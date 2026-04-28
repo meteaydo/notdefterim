@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Compose uygulamaları için temel Material3 tema -->
+  <style name="Theme.NotDefterim" parent="android:Theme.Material.Light.NoActionBar">
+    <item name="android:windowBackground">@android:color/transparent</item>
+  </style>
+</resources>

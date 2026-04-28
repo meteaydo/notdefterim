@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio
+*.iml
+.idea/
+local.properties
+
+# APK ve Bundle
+*.apk
+*.aab
+*.ap_
+
+# Kotlin
+*.class
+
+# Hassas dosyalar
+*.jks
+*.keystore
+google-services.json
+.env

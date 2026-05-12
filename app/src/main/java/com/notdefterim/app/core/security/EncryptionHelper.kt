@@ -63,6 +63,15 @@ class EncryptionHelper(context: Context) {
   }
 
   /**
+   * Buluttan indirilen yedeğin anahtarını yerel cihaza kaydeder.
+   */
+  fun restoreDatabasePassphrase(passphrase: ByteArray) {
+    securePreferences.edit()
+      .putString(KEY_DB_PASSPHRASE, Base64.encodeToString(passphrase, Base64.NO_WRAP))
+      .apply()
+  }
+
+  /**
    * Passphrase'i bellekten güvenli biçimde siler.
    * Room bağlantısı kurulduktan sonra çağrılmalıdır.
    */

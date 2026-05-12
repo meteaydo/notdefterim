@@ -38,4 +38,14 @@ class AuthViewModel @Inject constructor(
   fun onAppBackground() {
     securityManager.resetAuthentication()
   }
+
+  fun authenticateAction(
+    activity: androidx.fragment.app.FragmentActivity,
+    title: String,
+    subtitle: String,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+  ) {
+    securityManager.authenticateAction(activity, title, subtitle, onSuccess, onError)
+  }
 }

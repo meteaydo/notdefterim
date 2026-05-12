@@ -25,5 +25,17 @@ data class NoteEntity(
    * Not kartı arka plan rengi indeksi (0–7).
    * 0 = varsayılan (tema rengi), 1-7 = özel renkler.
    */
-  val colorIndex: Int = 0
+  val colorIndex: Int = 0,
+  /** Hatırlatıcı zamanı — Unix epoch milisaniye */
+  val reminderAt: Long? = null,
+  /** Tekrarlama periyodu */
+  val repeatInterval: String = "NONE",
+  /** Kategori ID'si (varsa) */
+  val categoryId: Long? = null,
+  /** Notun görüntülenme sayısı (En Sık sekmesi için) */
+  val viewCount: Int = 0,
+  /** Notun kilitli olup olmadığı */
+  val isLocked: Boolean = false,
+  /** Notun checklist modunda olup olmadığı */
+  val isChecklist: Boolean = false
 )

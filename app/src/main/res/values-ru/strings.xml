@@ -1,0 +1,116 @@
+<resources>
+    <string name="app_name">NotDefterim</string>
+    <string name="backup_file_prefix">Резервная копия NotDefterim</string>
+    <string name="backup_successful">Резервное копирование успешно</string>
+    <string name="backup_failed">Ошибка резервного копирования: %1$s</string>
+    <string name="restore_successful">Восстановлено заметок: %1$d</string>
+    <string name="restore_failed">Ошибка восстановления: %1$s</string>
+    <string name="saved_to_device_successfully">Успешно сохранено на устройство</string>
+    <string name="save_failed">Ошибка сохранения: %1$s</string>
+    <string name="file_creation_failed">Не удалось создать файл резервной копии: %1$s</string>
+    <string name="file_read_failed">Не удалось прочитать файл: %1$s</string>
+    <string name="restore_restart_message">Восстановление успешно, перезапуск приложения...</string>
+    
+    <string name="share_or_save_backup">Поделиться или сохранить резервную копию</string>
+    <string name="settings_title">Настройки</string>
+    <string name="back_button_desc">Назад</string>
+    <string name="google_account_section">Аккаунт Google</string>
+    <string name="guest_user">Пользователь</string>
+    <string name="logout">Выйти</string>
+    <string name="login_with_google">Войти с Google</string>
+    <string name="login_for_drive_backup">Войдите для резервного копирования на Диск</string>
+    <string name="login">Войти</string>
+    <string name="login_error">Ошибка входа</string>
+    <string name="drive_backup_section">Резервное копирование Google Диск</string>
+    <string name="backup_now">Создать резервную копию</string>
+    <string name="restore_from_backup">Восстановить</string>
+    <string name="login_required_for_backup">Войдите с аккаунтом Google для резервного копирования</string>
+    
+    <string name="local_backup_section">Локальная копия (На устройство)</string>
+    <string name="local_backup_description">Установите пароль, чтобы защитить файл резервной копии от посторонних.</string>
+    <string name="export_backup">Создать копию и экспортировать</string>
+    <string name="import_backup">Восстановить из копии</string>
+    <string name="security_info_section">Информация о безопасности</string>
+    
+    <string name="encryption">Шифрование</string>
+    <string name="key_storage">Хранилище ключей</string>
+    <string name="drive_backup">Резервное копирование на Диск</string>
+    <string name="version">Версия</string>
+    
+    <string name="encrypt_backup_title">Зашифровать резервную копию</string>
+    <string name="encrypt_backup_desc">Пожалуйста, установите пароль для предотвращения несанкционированного доступа при передаче этого файла через WhatsApp или почту.</string>
+    <string name="password">Пароль</string>
+    <string name="hint_optional">Подсказка для пароля (Необязательно)</string>
+    <string name="save">Сохранить</string>
+    <string name="share">Поделиться</string>
+    <string name="cancel">Отмена</string>
+    
+    <string name="decrypt_backup_title">Открыть резервную копию</string>
+    <string name="decrypt_backup_desc">Пожалуйста, введите пароль, заданный при создании этой копии.</string>
+    <string name="hint_format">Подсказка: %1$s</string>
+    <string name="import_button">Импорт</string>
+
+    <string name="invalid_file_format">Неверный формат файла. Это не резервная копия NotDefterim.</string>
+    <string name="invalid_backup_file">Недействительный файл резервной копии</string>
+    <string name="incorrect_password">Введен неверный пароль!</string>
+    <string name="target_file_error">Не удалось открыть целевой файл</string>
+    
+    <string name="language_section">Выбор языка</string>
+    <string name="language_description">Изменить язык приложения</string>
+
+    <!-- Passwords Screen -->
+    <string name="passwords_title">Мои пароли</string>
+    <string name="add_password_desc">Добавить пароль</string>
+    <string name="clear_search_desc">Очистить поиск</string>
+    <string name="swipe_to_edit_desc">Смахните вправо для редактирования</string>
+    <string name="tap_to_copy_desc">Нажмите, чтобы скопировать</string>
+    <string name="swipe_to_delete_desc">Смахните влево для удаления</string>
+    <string name="delete_password_title">Удалить пароль</string>
+    <string name="delete">Удалить</string>
+    <string name="float_window_desc">Плавающее окно</string>
+    <string name="username_copied">Имя пользователя скопировано</string>
+    <string name="username">Имя пользователя</string>
+    <string name="copied_desc">Скопировано</string>
+    <string name="password_copied">Пароль скопирован</string>
+    <string name="hide_desc">Скрыть</string>
+    <string name="show_desc">Показать</string>
+    <string name="password_options">Настройки пароля</string>
+    <string name="edit">Редактировать</string>
+    <string name="add_new_password_title">Добавить новый пароль</string>
+    <string name="platform">Платформа</string>
+    <string name="unnamed_record">Запись без имени</string>
+    <string name="update">Обновить</string>
+    <string name="edit_password_title">Редактировать пароль</string>
+    <!-- Auth Screen -->
+    <string name="auth_description">Аутентификация</string>
+    <string name="auth_prompt">Подтвердите вашу личность\nдля безопасного доступа к заметкам</string>
+    <string name="authenticating">Аутентификация...</string>
+    <string name="auth_success">Вход выполнен успешно</string>
+    <string name="authenticate">Подтвердить личность</string>
+    <string name="no_biometric_enrolled">Отпечаток пальца или PIN не настроены.\nДобавьте их в настройках устройства.</string>
+    <string name="search_passwords">Поиск паролей...</string>
+    <string name="overlay_permission_request">Пожалуйста, предоставьте разрешение \'Поверх других окон\'.</string>
+    <string name="my_notes">Мои заметки</string>
+    <string name="search">Поиск</string>
+    <string name="new_note">Новая заметка</string>
+    <string name="unpin">Открепить</string>
+    <string name="pin">Закрепить</string>
+    <string name="delete_note_title">Удалить заметку</string>
+    <string name="delete_note_desc">Вы уверены, что хотите удалить эту заметку?</string>
+    <string name="no_notes_yet">Пока нет заметок</string>
+    <string name="title_placeholder">Заголовок</string>
+    <string name="more_notes_above">Больше заметок выше</string>
+    <string name="more_notes_below">Больше заметок ниже</string>
+    <string name="settings">Настройки</string>
+    <string name="write_your_note">Напишите вашу заметку...</string>
+    <string name="reminder_title">Напоминание о заметке</string>
+    <string name="add_reminder">Добавить напоминание</string>
+    <string name="remove_reminder">Удалить напоминание</string>
+    <string name="reminder_set_for">Напоминание установлено на %s</string>
+    <string name="repeat_none">Не повторять</string>
+    <string name="repeat_daily">Каждый день</string>
+    <string name="repeat_weekly">Каждую неделю</string>
+    <string name="repeat_monthly">Каждый месяц</string>
+    <string name="repeat_yearly">Каждый год</string>
+    <string name="cancel_reminder">Отменить напоминание</string>
+</resources>

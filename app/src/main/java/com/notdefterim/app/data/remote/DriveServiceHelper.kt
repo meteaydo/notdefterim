@@ -118,6 +118,27 @@ class DriveServiceHelper(private val context: Context) {
     }
   }
 
+  /**
+   * Belirli bir yedeği ID'sine göre indirir.
+   */
+  suspend fun downloadBackup(
+    backupId: String,
+    googleAuthManager: GoogleAuthManager
+  ): Result<String> = withContext(Dispatchers.IO) {
+    try {
+      val driveService = buildDriveService(googleAuthManager)
+        ?: return@withContext Result.failure(IllegalStateException("Drive servisi başlatılamadı"))
+
+      val outputStream = ByteArrayOutputStream()
+      driveService.files().get(backupId)
+        .executeMediaAndDownloadTo(outputStream)
+
+      Result.success(outputStream.toString(Charsets.UTF_8.name()))
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
+  }
+
   /** Drive'daki tüm yedekleri listeler. */
   suspend fun listBackups(
     googleAuthManager: GoogleAuthManager

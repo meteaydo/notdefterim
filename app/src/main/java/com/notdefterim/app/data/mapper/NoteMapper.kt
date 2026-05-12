@@ -3,6 +3,10 @@ package com.notdefterim.app.data.mapper
 import com.notdefterim.app.data.local.entity.NoteEntity
 import com.notdefterim.app.domain.model.Note
 import com.notdefterim.app.domain.model.NoteColor
+import com.notdefterim.app.domain.model.RepeatInterval
+import com.notdefterim.app.domain.model.Category
+import com.notdefterim.app.data.local.entity.CategoryEntity
+import com.notdefterim.app.data.local.entity.NoteWithCategory
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -27,7 +31,38 @@ fun NoteEntity.toDomain(): Note = Note(
     .atZone(ZoneId.systemDefault())
     .toLocalDateTime(),
   isPinned = isPinned,
-  color = NoteColor.fromIndex(colorIndex)
+  color = NoteColor.fromIndex(colorIndex),
+  reminderAt = reminderAt?.let {
+    Instant.ofEpochMilli(it)
+      .atZone(ZoneId.systemDefault())
+      .toLocalDateTime()
+  },
+  repeatInterval = try { RepeatInterval.valueOf(repeatInterval) } catch (e: Exception) { RepeatInterval.NONE },
+  viewCount = viewCount,
+  isLocked = isLocked,
+  isChecklist = isChecklist
+)
+
+/** NoteWithCategory → Domain Note */
+fun NoteWithCategory.toDomain(): Note {
+  val note = this.note.toDomain()
+  return note.copy(
+    category = this.category?.toDomain()
+  )
+}
+
+/** CategoryEntity → Domain Category */
+fun CategoryEntity.toDomain(): Category = Category(
+  id = id,
+  name = name,
+  colorHex = colorHex
+)
+
+/** Domain Category → CategoryEntity */
+fun Category.toEntity(): CategoryEntity = CategoryEntity(
+  id = id,
+  name = name,
+  colorHex = colorHex
 )
 
 /** Domain Note → NoteEntity */
@@ -44,8 +79,17 @@ fun Note.toEntity(): NoteEntity = NoteEntity(
     .toInstant()
     .toEpochMilli(),
   isPinned = isPinned,
-  colorIndex = color.index
+  colorIndex = color.index,
+  reminderAt = reminderAt?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli(),
+  repeatInterval = repeatInterval.name,
+  categoryId = category?.id,
+  viewCount = viewCount,
+  isLocked = isLocked,
+  isChecklist = isChecklist
 )
 
 /** Liste dönüşümü. */
 fun List<NoteEntity>.toDomainList(): List<Note> = map { it.toDomain() }
+
+@JvmName("toDomainListNoteWithCategory")
+fun List<NoteWithCategory>.toDomainList(): List<Note> = map { it.toDomain() }

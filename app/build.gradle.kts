@@ -18,6 +18,7 @@ android {
     versionCode = 1
     versionName = "1.0.0"
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    resourceConfigurations += listOf("tr", "en", "ru", "es", "de", "fr")
   }
 
   buildTypes {
@@ -49,6 +50,7 @@ android {
       // Google API istemcileri çakışan meta-data dosyaları içerebilir
       excludes += "/META-INF/{AL2.0,LGPL2.1}"
       excludes += "META-INF/DEPENDENCIES"
+      excludes += "META-INF/INDEX.LIST"
     }
   }
 }
@@ -66,6 +68,7 @@ dependencies {
   // Activity + Navigation
   implementation(libs.activity.compose)
   implementation(libs.navigation.compose)
+  implementation("androidx.appcompat:appcompat:1.6.1")
 
   // Room + SQLCipher (AES-256 veritabanı şifreleme)
   implementation(libs.room.runtime)
@@ -95,6 +98,7 @@ dependencies {
 
   // Coroutines
   implementation(libs.coroutines.android)
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
   // Serialization (Drive yedek paketi için JSON)
   implementation(libs.kotlinx.serialization.json)

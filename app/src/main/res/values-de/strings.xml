@@ -1,0 +1,116 @@
+<resources>
+    <string name="app_name">NotDefterim</string>
+    <string name="backup_file_prefix">NotDefterim Backup</string>
+    <string name="backup_successful">Backup erfolgreich</string>
+    <string name="backup_failed">Backup fehlgeschlagen: %1$s</string>
+    <string name="restore_successful">%1$d Notizen wiederhergestellt</string>
+    <string name="restore_failed">Wiederherstellung fehlgeschlagen: %1$s</string>
+    <string name="saved_to_device_successfully">Erfolgreich auf dem Gerät gespeichert</string>
+    <string name="save_failed">Speichern fehlgeschlagen: %1$s</string>
+    <string name="file_creation_failed">Backup-Datei konnte nicht erstellt werden: %1$s</string>
+    <string name="file_read_failed">Datei konnte nicht gelesen werden: %1$s</string>
+    <string name="restore_restart_message">Wiederherstellung erfolgreich, Anwendung wird neu gestartet...</string>
+    
+    <string name="share_or_save_backup">Backup teilen oder speichern</string>
+    <string name="settings_title">Einstellungen</string>
+    <string name="back_button_desc">Zurück</string>
+    <string name="google_account_section">Google-Konto</string>
+    <string name="guest_user">Benutzer</string>
+    <string name="logout">Abmelden</string>
+    <string name="login_with_google">Mit Google anmelden</string>
+    <string name="login_for_drive_backup">Für Drive-Backup anmelden</string>
+    <string name="login">Anmelden</string>
+    <string name="login_error">Anmeldefehler</string>
+    <string name="drive_backup_section">Google Drive Backup</string>
+    <string name="backup_now">Jetzt sichern</string>
+    <string name="restore_from_backup">Wiederherstellen</string>
+    <string name="login_required_for_backup">Melden Sie sich mit Ihrem Google-Konto an, um zu sichern</string>
+    
+    <string name="local_backup_section">Lokales Backup (Gerät)</string>
+    <string name="local_backup_description">Legen Sie ein Passwort fest, um Ihre Backup-Datei vor unbefugtem Zugriff zu schützen.</string>
+    <string name="export_backup">Sichern und Exportieren</string>
+    <string name="import_backup">Aus Backup wiederherstellen</string>
+    <string name="security_info_section">Sicherheitsinformationen</string>
+    
+    <string name="encryption">Verschlüsselung</string>
+    <string name="key_storage">Schlüsselspeicher</string>
+    <string name="drive_backup">Drive Backup</string>
+    <string name="version">Version</string>
+    
+    <string name="encrypt_backup_title">Backup verschlüsseln</string>
+    <string name="encrypt_backup_desc">Bitte legen Sie ein Passwort fest, um unbefugten Zugriff zu verhindern, wenn Sie diese Backup-Datei über WhatsApp oder E-Mail teilen.</string>
+    <string name="password">Passwort</string>
+    <string name="hint_optional">Passworthinweis (Optional)</string>
+    <string name="save">Speichern</string>
+    <string name="share">Teilen</string>
+    <string name="cancel">Abbrechen</string>
+    
+    <string name="decrypt_backup_title">Backup öffnen</string>
+    <string name="decrypt_backup_desc">Bitte geben Sie das Passwort ein, das bei der Erstellung dieses Backups festgelegt wurde.</string>
+    <string name="hint_format">Hinweis: %1$s</string>
+    <string name="import_button">Importieren</string>
+
+    <string name="invalid_file_format">Ungültiges Dateiformat. Dies ist kein NotDefterim-Backup.</string>
+    <string name="invalid_backup_file">Ungültige Backup-Datei</string>
+    <string name="incorrect_password">Falsches Passwort eingegeben!</string>
+    <string name="target_file_error">Zieldatei konnte nicht geöffnet werden</string>
+    
+    <string name="language_section">Sprachauswahl</string>
+    <string name="language_description">Ändern Sie die Sprache der Anwendung</string>
+
+    <!-- Passwords Screen -->
+    <string name="passwords_title">Meine Passwörter</string>
+    <string name="add_password_desc">Passwort hinzufügen</string>
+    <string name="clear_search_desc">Suche löschen</string>
+    <string name="swipe_to_edit_desc">Nach rechts wischen zum Bearbeiten</string>
+    <string name="tap_to_copy_desc">Tippen zum Kopieren</string>
+    <string name="swipe_to_delete_desc">Nach links wischen zum Löschen</string>
+    <string name="delete_password_title">Passwort löschen</string>
+    <string name="delete">Löschen</string>
+    <string name="float_window_desc">Schwebend</string>
+    <string name="username_copied">Benutzername kopiert</string>
+    <string name="username">Benutzername</string>
+    <string name="copied_desc">Kopiert</string>
+    <string name="password_copied">Passwort kopiert</string>
+    <string name="hide_desc">Ausblenden</string>
+    <string name="show_desc">Anzeigen</string>
+    <string name="password_options">Passwort-Optionen</string>
+    <string name="edit">Bearbeiten</string>
+    <string name="add_new_password_title">Neues Passwort hinzufügen</string>
+    <string name="platform">Plattform</string>
+    <string name="unnamed_record">Unbenannter Eintrag</string>
+    <string name="update">Aktualisieren</string>
+    <string name="edit_password_title">Passwort bearbeiten</string>
+    <!-- Auth Screen -->
+    <string name="auth_description">Authentifizierung</string>
+    <string name="auth_prompt">Bestätigen Sie Ihre Identität\nfür den sicheren Zugriff auf Ihre Notizen</string>
+    <string name="authenticating">Authentifizierung...</string>
+    <string name="auth_success">Anmeldung erfolgreich</string>
+    <string name="authenticate">Identität bestätigen</string>
+    <string name="no_biometric_enrolled">Fingerabdruck oder PIN ist nicht eingerichtet.\nBitte fügen Sie dies in den Geräteeinstellungen hinzu.</string>
+    <string name="search_passwords">Passwörter suchen...</string>
+    <string name="overlay_permission_request">Bitte erteilen Sie die Berechtigung \'Über anderen Apps einblenden\'.</string>
+    <string name="my_notes">Meine Notizen</string>
+    <string name="search">Suche</string>
+    <string name="new_note">Neue Notiz</string>
+    <string name="unpin">Loslösen</string>
+    <string name="pin">Anheften</string>
+    <string name="delete_note_title">Notiz löschen</string>
+    <string name="delete_note_desc">Möchten Sie diese Notiz wirklich löschen?</string>
+    <string name="no_notes_yet">Noch keine Notizen</string>
+    <string name="title_placeholder">Titel</string>
+    <string name="more_notes_above">Weitere Notizen oben</string>
+    <string name="more_notes_below">Weitere Notizen unten</string>
+    <string name="settings">Einstellungen</string>
+    <string name="write_your_note">Schreiben Sie Ihre Notiz...</string>
+    <string name="reminder_title">Notiz-Erinnerung</string>
+    <string name="add_reminder">Erinnerung hinzufügen</string>
+    <string name="remove_reminder">Erinnerung entfernen</string>
+    <string name="reminder_set_for">Erinnerung eingestellt für %s</string>
+    <string name="repeat_none">Nicht wiederholen</string>
+    <string name="repeat_daily">Täglich</string>
+    <string name="repeat_weekly">Wöchentlich</string>
+    <string name="repeat_monthly">Monatlich</string>
+    <string name="repeat_yearly">Jährlich</string>
+    <string name="cancel_reminder">Erinnerung abbrechen</string>
+</resources>

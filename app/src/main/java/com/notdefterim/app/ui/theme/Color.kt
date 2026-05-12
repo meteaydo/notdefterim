@@ -3,32 +3,32 @@ package com.notdefterim.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ─── Ana Palet ──────────────────────────────────────────────────────────────
-// Koyu tema — premium, derin renkler
-val PrimaryDark = Color(0xFF7C6AF7)       // Soft violet
+// Koyu tema — Arduvaz (Slate) Mavi-Gri Soft Dark
+val PrimaryDark = Color(0xFF818CF8)       // Indigo 400
 val OnPrimaryDark = Color(0xFFFFFFFF)
-val PrimaryContainerDark = Color(0xFF4A3DB5)
-val OnPrimaryContainerDark = Color(0xFFE8E4FF)
+val PrimaryContainerDark = Color(0xFF4F46E5) // Indigo 600
+val OnPrimaryContainerDark = Color(0xFFE0E7FF)
 
-val SecondaryDark = Color(0xFF9C8FFF)
-val OnSecondaryDark = Color(0xFF1A1A2E)
-val SecondaryContainerDark = Color(0xFF302D5E)
-val OnSecondaryContainerDark = Color(0xFFD4CFFF)
+val SecondaryDark = Color(0xFF94A3B8)     // Slate 400
+val OnSecondaryDark = Color(0xFF0F172A)
+val SecondaryContainerDark = Color(0xFF334155) // Slate 700
+val OnSecondaryContainerDark = Color(0xFFF1F5F9)
 
-val TertiaryDark = Color(0xFF63D3C8)
-val OnTertiaryDark = Color(0xFF003733)
+val TertiaryDark = Color(0xFF38BDF8)      // Sky 400
+val OnTertiaryDark = Color(0xFF082F49)
 
-val BackgroundDark = Color(0xFF0F0F1A)
-val OnBackgroundDark = Color(0xFFE8E6F0)
-val SurfaceDark = Color(0xFF1A1A2E)
-val OnSurfaceDark = Color(0xFFE8E6F0)
-val SurfaceVariantDark = Color(0xFF252540)
-val OnSurfaceVariantDark = Color(0xFFB8B5CC)
+val BackgroundDark = Color(0xFF0F172A)    // Slate 900 (Mavi alt tonlu koyu gri)
+val OnBackgroundDark = Color(0xFFF8FAFC)  // Slate 50
+val SurfaceDark = Color(0xFF1E293B)       // Slate 800
+val OnSurfaceDark = Color(0xFFF8FAFC)     // Slate 50
+val SurfaceVariantDark = Color(0xFF334155)// Slate 700
+val OnSurfaceVariantDark = Color(0xFFCBD5E1)// Slate 300
 
-val ErrorDark = Color(0xFFFF6B6B)
-val OnErrorDark = Color(0xFF1A0000)
+val ErrorDark = Color(0xFFF87171)
+val OnErrorDark = Color(0xFF450A0A)
 
-val OutlineDark = Color(0xFF48466A)
-val OutlineVariantDark = Color(0xFF302E50)
+val OutlineDark = Color(0xFF475569)       // Slate 600
+val OutlineVariantDark = Color(0xFF334155) // Slate 700
 
 // Açık tema
 val PrimaryLight = Color(0xFF5A48E0)
@@ -58,16 +58,16 @@ val OutlineLight = Color(0xFF8E8CB0)
 val OutlineVariantLight = Color(0xFFCAC8E8)
 
 // ─── Not Kartı Renkleri ────────────────────────────────────────────────────
-// Koyu tema not kartı renkleri
+// Koyu tema not kartı renkleri (Arduvaz temaya uyumlu pastel-koyu tonlar)
 val NoteColorsDark = listOf(
-  Color(0xFF1A1A2E),  // DEFAULT — yüzey rengiyle aynı
-  Color(0xFF2E1A1A),  // ROSE
-  Color(0xFF2E221A),  // PEACH
-  Color(0xFF2A261A),  // SAND
-  Color(0xFF1A2E24),  // MINT
-  Color(0xFF1A222E),  // SKY
-  Color(0xFF221A2E),  // LAVENDER
-  Color(0xFF1E1E22),  // GRAPHITE
+  Color(0xFF1E293B),  // DEFAULT — yüzey rengiyle aynı (Slate 800)
+  Color(0xFF3F2C33),  // ROSE (Pastel koyu gül)
+  Color(0xFF403126),  // PEACH (Pastel koyu şeftali)
+  Color(0xFF3D3826),  // SAND (Pastel koyu kum)
+  Color(0xFF223B33),  // MINT (Pastel koyu nane)
+  Color(0xFF1E3A4C),  // SKY (Pastel koyu gök)
+  Color(0xFF312842),  // LAVENDER (Pastel koyu lavanta)
+  Color(0xFF273043),  // GRAPHITE (Alternatif Slate/Grafit)
 )
 
 // Açık tema not kartı renkleri

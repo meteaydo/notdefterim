@@ -8,5 +8,5 @@ class RestoreFromCloudUseCase @Inject constructor(
   private val repository: BackupRepository
 ) {
   /** @return geri yüklenen not sayısı */
-  suspend operator fun invoke(): Result<Int> = repository.restoreFromCloud()
+  suspend operator fun invoke(backupId: String? = null): Result<Int> = repository.restoreFromCloud(backupId)
 }

@@ -1,4 +1,121 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="app_name">NotDefterim</string>
+    <string name="app_name">NotDefterim</string>
+    <string name="backup_file_prefix">NotDefterim Yedek</string>
+    <string name="backup_successful">Yedekleme başarılı</string>
+    <string name="backup_failed">Yedekleme başarısız: %1$s</string>
+    <string name="restore_successful">%1$d not geri yüklendi</string>
+    <string name="restore_failed">Geri yükleme başarısız: %1$s</string>
+    <string name="saved_to_device_successfully">Cihaza başarıyla kaydedildi</string>
+    <string name="save_failed">Kaydetme başarısız: %1$s</string>
+    <string name="file_creation_failed">Yedekleme dosyası oluşturulamadı: %1$s</string>
+    <string name="file_read_failed">Dosya okunamadı: %1$s</string>
+    <string name="restore_restart_message">Geri yükleme başarılı, uygulama yeniden başlatılıyor...</string>
+    <string name="backup_list_failed">Yedek listesi alınamadı: %1$s</string>
+    <string name="select_backup_title">Yedek Seçin</string>
+    <string name="backup_info_format">Tarih: %1$s\nBoyut: %2$s KB</string>
+    <string name="confirm_restore_title">Geri Yüklemeyi Onayla</string>
+    <string name="confirm_restore_desc">Seçilen yedeği geri yüklemek üzeresiniz. Mevcut verileriniz silinecektir. Onaylıyor musunuz?</string>
+    
+    <string name="share_or_save_backup">Yedeği Paylaş veya Kaydet</string>
+    <string name="settings_title">Ayarlar</string>
+    <string name="back_button_desc">Geri</string>
+    <string name="google_account_section">Google Hesabı</string>
+    <string name="guest_user">Kullanıcı</string>
+    <string name="logout">Çıkış</string>
+    <string name="login_with_google">Google ile Giriş Yap</string>
+    <string name="login_for_drive_backup">Drive yedekleme için giriş yapın</string>
+    <string name="login">Giriş</string>
+    <string name="login_error">Giriş Hatası</string>
+    <string name="drive_backup_section">Google Drive Yedekleme</string>
+    <string name="backup_now">Şimdi Yedekle</string>
+    <string name="restore_from_backup">Geri Yükle</string>
+    <string name="login_required_for_backup">Yedekleme için Google hesabıyla giriş yapın</string>
+    
+    <string name="local_backup_section">Cihaza Yedekle (Yerel)</string>
+    <string name="local_backup_description">Yedeği dosyaya kaydederken başkalarının açamaması için şifre belirleyebilirsiniz.</string>
+    <string name="export_backup">Yedekle ve Dışa Aktar</string>
+    <string name="import_backup">Yedekten Geri Yükle</string>
+    <string name="security_info_section">Güvenlik Bilgisi</string>
+    
+    <string name="encryption">Şifreleme</string>
+    <string name="key_storage">Anahtar Depolama</string>
+    <string name="drive_backup">Drive Yedekleme</string>
+    <string name="version">Versiyon</string>
+    
+    <string name="encrypt_backup_title">Yedeklemeyi Şifrele</string>
+    <string name="encrypt_backup_desc">Bu yedekleme dosyası WhatsApp veya e-posta ile paylaşıldığında kimsenin açamaması için lütfen bir şifre belirleyin.</string>
+    <string name="password">Şifre</string>
+    <string name="hint_optional">Hatırlatıcı İpucu (İsteğe Bağlı)</string>
+    <string name="save">Kaydet</string>
+    <string name="share">Paylaş</string>
+    <string name="cancel">İptal</string>
+    
+    <string name="decrypt_backup_title">Yedeği Aç</string>
+    <string name="decrypt_backup_desc">Lütfen bu yedekleme oluşturulurken belirlenen şifreyi girin.</string>
+    <string name="hint_format">İpucu: %1$s</string>
+    <string name="import_button">İçe Aktar</string>
+
+    <string name="invalid_file_format">Geçersiz dosya formatı. Bu bir NotDefterim yedeği değil.</string>
+    <string name="invalid_backup_file">Geçersiz yedek dosyası</string>
+    <string name="incorrect_password">Hatalı şifre girdiniz!</string>
+    <string name="target_file_error">Hedef dosya açılamadı</string>
+    
+    <string name="language_section">Dil Seçimi</string>
+    <string name="language_description">Uygulamanın dilini değiştirin</string>
+
+    <!-- Passwords Screen -->
+    <string name="passwords_title">Parolalarım</string>
+    <string name="add_password_desc">Parola Ekle</string>
+    <string name="clear_search_desc">Aramayı temizle</string>
+    <string name="swipe_to_edit_desc">Düzenlemek için sağa kaydır</string>
+    <string name="tap_to_copy_desc">Kopyalamak için dokun</string>
+    <string name="swipe_to_delete_desc">Silmek için sola kaydır</string>
+    <string name="delete_password_title">Parolayı Sil</string>
+    <string name="delete">Sil</string>
+    <string name="float_window_desc">Yüzdür</string>
+    <string name="username_copied">Kullanıcı adı kopyalandı</string>
+    <string name="username">Kullanıcı Adı</string>
+    <string name="copied_desc">Kopyalandı</string>
+    <string name="password_copied">Parola kopyalandı</string>
+    <string name="hide_desc">Gizle</string>
+    <string name="show_desc">Göster</string>
+    <string name="password_options">Parola Seçenekleri</string>
+    <string name="edit">Düzenle</string>
+    <string name="add_new_password_title">Yeni Parola Ekle</string>
+    <string name="platform">Platform</string>
+    <string name="unnamed_record">İsimsiz Kayıt</string>
+    <string name="update">Güncelle</string>
+    <string name="edit_password_title">Parolayı Düzenle</string>
+    <!-- Auth Screen -->
+    <string name="auth_description">Kimlik doğrulama</string>
+    <string name="auth_prompt">Notlarınıza güvenli erişim için\nkimliğinizi doğrulayın</string>
+    <string name="authenticating">Kimlik doğrulanıyor...</string>
+    <string name="auth_success">Giriş başarılı</string>
+    <string name="authenticate">Kimliği Doğrula</string>
+    <string name="no_biometric_enrolled">Parmak izi veya PIN kurulu değil.\nCihaz ayarlarından ekleyin.</string>
+    <string name="search_passwords">Parolalarda ara...</string>
+    <string name="overlay_permission_request">Lütfen \'Diğer uygulamaların üzerinde göster\' izni verin.</string>
+    <string name="my_notes">Notlarım</string>
+    <string name="search">Ara</string>
+    <string name="new_note">Yeni Not</string>
+    <string name="unpin">Sabitlemeyi Kaldır</string>
+    <string name="pin">Sabitle</string>
+    <string name="delete_note_title">Notu Sil</string>
+    <string name="delete_note_desc">Bu notu silmek istediğinize emin misiniz?</string>
+    <string name="no_notes_yet">Henüz not yok</string>
+    <string name="title_placeholder">Başlık</string>
+    <string name="more_notes_above">Yukarıda daha fazla not var</string>
+    <string name="more_notes_below">Aşağıda daha fazla not var</string>
+    <string name="settings">Ayarlar</string>
+    <string name="write_your_note">Notunuzu yazın...</string>
+    <string name="reminder_title">Not Hatırlatması</string>
+    <string name="add_reminder">Hatırlatıcı ekle</string>
+    <string name="remove_reminder">Hatırlatıcıyı kaldır</string>
+    <string name="reminder_set_for">%s için hatırlatıcı kuruldu</string>
+    <string name="repeat_none">Sadece bir kez</string>
+    <string name="repeat_daily">Her Gün</string>
+    <string name="repeat_weekly">Her Hafta</string>
+    <string name="repeat_monthly">Her Ay</string>
+    <string name="repeat_yearly">Her Yıl</string>
+    <string name="cancel_reminder">Hatırlatıcıyı İptal Et</string>
 </resources>

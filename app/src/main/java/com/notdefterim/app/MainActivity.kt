@@ -10,16 +10,18 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.fragment.app.FragmentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.core.security.AuthState
 import com.notdefterim.app.data.remote.GoogleAuthManager
 import com.notdefterim.app.ui.auth.AuthScreen
 import com.notdefterim.app.ui.auth.AuthViewModel
+import com.notdefterim.app.data.local.ThemePreferences
 import com.notdefterim.app.ui.navigation.AppNavigation
 import com.notdefterim.app.ui.theme.NotDefterimTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.foundation.isSystemInDarkTheme
 import javax.inject.Inject
 
 /**
@@ -31,17 +33,24 @@ import javax.inject.Inject
  * EdgeToEdge: Sistem çubuklarının altına içerik uzanır (immersive deneyim).
  */
 @AndroidEntryPoint
-class MainActivity : FragmentActivity() {
+class MainActivity : AppCompatActivity() {
 
   @Inject
   lateinit var googleAuthManager: GoogleAuthManager
+
+  @Inject
+  lateinit var themePreferences: ThemePreferences
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
 
     setContent {
-      NotDefterimTheme {
+      val systemDark = isSystemInDarkTheme()
+      val userDarkTheme by themePreferences.isDarkTheme.collectAsStateWithLifecycle()
+      val darkTheme = userDarkTheme ?: systemDark
+
+      NotDefterimTheme(darkTheme = darkTheme) {
         val authViewModel: AuthViewModel = hiltViewModel()
         val authState by authViewModel.authState.collectAsStateWithLifecycle()
         val biometricSupport = authViewModel.checkBiometricSupport()
@@ -55,6 +64,8 @@ class MainActivity : FragmentActivity() {
           if (isAuthenticated) {
             AppNavigation(
               googleAuthManager = googleAuthManager,
+              themePreferences = themePreferences,
+              systemDark = systemDark,
               modifier = Modifier.fillMaxSize()
             )
           } else {

@@ -3,6 +3,9 @@ package com.notdefterim.app.ui.notelist
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notdefterim.app.domain.model.Note
+import com.notdefterim.app.domain.model.Category
+import com.notdefterim.app.domain.repository.CategoryRepository
+import com.notdefterim.app.domain.usecase.category.GetCategoriesUseCase
 import com.notdefterim.app.domain.usecase.note.DeleteNoteUseCase
 import com.notdefterim.app.domain.usecase.note.GetNotesUseCase
 import com.notdefterim.app.domain.usecase.note.SearchNotesUseCase
@@ -25,8 +28,28 @@ class NoteListViewModel @Inject constructor(
   private val getNotesUseCase: GetNotesUseCase,
   private val searchNotesUseCase: SearchNotesUseCase,
   private val deleteNoteUseCase: DeleteNoteUseCase,
-  private val updateNoteUseCase: UpdateNoteUseCase
+  private val updateNoteUseCase: UpdateNoteUseCase,
+  private val getCategoriesUseCase: GetCategoriesUseCase,
+  private val categoryRepository: CategoryRepository
 ) : ViewModel() {
+
+  /** Düzenleme ve silme yapılamayan korumalı kategori isimleri */
+  companion object {
+    val PROTECTED_CATEGORY_NAMES = setOf(
+      "fikirler", "yapılacaklar", "alışveriş"
+    )
+  }
+
+  enum class FilterType { ALL, LOCKED, FREQUENT, CATEGORY }
+  
+  private val _selectedFilterType = MutableStateFlow(FilterType.ALL)
+  val selectedFilterType = _selectedFilterType.asStateFlow()
+
+  private val _selectedCategoryId = MutableStateFlow<Long?>(null)
+  val selectedCategoryId = _selectedCategoryId.asStateFlow()
+
+  val categories: StateFlow<List<Category>> = getCategoriesUseCase()
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
   private val _searchQuery = MutableStateFlow("")
   val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -39,12 +62,37 @@ class NoteListViewModel @Inject constructor(
    * 300ms bekledikten sonra query değerlendirmeye alınır.
    */
   @OptIn(FlowPreview::class)
-  val notes: StateFlow<List<Note>> = _searchQuery
-    .debounce(300L)
-    .flatMapLatest { query ->
-      if (query.isBlank()) getNotesUseCase() else searchNotesUseCase(query)
+  val notes: StateFlow<List<Note>> = kotlinx.coroutines.flow.combine(
+    _searchQuery
+      .debounce(300L)
+      .flatMapLatest { query ->
+        if (query.isBlank()) getNotesUseCase() else searchNotesUseCase(query)
+      },
+    _selectedFilterType,
+    _selectedCategoryId
+  ) { noteList, filterType, categoryId ->
+    when (filterType) {
+      FilterType.ALL -> noteList.sortedWith(compareByDescending<Note> { it.isPinned }.thenByDescending { it.updatedAt })
+      FilterType.LOCKED -> noteList.sortedWith(
+        compareByDescending<Note> { it.isLocked }
+          .thenByDescending { it.isPinned }
+          .thenByDescending { it.updatedAt }
+      )
+      FilterType.FREQUENT -> noteList.sortedByDescending { it.viewCount }
+      FilterType.CATEGORY -> {
+        if (categoryId != null) {
+          // Seçili kategori notlarını EN ÜSTE koy, diğerlerini alta bırak.
+          noteList.sortedWith(
+            compareByDescending<Note> { it.category?.id == categoryId }
+              .thenByDescending { it.isPinned }
+              .thenByDescending { it.updatedAt }
+          )
+        } else {
+          noteList.sortedWith(compareByDescending<Note> { it.isPinned }.thenByDescending { it.updatedAt })
+        }
+      }
     }
-    .stateIn(
+  }.stateIn(
       scope = viewModelScope,
       started = SharingStarted.WhileSubscribed(5_000),
       initialValue = emptyList()
@@ -66,6 +114,11 @@ class NoteListViewModel @Inject constructor(
     if (!active) _searchQuery.value = ""
   }
 
+  fun setFilter(type: FilterType, categoryId: Long? = null) {
+    _selectedFilterType.value = type
+    _selectedCategoryId.value = categoryId
+  }
+
   fun deleteNote(noteId: Long) {
     viewModelScope.launch {
       deleteNoteUseCase(noteId)
@@ -75,6 +128,37 @@ class NoteListViewModel @Inject constructor(
   fun togglePin(note: Note) {
     viewModelScope.launch {
       updateNoteUseCase(note.copy(isPinned = !note.isPinned))
+    }
+  }
+
+  /** Kategorinin korumalı olup olmadığını kontrol eder */
+  fun isCategoryProtected(category: Category): Boolean =
+    category.name.lowercase() in PROTECTED_CATEGORY_NAMES
+
+  /** Kategori adını ve rengini günceller */
+  fun updateCategory(category: Category) {
+    viewModelScope.launch {
+      categoryRepository.updateCategory(category)
+    }
+  }
+
+  /** Kategoriyi siler. Korumalı kategorileri silmez. */
+  fun deleteCategory(category: Category) {
+    if (isCategoryProtected(category)) return
+    viewModelScope.launch {
+      categoryRepository.deleteCategory(category.id)
+      // Aktif filtre silinen kategoriyse, filtre sıfırla
+      if (_selectedFilterType.value == FilterType.CATEGORY && _selectedCategoryId.value == category.id) {
+        _selectedFilterType.value = FilterType.ALL
+        _selectedCategoryId.value = null
+      }
+    }
+  }
+
+  /** Yeni kategori ekler */
+  fun addCategory(name: String, colorHex: String) {
+    viewModelScope.launch {
+      categoryRepository.addCategory(Category(name = name, colorHex = colorHex))
     }
   }
 }

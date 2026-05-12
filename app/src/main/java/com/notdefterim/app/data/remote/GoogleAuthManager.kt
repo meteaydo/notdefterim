@@ -33,12 +33,16 @@ class GoogleAuthManager(private val context: Context) {
   }
 
   /** Mevcut oturumu kontrol eder (uygulama açılışında çağrılır). */
-  fun checkSignInStatus() {
+  suspend fun checkSignInStatus() {
     val account = GoogleSignIn.getLastSignedInAccount(context)
-    _authState.value = if (account != null && !account.isExpired) {
-      GoogleAuthState.SignedIn(account)
+    if (account != null) {
+      if (!account.isExpired) {
+        _authState.value = GoogleAuthState.SignedIn(account)
+      } else {
+        trySilentSignIn()
+      }
     } else {
-      GoogleAuthState.SignedOut
+      _authState.value = GoogleAuthState.SignedOut
     }
   }
 

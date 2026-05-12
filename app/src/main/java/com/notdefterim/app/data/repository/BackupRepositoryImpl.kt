@@ -3,6 +3,7 @@ package com.notdefterim.app.data.repository
 import com.notdefterim.app.data.local.NoteDao
 import com.notdefterim.app.data.mapper.toDomainList
 import com.notdefterim.app.data.mapper.toEntity
+import com.notdefterim.app.data.remote.BackupInfo
 import com.notdefterim.app.data.remote.DriveServiceHelper
 import com.notdefterim.app.data.remote.GoogleAuthManager
 import com.notdefterim.app.domain.model.Note
@@ -51,9 +52,14 @@ class BackupRepositoryImpl @Inject constructor(
     }
   }
 
-  override suspend fun restoreFromCloud(): Result<Int> {
+  override suspend fun restoreFromCloud(backupId: String?): Result<Int> {
     return try {
-      val jsonResult = driveServiceHelper.downloadLatestBackup(googleAuthManager)
+      val jsonResult = if (backupId != null) {
+        driveServiceHelper.downloadBackup(backupId, googleAuthManager)
+      } else {
+        driveServiceHelper.downloadLatestBackup(googleAuthManager)
+      }
+      
       jsonResult.fold(
         onSuccess = { jsonString ->
           val payload = json.decodeFromString<BackupPayload>(jsonString)
@@ -61,7 +67,7 @@ class BackupRepositoryImpl @Inject constructor(
 
           // Mevcut notları sil, Drive'daki yedekle değiştir
           // NOT: Üretimde merge stratejisi daha uygundur
-          noteDao.getAllNotesSnapshot().forEach { noteDao.deleteNoteById(it.id) }
+          noteDao.getAllNotesSnapshot().forEach { noteDao.deleteNoteById(it.note.id) }
           entities.forEach { noteDao.insertNote(it) }
 
           Result.success(entities.size)
@@ -71,6 +77,10 @@ class BackupRepositoryImpl @Inject constructor(
     } catch (e: Exception) {
       Result.failure(e)
     }
+  }
+
+  override suspend fun listBackups(): Result<List<BackupInfo>> {
+    return driveServiceHelper.listBackups(googleAuthManager)
   }
 }
 
@@ -92,7 +102,8 @@ private data class SerializableNote(
   val createdAt: Long,
   val updatedAt: Long,
   val isPinned: Boolean,
-  val colorIndex: Int
+  val colorIndex: Int,
+  val isLocked: Boolean = false
 )
 
 private fun Note.toSerializable() = SerializableNote(
@@ -106,7 +117,8 @@ private fun Note.toSerializable() = SerializableNote(
     .atZone(java.time.ZoneId.systemDefault())
     .toInstant().toEpochMilli(),
   isPinned = isPinned,
-  colorIndex = color.index
+  colorIndex = color.index,
+  isLocked = isLocked
 )
 
 private fun SerializableNote.toEntity() =
@@ -117,5 +129,10 @@ private fun SerializableNote.toEntity() =
     createdAt = createdAt,
     updatedAt = updatedAt,
     isPinned = isPinned,
-    colorIndex = colorIndex
+    colorIndex = colorIndex,
+    reminderAt = null,
+    repeatInterval = "NONE",
+    categoryId = null,
+    viewCount = 0,
+    isLocked = isLocked
   )

@@ -32,6 +32,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -46,11 +47,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.data.remote.GoogleAuthManager
 import com.notdefterim.app.data.remote.GoogleAuthState
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import androidx.core.content.FileProvider
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material.icons.rounded.Save
+import androidx.compose.material.icons.rounded.FolderOpen
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
+import com.notdefterim.app.R
+import android.net.Uri
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -63,10 +84,12 @@ fun SettingsScreen(
   modifier: Modifier = Modifier,
   viewModel: SettingsViewModel = hiltViewModel()
 ) {
+  val context = LocalContext.current
   val googleAuthState by viewModel.googleAuthState.collectAsStateWithLifecycle()
   val isBackupLoading by viewModel.isBackupLoading.collectAsStateWithLifecycle()
   val isRestoreLoading by viewModel.isRestoreLoading.collectAsStateWithLifecycle()
   val lastBackupTime by viewModel.lastBackupTime.collectAsStateWithLifecycle()
+  val cloudBackups by viewModel.cloudBackups.collectAsStateWithLifecycle()
 
   val snackbarHostState = remember { SnackbarHostState() }
 
@@ -79,11 +102,56 @@ fun SettingsScreen(
     }
   }
 
+  var showExportDialog by remember { mutableStateOf(false) }
+  var showImportDialog by remember { mutableStateOf<Uri?>(null) }
+  var showLanguageDialog by remember { mutableStateOf(false) }
+  var showBackupListDialog by remember { mutableStateOf(false) }
+  var selectedBackupToRestore by remember { mutableStateOf<com.notdefterim.app.data.remote.BackupInfo?>(null) }
+  var dialogPassword by remember { mutableStateOf("") }
+  var dialogHint by remember { mutableStateOf("") }
+
+  val createDocumentLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.CreateDocument("application/octet-stream")
+  ) { uri ->
+    if (uri != null) {
+      viewModel.exportToDevice(uri, dialogPassword, dialogHint)
+    }
+    // Seçim yapılsa da yapılmasa da diyaloğu kapat
+    showExportDialog = false
+  }
+
+  val openDocumentLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.OpenDocument()
+  ) { uri ->
+    if (uri != null) {
+      dialogPassword = ""
+      viewModel.getBackupHintAndRequestImport(uri)
+    }
+  }
+
   LaunchedEffect(Unit) {
     viewModel.events.collect { event ->
       when (event) {
         is SettingsEvent.ShowMessage -> snackbarHostState.showSnackbar(event.message)
         is SettingsEvent.LaunchSignIn -> signInLauncher.launch(event.intent)
+        is SettingsEvent.ShowBackupListDialog -> showBackupListDialog = true
+        is SettingsEvent.ShowImportPasswordDialog -> {
+          dialogHint = event.hint
+          showImportDialog = event.uri
+        }
+        is SettingsEvent.ShowShareSheet -> {
+          val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            event.file
+          )
+          val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/octet-stream"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+          }
+          context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_or_save_backup)))
+        }
       }
     }
   }
@@ -94,10 +162,10 @@ fun SettingsScreen(
     snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
       TopAppBar(
-        title = { Text("Ayarlar") },
+        title = { Text(stringResource(R.string.settings_title)) },
         navigationIcon = {
           IconButton(onClick = onNavigateBack) {
-            Icon(Icons.Rounded.ArrowBack, contentDescription = "Geri")
+            Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.back_button_desc))
           }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -117,8 +185,26 @@ fun SettingsScreen(
 
       Spacer(modifier = Modifier.height(8.dp))
 
+      // ── Dil Seçimi Bölümü ────────────────────────────────────────
+      SectionTitle(stringResource(R.string.language_section))
+      Card(
+        colors = CardDefaults.cardColors(
+          containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth().clickable { showLanguageDialog = true }
+      ) {
+        ListItem(
+          colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+          headlineContent = { Text(stringResource(R.string.language_section)) },
+          supportingContent = { Text(stringResource(R.string.language_description)) },
+          trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+        )
+      }
+
+      Spacer(modifier = Modifier.height(24.dp))
+
       // ── Google Hesabı Bölümü ─────────────────────────────────────
-      SectionTitle("Google Hesabı")
+      SectionTitle(stringResource(R.string.google_account_section))
 
       Card(
         colors = CardDefaults.cardColors(
@@ -130,7 +216,7 @@ fun SettingsScreen(
           is GoogleAuthState.SignedIn -> {
             ListItem(
               headlineContent = {
-                Text(state.account.displayName ?: "Kullanıcı")
+                Text(state.account.displayName ?: stringResource(R.string.guest_user))
               },
               supportingContent = {
                 Text(state.account.email ?: "")
@@ -150,15 +236,15 @@ fun SettingsScreen(
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
                   )
-                  Text("Çıkış")
+                  Text(stringResource(R.string.logout))
                 }
               }
             )
           }
           is GoogleAuthState.SignedOut -> {
             ListItem(
-              headlineContent = { Text("Google ile Giriş Yap") },
-              supportingContent = { Text("Drive yedekleme için giriş yapın") },
+              headlineContent = { Text(stringResource(R.string.login_with_google)) },
+              supportingContent = { Text(stringResource(R.string.login_for_drive_backup)) },
               leadingContent = {
                 Icon(Icons.Rounded.CloudOff, contentDescription = null)
               },
@@ -168,14 +254,14 @@ fun SettingsScreen(
                     signInLauncher.launch(googleAuthManager.getSignInIntent())
                   }
                 ) {
-                  Text("Giriş")
+                  Text(stringResource(R.string.login))
                 }
               }
             )
           }
           is GoogleAuthState.Error -> {
             ListItem(
-              headlineContent = { Text("Giriş Hatası") },
+              headlineContent = { Text(stringResource(R.string.login_error)) },
               supportingContent = { Text(state.message) },
               leadingContent = {
                 Icon(
@@ -192,7 +278,7 @@ fun SettingsScreen(
       Spacer(modifier = Modifier.height(24.dp))
 
       // ── Google Drive Yedekleme Bölümü ───────────────────────────
-      SectionTitle("Google Drive Yedekleme")
+      SectionTitle(stringResource(R.string.drive_backup_section))
 
       Card(
         colors = CardDefaults.cardColors(
@@ -234,11 +320,11 @@ fun SettingsScreen(
                 Icon(Icons.Rounded.Backup, contentDescription = null, modifier = Modifier.size(16.dp))
               }
               Spacer(modifier = Modifier.size(8.dp))
-              Text("Şimdi Yedekle")
+              Text(stringResource(R.string.backup_now))
             }
 
             OutlinedButton(
-              onClick = viewModel::restoreFromCloud,
+              onClick = viewModel::loadCloudBackups,
               enabled = googleAuthState is GoogleAuthState.SignedIn && !isRestoreLoading,
               modifier = Modifier.weight(1f)
             ) {
@@ -251,14 +337,14 @@ fun SettingsScreen(
                 Icon(Icons.Rounded.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
               }
               Spacer(modifier = Modifier.size(8.dp))
-              Text("Geri Yükle")
+              Text(stringResource(R.string.restore_from_backup))
             }
           }
 
           if (googleAuthState !is GoogleAuthState.SignedIn) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-              text = "Yedekleme için Google hesabıyla giriş yapın",
+              text = stringResource(R.string.login_required_for_backup),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -268,8 +354,8 @@ fun SettingsScreen(
 
       Spacer(modifier = Modifier.height(24.dp))
 
-      // ── Bilgi Bölümü ─────────────────────────────────────────────
-      SectionTitle("Güvenlik Bilgisi")
+      // ── Cihaza Yedekle Bölümü ───────────────────────────────────
+      SectionTitle(stringResource(R.string.local_backup_section))
 
       Card(
         colors = CardDefaults.cardColors(
@@ -278,18 +364,283 @@ fun SettingsScreen(
         modifier = Modifier.fillMaxWidth()
       ) {
         Column(modifier = Modifier.padding(16.dp)) {
-          InfoRow(label = "Şifreleme", value = "AES-256 (SQLCipher)")
+          Text(
+            text = stringResource(R.string.local_backup_description),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+          Spacer(modifier = Modifier.height(16.dp))
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+          ) {
+            Button(
+              onClick = { 
+                dialogPassword = ""
+                dialogHint = ""
+                showExportDialog = true 
+              },
+              enabled = !isBackupLoading,
+              modifier = Modifier.weight(1f)
+            ) {
+              if (isBackupLoading) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                Spacer(modifier = Modifier.size(8.dp))
+              } else {
+                Icon(Icons.Rounded.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.size(8.dp))
+              }
+              Text(stringResource(R.string.export_backup))
+            }
+
+            OutlinedButton(
+              onClick = { openDocumentLauncher.launch(arrayOf("*/*")) },
+              modifier = Modifier.weight(1f)
+            ) {
+              Icon(Icons.Rounded.FolderOpen, contentDescription = null, modifier = Modifier.size(16.dp))
+              Spacer(modifier = Modifier.size(8.dp))
+              Text(stringResource(R.string.import_backup))
+            }
+          }
+        }
+      }
+
+      Spacer(modifier = Modifier.height(24.dp))
+
+      // ── Bilgi Bölümü ─────────────────────────────────────────────
+      SectionTitle(stringResource(R.string.security_info_section))
+
+      Card(
+        colors = CardDefaults.cardColors(
+          containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth()
+      ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+          InfoRow(label = stringResource(R.string.encryption), value = "AES-256 (SQLCipher)")
           HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-          InfoRow(label = "Anahtar Depolama", value = "Android Keystore")
+          InfoRow(label = stringResource(R.string.key_storage), value = "Android Keystore")
           HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-          InfoRow(label = "Drive Yedekleme", value = "App Data Folder (gizli)")
+          InfoRow(label = stringResource(R.string.drive_backup), value = "App Data Folder (gizli)")
           HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-          InfoRow(label = "Versiyon", value = "1.0.0")
+          InfoRow(label = stringResource(R.string.version), value = "1.0.0")
         }
       }
 
       Spacer(modifier = Modifier.height(32.dp))
     }
+  }
+
+  // ── Dialogs ──────────────────────────────────────────────────
+  if (showExportDialog) {
+    AlertDialog(
+      onDismissRequest = { showExportDialog = false },
+      title = { Text(stringResource(R.string.encrypt_backup_title)) },
+      text = {
+        Column {
+          Text(stringResource(R.string.encrypt_backup_desc))
+          Spacer(Modifier.height(16.dp))
+          OutlinedTextField(
+            value = dialogPassword,
+            onValueChange = { dialogPassword = it },
+            label = { Text(stringResource(R.string.password)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+          )
+          Spacer(Modifier.height(8.dp))
+          OutlinedTextField(
+            value = dialogHint,
+            onValueChange = { dialogHint = it },
+            label = { Text(stringResource(R.string.hint_optional)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+          )
+        }
+      },
+      confirmButton = {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+          OutlinedButton(
+            onClick = {
+              if (dialogPassword.isNotBlank()) {
+                val dateFormat = android.text.format.DateFormat.format("dd.MM.yyyy", java.util.Date())
+                createDocumentLauncher.launch("NotDefterim Yedek ($dateFormat).notdefterim")
+              }
+            },
+            enabled = dialogPassword.isNotBlank(),
+            modifier = Modifier.weight(1f)
+          ) {
+            Icon(Icons.Rounded.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(stringResource(R.string.save))
+          }
+          
+          Button(
+            onClick = {
+              if (dialogPassword.isNotBlank()) {
+                viewModel.createBackupFile(dialogPassword, dialogHint)
+                showExportDialog = false
+              }
+            },
+            enabled = dialogPassword.isNotBlank(),
+            modifier = Modifier.weight(1f)
+          ) {
+            Icon(Icons.Rounded.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(stringResource(R.string.share))
+          }
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showExportDialog = false }) {
+          Text(stringResource(R.string.cancel))
+        }
+      }
+    )
+  }
+
+  if (showImportDialog != null) {
+    AlertDialog(
+      onDismissRequest = { showImportDialog = null },
+      title = { Text(stringResource(R.string.decrypt_backup_title)) },
+      text = {
+        Column {
+          Text(stringResource(R.string.decrypt_backup_desc))
+          if (dialogHint.isNotBlank()) {
+            Spacer(Modifier.height(4.dp))
+            Text(stringResource(R.string.hint_format, dialogHint), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+          }
+          Spacer(Modifier.height(16.dp))
+          OutlinedTextField(
+            value = dialogPassword,
+            onValueChange = { dialogPassword = it },
+            label = { Text(stringResource(R.string.password)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+          )
+        }
+      },
+      confirmButton = {
+        Button(
+          onClick = {
+            if (dialogPassword.isNotBlank()) {
+              viewModel.importFromDevice(showImportDialog!!, dialogPassword)
+              showImportDialog = null
+            }
+          },
+          enabled = dialogPassword.isNotBlank()
+        ) {
+          Text(stringResource(R.string.import_button))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showImportDialog = null }) {
+          Text(stringResource(R.string.cancel))
+        }
+      }
+    )
+  }
+
+  if (showLanguageDialog) {
+    val languages = listOf("tr" to "Türkçe", "en" to "English", "ru" to "Русский", "es" to "Español", "de" to "Deutsch", "fr" to "Français")
+    val currentLocale = AppCompatDelegate.getApplicationLocales()[0]?.language ?: java.util.Locale.getDefault().language
+
+    AlertDialog(
+      onDismissRequest = { showLanguageDialog = false },
+      title = { Text(stringResource(R.string.language_section)) },
+      text = {
+        Column {
+          languages.forEach { (tag, name) ->
+            TextButton(
+              onClick = {
+                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
+                showLanguageDialog = false
+              },
+              modifier = Modifier.fillMaxWidth()
+            ) {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Text(name)
+                if (currentLocale.startsWith(tag)) {
+                  Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                }
+              }
+            }
+          }
+        }
+      },
+      confirmButton = {
+        TextButton(onClick = { showLanguageDialog = false }) {
+          Text(stringResource(R.string.cancel))
+        }
+      }
+    )
+  }
+
+  if (showBackupListDialog) {
+    AlertDialog(
+      onDismissRequest = { showBackupListDialog = false },
+      title = { Text(stringResource(R.string.select_backup_title)) },
+      text = {
+        Column(modifier = Modifier.fillMaxWidth()) {
+          if (cloudBackups.isEmpty()) {
+            Text(stringResource(R.string.no_notes_yet))
+          } else {
+            cloudBackups.forEach { backup ->
+              Card(
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(vertical = 4.dp)
+                  .clickable {
+                    selectedBackupToRestore = backup
+                    showBackupListDialog = false
+                  },
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+              ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                  val dateStr = SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault())
+                    .format(Date(backup.createdTimeMillis))
+                  val sizeKb = backup.sizeBytes / 1024
+                  Text(text = dateStr, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                  Text(text = "Boyut: $sizeKb KB", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+              }
+            }
+          }
+        }
+      },
+      confirmButton = {
+        TextButton(onClick = { showBackupListDialog = false }) {
+          Text(stringResource(R.string.cancel))
+        }
+      }
+    )
+  }
+
+  if (selectedBackupToRestore != null) {
+    AlertDialog(
+      onDismissRequest = { selectedBackupToRestore = null },
+      title = { Text(stringResource(R.string.confirm_restore_title)) },
+      text = { Text(stringResource(R.string.confirm_restore_desc)) },
+      confirmButton = {
+        Button(onClick = {
+          viewModel.restoreFromCloud(selectedBackupToRestore!!.id)
+          selectedBackupToRestore = null
+        }) {
+          Text(stringResource(R.string.restore_from_backup))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { selectedBackupToRestore = null }) {
+          Text(stringResource(R.string.cancel))
+        }
+      }
+    )
   }
 }
 

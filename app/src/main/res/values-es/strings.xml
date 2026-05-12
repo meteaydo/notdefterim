@@ -1,0 +1,116 @@
+<resources>
+    <string name="app_name">NotDefterim</string>
+    <string name="backup_file_prefix">Copia de seguridad NotDefterim</string>
+    <string name="backup_successful">Copia de seguridad exitosa</string>
+    <string name="backup_failed">Fallo en la copia de seguridad: %1$s</string>
+    <string name="restore_successful">%1$d notas restauradas</string>
+    <string name="restore_failed">Fallo en la restauración: %1$s</string>
+    <string name="saved_to_device_successfully">Guardado en el dispositivo con éxito</string>
+    <string name="save_failed">Error al guardar: %1$s</string>
+    <string name="file_creation_failed">No se pudo crear el archivo de copia: %1$s</string>
+    <string name="file_read_failed">No se pudo leer el archivo: %1$s</string>
+    <string name="restore_restart_message">Restauración exitosa, reiniciando la aplicación...</string>
+    
+    <string name="share_or_save_backup">Compartir o guardar copia de seguridad</string>
+    <string name="settings_title">Ajustes</string>
+    <string name="back_button_desc">Atrás</string>
+    <string name="google_account_section">Cuenta de Google</string>
+    <string name="guest_user">Usuario</string>
+    <string name="logout">Cerrar sesión</string>
+    <string name="login_with_google">Iniciar sesión con Google</string>
+    <string name="login_for_drive_backup">Inicia sesión para usar Google Drive</string>
+    <string name="login">Iniciar sesión</string>
+    <string name="login_error">Error de inicio de sesión</string>
+    <string name="drive_backup_section">Copia de seguridad en Google Drive</string>
+    <string name="backup_now">Hacer copia ahora</string>
+    <string name="restore_from_backup">Restaurar</string>
+    <string name="login_required_for_backup">Inicia sesión con tu cuenta de Google para respaldar</string>
+    
+    <string name="local_backup_section">Copia de seguridad local (Dispositivo)</string>
+    <string name="local_backup_description">Establece una contraseña para proteger tu archivo de copia de seguridad.</string>
+    <string name="export_backup">Respaldar y Exportar</string>
+    <string name="import_backup">Restaurar desde Copia</string>
+    <string name="security_info_section">Información de seguridad</string>
+    
+    <string name="encryption">Cifrado</string>
+    <string name="key_storage">Almacenamiento de claves</string>
+    <string name="drive_backup">Copia en Drive</string>
+    <string name="version">Versión</string>
+    
+    <string name="encrypt_backup_title">Cifrar copia de seguridad</string>
+    <string name="encrypt_backup_desc">Por favor, establece una contraseña para evitar el acceso no autorizado al compartir este archivo por WhatsApp o correo electrónico.</string>
+    <string name="password">Contraseña</string>
+    <string name="hint_optional">Pista de contraseña (Opcional)</string>
+    <string name="save">Guardar</string>
+    <string name="share">Compartir</string>
+    <string name="cancel">Cancelar</string>
+    
+    <string name="decrypt_backup_title">Abrir copia de seguridad</string>
+    <string name="decrypt_backup_desc">Por favor, introduce la contraseña establecida al crear esta copia.</string>
+    <string name="hint_format">Pista: %1$s</string>
+    <string name="import_button">Importar</string>
+
+    <string name="invalid_file_format">Formato de archivo inválido. No es una copia de NotDefterim.</string>
+    <string name="invalid_backup_file">Archivo de copia inválido</string>
+    <string name="incorrect_password">¡Contraseña incorrecta!</string>
+    <string name="target_file_error">No se pudo abrir el archivo destino</string>
+    
+    <string name="language_section">Selección de idioma</string>
+    <string name="language_description">Cambiar el idioma de la aplicación</string>
+
+    <!-- Passwords Screen -->
+    <string name="passwords_title">Mis contraseñas</string>
+    <string name="add_password_desc">Añadir contraseña</string>
+    <string name="clear_search_desc">Borrar búsqueda</string>
+    <string name="swipe_to_edit_desc">Deslizar a la derecha para editar</string>
+    <string name="tap_to_copy_desc">Tocar para copiar</string>
+    <string name="swipe_to_delete_desc">Deslizar a la izquierda para borrar</string>
+    <string name="delete_password_title">Borrar contraseña</string>
+    <string name="delete">Borrar</string>
+    <string name="float_window_desc">Flotante</string>
+    <string name="username_copied">Nombre de usuario copiado</string>
+    <string name="username">Nombre de usuario</string>
+    <string name="copied_desc">Copiado</string>
+    <string name="password_copied">Contraseña copiada</string>
+    <string name="hide_desc">Ocultar</string>
+    <string name="show_desc">Mostrar</string>
+    <string name="password_options">Opciones de contraseña</string>
+    <string name="edit">Editar</string>
+    <string name="add_new_password_title">Añadir nueva contraseña</string>
+    <string name="platform">Plataforma</string>
+    <string name="unnamed_record">Registro sin nombre</string>
+    <string name="update">Actualizar</string>
+    <string name="edit_password_title">Editar contraseña</string>
+    <!-- Auth Screen -->
+    <string name="auth_description">Autenticación</string>
+    <string name="auth_prompt">Verifica tu identidad\npara acceder de forma segura a tus notas</string>
+    <string name="authenticating">Autenticando...</string>
+    <string name="auth_success">Inicio de sesión exitoso</string>
+    <string name="authenticate">Verificar identidad</string>
+    <string name="no_biometric_enrolled">La huella dactilar o el PIN no están configurados.\nPor favor, añádelos en los ajustes del dispositivo.</string>
+    <string name="search_passwords">Buscar contraseñas...</string>
+    <string name="overlay_permission_request">Por favor, conceda el permiso \'Mostrar sobre otras apps\'.</string>
+    <string name="my_notes">Mis Notas</string>
+    <string name="search">Buscar</string>
+    <string name="new_note">Nueva Nota</string>
+    <string name="unpin">Desfijar</string>
+    <string name="pin">Fijar</string>
+    <string name="delete_note_title">Eliminar Nota</string>
+    <string name="delete_note_desc">¿Estás seguro de que quieres eliminar esta nota?</string>
+    <string name="no_notes_yet">Aún no hay notas</string>
+    <string name="title_placeholder">Título</string>
+    <string name="more_notes_above">Más notas arriba</string>
+    <string name="more_notes_below">Más notas abajo</string>
+    <string name="settings">Ajustes</string>
+    <string name="write_your_note">Escribe tu nota...</string>
+    <string name="reminder_title">Recordatorio de nota</string>
+    <string name="add_reminder">Añadir recordatorio</string>
+    <string name="remove_reminder">Quitar recordatorio</string>
+    <string name="reminder_set_for">Recordatorio establecido para %s</string>
+    <string name="repeat_none">No repetir</string>
+    <string name="repeat_daily">Diariamente</string>
+    <string name="repeat_weekly">Semanalmente</string>
+    <string name="repeat_monthly">Mensualmente</string>
+    <string name="repeat_yearly">Anualmente</string>
+    <string name="cancel_reminder">Cancelar recordatorio</string>
+</resources>

@@ -13,7 +13,13 @@ data class Note(
   val createdAt: LocalDateTime = LocalDateTime.now(),
   val updatedAt: LocalDateTime = LocalDateTime.now(),
   val isPinned: Boolean = false,
-  val color: NoteColor = NoteColor.DEFAULT
+  val color: NoteColor = NoteColor.DEFAULT,
+  val reminderAt: LocalDateTime? = null,
+  val repeatInterval: RepeatInterval = RepeatInterval.NONE,
+  val category: Category? = null,
+  val viewCount: Int = 0,
+  val isLocked: Boolean = false,
+  val isChecklist: Boolean = false
 )
 
 /**

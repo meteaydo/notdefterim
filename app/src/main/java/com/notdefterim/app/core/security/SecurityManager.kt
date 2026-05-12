@@ -78,6 +78,34 @@ class SecurityManager(private val context: Context) {
   fun resetAuthentication() {
     _authState.value = AuthState.Unauthenticated
   }
+
+  /**
+   * Global state'i etkilemeden bir defaya mahsus kimlik doğrulama işlemi gerçekleştirir (örn. kilitli nota girmek için).
+   */
+  fun authenticateAction(
+    activity: FragmentActivity,
+    title: String,
+    subtitle: String,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+  ) {
+    val executor = ContextCompat.getMainExecutor(activity)
+    val callback = object : BiometricPrompt.AuthenticationCallback() {
+      override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+        onSuccess()
+      }
+      override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+        onError(errString.toString())
+      }
+    }
+    val biometricPrompt = BiometricPrompt(activity, executor, callback)
+    val promptInfo = BiometricPrompt.PromptInfo.Builder()
+      .setTitle(title)
+      .setSubtitle(subtitle)
+      .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
+      .build()
+    biometricPrompt.authenticate(promptInfo)
+  }
 }
 
 /** Kimlik doğrulama durumu — UI bu sealed class'ı gözlemler. */

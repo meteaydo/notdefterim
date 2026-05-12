@@ -8,6 +8,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.notdefterim.app.core.security.EncryptionHelper
 import com.notdefterim.app.data.local.NoteDao
+import com.notdefterim.app.data.local.CategoryDao
 import com.notdefterim.app.data.local.NoteDatabase
 import com.notdefterim.app.data.worker.BackupWorker
 import dagger.Module
@@ -44,6 +45,14 @@ object DatabaseModule {
   @Provides
   @Singleton
   fun provideNoteDao(database: NoteDatabase): NoteDao = database.noteDao()
+
+  @Provides
+  @Singleton
+  fun providePasswordDao(database: NoteDatabase) = database.passwordDao()
+
+  @Provides
+  @Singleton
+  fun provideCategoryDao(database: NoteDatabase): CategoryDao = database.categoryDao()
 
   /**
    * Periyodik yedekleme işini kaydeder.

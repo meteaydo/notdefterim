@@ -28,6 +28,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.notdefterim.app.R
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
@@ -108,7 +110,7 @@ fun AuthScreen(
           } else {
             Icons.Rounded.Fingerprint
           },
-          contentDescription = "Kimlik doğrulama",
+          contentDescription = stringResource(R.string.auth_description),
           modifier = Modifier.size(64.dp),
           tint = MaterialTheme.colorScheme.primary
         )
@@ -127,9 +129,9 @@ fun AuthScreen(
 
       Text(
         text = when (authState) {
-          is AuthState.Unauthenticated -> "Notlarınıza güvenli erişim için\nkimliğinizi doğrulayın"
-          is AuthState.Authenticating -> "Kimlik doğrulanıyor..."
-          is AuthState.Authenticated -> "Giriş başarılı"
+          is AuthState.Unauthenticated -> stringResource(R.string.auth_prompt)
+          is AuthState.Authenticating -> stringResource(R.string.authenticating)
+          is AuthState.Authenticated -> stringResource(R.string.auth_success)
           is AuthState.Error -> authState.message
         },
         style = MaterialTheme.typography.bodyLarge,
@@ -157,16 +159,16 @@ fun AuthScreen(
             modifier = Modifier.size(20.dp)
           )
           Spacer(modifier = Modifier.size(8.dp))
-          Text("Kimliği Doğrula")
+          Text(stringResource(R.string.authenticate))
         }
       }
 
       if (biometricSupport is BiometricSupport.NoneEnrolled) {
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-          text = "Parmak izi veya PIN kurulu değil.\nCihaz ayarlarından ekleyin.",
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.error,
+          text = stringResource(R.string.no_biometric_enrolled),
+          style = MaterialTheme.typography.bodyLarge,
+          color = androidx.compose.ui.graphics.Color.Black,
           textAlign = TextAlign.Center
         )
       }

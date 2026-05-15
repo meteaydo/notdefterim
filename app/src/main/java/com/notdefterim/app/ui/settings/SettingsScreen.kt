@@ -22,6 +22,8 @@ import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -54,6 +56,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.data.remote.GoogleAuthManager
 import com.notdefterim.app.data.remote.GoogleAuthState
+import com.notdefterim.app.ui.components.SetupAppPinDialog
 import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
 import androidx.core.content.FileProvider
@@ -90,6 +93,11 @@ fun SettingsScreen(
   val isRestoreLoading by viewModel.isRestoreLoading.collectAsStateWithLifecycle()
   val lastBackupTime by viewModel.lastBackupTime.collectAsStateWithLifecycle()
   val cloudBackups by viewModel.cloudBackups.collectAsStateWithLifecycle()
+  val autoLockTimeout by viewModel.autoLockTimeout.collectAsStateWithLifecycle()
+  val passwordReminderPeriod by viewModel.passwordReminderPeriod.collectAsStateWithLifecycle()
+  val appPin by viewModel.appPin.collectAsStateWithLifecycle()
+  val appPinHint by viewModel.appPinHint.collectAsStateWithLifecycle()
+  val appPinScope by viewModel.appPinScope.collectAsStateWithLifecycle()
 
   val snackbarHostState = remember { SnackbarHostState() }
 
@@ -105,6 +113,9 @@ fun SettingsScreen(
   var showExportDialog by remember { mutableStateOf(false) }
   var showImportDialog by remember { mutableStateOf<Uri?>(null) }
   var showLanguageDialog by remember { mutableStateOf(false) }
+  var showAutoLockDialog by remember { mutableStateOf(false) }
+  var showReminderDialog by remember { mutableStateOf(false) }
+  var showAppPinDialog by remember { mutableStateOf(false) }
   var showBackupListDialog by remember { mutableStateOf(false) }
   var selectedBackupToRestore by remember { mutableStateOf<com.notdefterim.app.data.remote.BackupInfo?>(null) }
   var dialogPassword by remember { mutableStateOf("") }
@@ -158,7 +169,7 @@ fun SettingsScreen(
 
   Scaffold(
     modifier = modifier.fillMaxSize(),
-    containerColor = MaterialTheme.colorScheme.background,
+    containerColor = androidx.compose.ui.graphics.Color.Transparent,
     snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
       TopAppBar(
@@ -169,7 +180,7 @@ fun SettingsScreen(
           }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-          containerColor = MaterialTheme.colorScheme.background
+          containerColor = androidx.compose.ui.graphics.Color.Transparent
         )
       )
     }
@@ -197,6 +208,64 @@ fun SettingsScreen(
           colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
           headlineContent = { Text(stringResource(R.string.language_section)) },
           supportingContent = { Text(stringResource(R.string.language_description)) },
+          trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+        )
+      }
+
+      Spacer(modifier = Modifier.height(24.dp))
+
+      // ── Otomatik Kilitleme Bölümü ────────────────────────────────
+      SectionTitle(stringResource(R.string.auto_lock_section))
+      Card(
+        colors = CardDefaults.cardColors(
+          containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth().clickable { showAutoLockDialog = true }
+      ) {
+        val currentTimeout = com.notdefterim.app.domain.model.AutoLockTimeout.fromMs(autoLockTimeout)
+        ListItem(
+          colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+          headlineContent = { Text(stringResource(R.string.auto_lock_section)) },
+          supportingContent = { Text(stringResource(currentTimeout.titleResId)) },
+          trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+        )
+      }
+
+      Spacer(modifier = Modifier.height(24.dp))
+
+      // ── Parola Değiştirme Tavsiyesi ────────────────────────────────
+      SectionTitle(stringResource(R.string.reminder_section))
+      Card(
+        colors = CardDefaults.cardColors(
+          containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth().clickable { showReminderDialog = true }
+      ) {
+        val currentReminder = com.notdefterim.app.domain.model.PasswordUpdateReminderPeriod.fromMs(passwordReminderPeriod)
+        ListItem(
+          colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+          headlineContent = { Text(stringResource(R.string.reminder_section)) },
+          supportingContent = { Text(stringResource(currentReminder.titleResId)) },
+          trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+        )
+      }
+
+      Spacer(modifier = Modifier.height(24.dp))
+
+      // ── Uygulama İçi PIN ────────────────────────────────
+      SectionTitle(stringResource(R.string.app_pin_title))
+      Card(
+        colors = CardDefaults.cardColors(
+          containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth().clickable { showAppPinDialog = true }
+      ) {
+        ListItem(
+          colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+          headlineContent = { Text(stringResource(R.string.app_pin_title)) },
+          supportingContent = { 
+            Text(stringResource(if (appPin == null) R.string.app_pin_not_set else R.string.app_pin_active)) 
+          },
           trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
         )
       }
@@ -582,6 +651,86 @@ fun SettingsScreen(
     )
   }
 
+  if (showAutoLockDialog) {
+    val timeouts = com.notdefterim.app.domain.model.AutoLockTimeout.entries
+
+    AlertDialog(
+      onDismissRequest = { showAutoLockDialog = false },
+      title = { Text(stringResource(R.string.auto_lock_section)) },
+      text = {
+        Column {
+          Text(stringResource(R.string.auto_lock_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+          Spacer(modifier = Modifier.height(8.dp))
+          timeouts.forEach { timeout ->
+            TextButton(
+              onClick = {
+                viewModel.setAutoLockTimeout(timeout.timeoutMs)
+                showAutoLockDialog = false
+              },
+              modifier = Modifier.fillMaxWidth()
+            ) {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Text(stringResource(timeout.titleResId))
+                if (autoLockTimeout == timeout.timeoutMs) {
+                  Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                }
+              }
+            }
+          }
+        }
+      },
+      confirmButton = {
+        TextButton(onClick = { showAutoLockDialog = false }) {
+          Text(stringResource(R.string.cancel))
+        }
+      }
+    )
+  }
+
+  if (showReminderDialog) {
+    val reminders = com.notdefterim.app.domain.model.PasswordUpdateReminderPeriod.entries
+
+    AlertDialog(
+      onDismissRequest = { showReminderDialog = false },
+      title = { Text(stringResource(R.string.reminder_section)) },
+      text = {
+        Column {
+          Text(stringResource(R.string.reminder_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+          Spacer(modifier = Modifier.height(8.dp))
+          reminders.forEach { reminder ->
+            TextButton(
+              onClick = {
+                viewModel.setPasswordReminderPeriod(reminder.periodMs)
+                showReminderDialog = false
+              },
+              modifier = Modifier.fillMaxWidth()
+            ) {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Text(stringResource(reminder.titleResId))
+                if (passwordReminderPeriod == reminder.periodMs) {
+                  Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                }
+              }
+            }
+          }
+        }
+      },
+      confirmButton = {
+        TextButton(onClick = { showReminderDialog = false }) {
+          Text(stringResource(R.string.cancel))
+        }
+      }
+    )
+  }
+
   if (showBackupListDialog) {
     AlertDialog(
       onDismissRequest = { showBackupListDialog = false },
@@ -639,6 +788,20 @@ fun SettingsScreen(
         TextButton(onClick = { selectedBackupToRestore = null }) {
           Text(stringResource(R.string.cancel))
         }
+      }
+    )
+  }
+
+  // Uygulama İçi PIN Ayarlama Dialog'u
+  if (showAppPinDialog) {
+    SetupAppPinDialog(
+      appPin = appPin,
+      appPinHint = appPinHint,
+      appPinScope = appPinScope,
+      onDismiss = { showAppPinDialog = false },
+      onSave = { newPin, newHint, newScope -> 
+        viewModel.setAppPin(newPin, newHint) 
+        viewModel.setAppPinScope(newScope)
       }
     )
   }

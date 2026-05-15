@@ -22,7 +22,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  */
 @Database(
   entities = [NoteEntity::class, PasswordEntity::class, CategoryEntity::class],
-  version = 8,
+  version = 9,
   exportSchema = true
 )
 abstract class NoteDatabase : RoomDatabase() {
@@ -79,6 +79,12 @@ abstract class NoteDatabase : RoomDatabase() {
       }
     }
 
+    val MIGRATION_8_9 = object : Migration(8, 9) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE passwords ADD COLUMN updatedAt INTEGER")
+      }
+    }
+
     /**
      * SQLCipher SupportFactory ile şifrelenmiş Room veritabanı oluşturur.
      *
@@ -96,7 +102,7 @@ abstract class NoteDatabase : RoomDatabase() {
         DATABASE_NAME
       )
         .openHelperFactory(factory)
-        .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+        .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
         // Migrasyon stratejisi: şimdilik yıkım-yeniden yapım
         // Üretimde Migration sınıfları eklenmelidir
         .fallbackToDestructiveMigration()

@@ -58,13 +58,13 @@ fun HomeScreen(
     val userDarkTheme by themePreferences.isDarkTheme.collectAsStateWithLifecycle()
     val isDark = userDarkTheme ?: systemDark
 
-    Column(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(modifier = modifier.fillMaxSize().background(Color.Transparent)) {
         // Üst Kısım: Segmented Control ve Ayarlar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(top = 8.dp, start = 8.dp, end = 8.dp, bottom = 8.dp),
+                .padding(top = 8.dp, start = 8.dp, end = 8.dp, bottom = 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Spacer(modifier = Modifier.weight(1f))

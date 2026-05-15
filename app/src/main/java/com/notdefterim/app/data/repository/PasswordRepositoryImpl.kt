@@ -47,7 +47,8 @@ fun PasswordEntity.toDomain() = Password(
   username = username,
   passwordValue = passwordValue,
   usageCount = usageCount,
-  createdAt = createdAt
+  createdAt = createdAt,
+  updatedAt = updatedAt
 )
 
 fun Password.toEntity() = PasswordEntity(
@@ -56,5 +57,6 @@ fun Password.toEntity() = PasswordEntity(
   username = username,
   passwordValue = passwordValue,
   usageCount = usageCount,
-  createdAt = createdAt
+  createdAt = createdAt,
+  updatedAt = updatedAt
 )

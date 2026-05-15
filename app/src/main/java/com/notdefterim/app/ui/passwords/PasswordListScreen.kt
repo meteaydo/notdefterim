@@ -2,11 +2,11 @@ package com.notdefterim.app.ui.passwords
 
 import android.app.Activity
 import android.content.Intent
-import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.border
@@ -44,6 +44,7 @@ import androidx.compose.material.icons.rounded.SwipeLeft
 import androidx.compose.material.icons.rounded.SwipeRight
 import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +59,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.notdefterim.app.R
@@ -73,13 +77,15 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.domain.model.Password
 import com.notdefterim.app.service.FloatingPasswordService
+import com.notdefterim.app.ui.auth.AuthViewModel
+import com.notdefterim.app.ui.components.ActionPinDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,11 +93,16 @@ fun PasswordListScreen(
   modifier: Modifier = Modifier,
   onNavigateBack: (() -> Unit)? = null,
   hideTopBar: Boolean = false,
-  viewModel: PasswordListViewModel = hiltViewModel()
+  viewModel: PasswordListViewModel = hiltViewModel(),
+  authViewModel: AuthViewModel = hiltViewModel()
 ) {
   val passwords by viewModel.passwords.collectAsStateWithLifecycle()
   val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
   val copiedState by viewModel.copiedState.collectAsStateWithLifecycle()
+  val frequentUsernames by viewModel.frequentUsernames.collectAsStateWithLifecycle()
+  val expiredPasswordAlert by viewModel.expiredPasswordAlert.collectAsStateWithLifecycle()
+  val pinPromptState by authViewModel.pinPromptState.collectAsStateWithLifecycle()
+  val unlockedPasswords = remember { androidx.compose.runtime.mutableStateListOf<Long>() }
 
   var showAddDialog by remember { mutableStateOf(false) }
   var passwordToEdit by remember { mutableStateOf<Password?>(null) }
@@ -99,6 +110,7 @@ fun PasswordListScreen(
 
   Scaffold(
     modifier = modifier.fillMaxSize(),
+    containerColor = androidx.compose.ui.graphics.Color.Transparent,
     topBar = {
       if (!hideTopBar) {
         TopAppBar(
@@ -133,11 +145,43 @@ fun PasswordListScreen(
         .imePadding()
         .navigationBarsPadding()
     ) {
+      AnimatedVisibility(visible = expiredPasswordAlert != null) {
+        expiredPasswordAlert?.let { platforms ->
+          Card(
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+            colors = CardDefaults.cardColors(
+              containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f),
+              contentColor = MaterialTheme.colorScheme.onErrorContainer
+            )
+          ) {
+            Row(
+              modifier = Modifier.padding(start = 12.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              Text(
+                text = stringResource(R.string.password_expired_alert, platforms),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f)
+              )
+              IconButton(onClick = { viewModel.dismissCurrentAlerts() }) {
+                Icon(
+                  imageVector = Icons.Rounded.Close,
+                  contentDescription = stringResource(R.string.clear_search_desc),
+                  modifier = Modifier.size(20.dp)
+                )
+              }
+            }
+          }
+        }
+      }
+
       // Arama Çubuğu
       OutlinedTextField(
         value = searchQuery,
         onValueChange = viewModel::onSearchQueryChange,
-        placeholder = { Text(stringResource(R.string.search_passwords)) },
+        placeholder = { Text("Herhangi Birşey Ara") },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
           if (searchQuery.isNotEmpty()) {
@@ -191,6 +235,24 @@ fun PasswordListScreen(
       }
 
       Box(modifier = Modifier.weight(1f)) {
+        // Kaydırma geçiş efekti (sabit alanın alt yüzeyinin erimesi)
+        Box(
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .background(
+              brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                colors = listOf(
+                  MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                  MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                  androidx.compose.ui.graphics.Color.Transparent
+                )
+              )
+            )
+            .align(Alignment.TopCenter)
+            .zIndex(1f)
+        )
+
         LazyColumn(
           modifier = Modifier.fillMaxSize(),
           contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp),
@@ -200,9 +262,18 @@ fun PasswordListScreen(
             PasswordCard(
               password = password,
               copiedState = copiedState,
+              isAnyPasswordUnlocked = unlockedPasswords.isNotEmpty(),
+              onUnlockedStateChange = { isUnlocked ->
+                if (isUnlocked) {
+                  if (!unlockedPasswords.contains(password.id)) unlockedPasswords.add(password.id)
+                } else {
+                  unlockedPasswords.remove(password.id)
+                }
+              },
               onCopy = { field -> viewModel.onPasswordCopied(password, field) },
               onEdit = { passwordToEdit = password },
-              onDelete = { passwordToDelete = password }
+              onDelete = { passwordToDelete = password },
+              authViewModel = authViewModel
             )
           }
         }
@@ -216,7 +287,8 @@ fun PasswordListScreen(
       onSave = { platform, user, pass ->
         viewModel.savePassword(platform, user, pass)
         showAddDialog = false
-      }
+      },
+      frequentUsernames = frequentUsernames
     )
   }
 
@@ -227,7 +299,8 @@ fun PasswordListScreen(
       onSave = { updatedPassword ->
         viewModel.updatePassword(updatedPassword)
         passwordToEdit = null
-      }
+      },
+      frequentUsernames = frequentUsernames
     )
   }
 
@@ -253,6 +326,14 @@ fun PasswordListScreen(
       }
     )
   }
+
+  if (pinPromptState != null) {
+    ActionPinDialog(
+      pinPromptState = pinPromptState!!,
+      onDismiss = { authViewModel.dismissPinPrompt() },
+      onVerify = { pin, keep -> authViewModel.verifyActionPin(pin, keep) }
+    )
+  }
 }
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -260,9 +341,12 @@ fun PasswordListScreen(
 fun PasswordCard(
   password: Password,
   copiedState: Pair<Long, CopiedField>?,
+  isAnyPasswordUnlocked: Boolean,
+  onUnlockedStateChange: (Boolean) -> Unit,
   onCopy: (CopiedField) -> Unit,
   onEdit: () -> Unit,
-  onDelete: () -> Unit
+  onDelete: () -> Unit,
+  authViewModel: AuthViewModel
 ) {
   var passwordVisible by remember { mutableStateOf(false) }
   var showMenu by remember { mutableStateOf(false) }
@@ -342,7 +426,7 @@ fun PasswordCard(
           Column(
             modifier = Modifier
               .fillMaxWidth()
-              .padding(horizontal = 12.dp, vertical = 8.dp)
+              .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 0.dp)
           ) {
             Row(
               modifier = Modifier.fillMaxWidth(),
@@ -403,7 +487,7 @@ fun PasswordCard(
                   Text(
                     text = stringResource(R.string.username),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                   )
                   if (copiedField == CopiedField.USERNAME) {
                     Icon(
@@ -433,9 +517,31 @@ fun PasswordCard(
                   modifier = Modifier
                     .combinedClickable(
                       onClick = {
-                        clipboardManager.setText(AnnotatedString(password.passwordValue))
-                        onCopy(CopiedField.PASSWORD)
-                        Toast.makeText(context, context.getString(R.string.password_copied), Toast.LENGTH_SHORT).show()
+                        val performCopy = {
+                          clipboardManager.setText(AnnotatedString(password.passwordValue))
+                          onCopy(CopiedField.PASSWORD)
+                          Toast.makeText(context, context.getString(R.string.password_copied), Toast.LENGTH_SHORT).show()
+                        }
+
+                        if (passwordVisible || isAnyPasswordUnlocked) {
+                          performCopy()
+                        } else {
+                          val activity = context as? androidx.fragment.app.FragmentActivity
+                          if (activity != null) {
+                              authViewModel.authenticateAction(
+                                  activity = activity,
+                                  title = context.getString(R.string.app_name),
+                                  subtitle = "Uygulama içi pin korumasını açtınız. Parolayı kopyalamak için pini girmeniz gerekiyor.",
+                                  targetScope = 2,
+                                  onSuccess = { 
+                                      performCopy()
+                                      passwordVisible = true
+                                      onUnlockedStateChange(true)
+                                  },
+                                  onError = {}
+                              )
+                          }
+                        }
                       },
                       onLongClick = { showMenu = true }
                     )
@@ -454,7 +560,7 @@ fun PasswordCard(
                     Text(
                       text = stringResource(R.string.password),
                       style = MaterialTheme.typography.labelSmall,
-                      color = MaterialTheme.colorScheme.onSurfaceVariant
+                      color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                   }
                   Text(
@@ -464,14 +570,62 @@ fun PasswordCard(
                   )
                 }
                 
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                  onClick = {
+                    if (!passwordVisible) {
+                        if (isAnyPasswordUnlocked) {
+                            passwordVisible = true
+                            onUnlockedStateChange(true)
+                        } else {
+                            val activity = context as? androidx.fragment.app.FragmentActivity
+                            if (activity != null) {
+                                authViewModel.authenticateAction(
+                                    activity = activity,
+                                    title = context.getString(R.string.app_name),
+                                    subtitle = "Uygulama içi pin korumasını açtınız. Parolayı görüntülemek için pini girmeniz gerekiyor.",
+                                    targetScope = 2,
+                                    onSuccess = { 
+                                        passwordVisible = true
+                                        onUnlockedStateChange(true)
+                                    },
+                                    onError = {}
+                                )
+                            }
+                        }
+                    } else {
+                        passwordVisible = false
+                        onUnlockedStateChange(false)
+                        authViewModel.lockSession()
+                    }
+                  },
+                  modifier = Modifier.size(28.dp)
+                ) {
                   Icon(
                     imageVector = if (passwordVisible) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
-                    contentDescription = if (passwordVisible) stringResource(R.string.hide_desc) else stringResource(R.string.show_desc)
+                    contentDescription = if (passwordVisible) stringResource(R.string.hide_desc) else stringResource(R.string.show_desc),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                   )
                 }
               }
             }
+            
+            val isUpdated = password.updatedAt != null
+            val displayDate = password.updatedAt ?: password.createdAt
+            val dateString = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault()).format(java.util.Date(displayDate))
+            val prefix = if (isUpdated) "Değiştirildi:" else "Oluşturuldu:"
+            val timeAgo = getTimeAgoText(displayDate)
+            
+            Text(
+              text = "$prefix $dateString ($timeAgo)",
+              style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+              fontWeight = FontWeight.Normal,
+              color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 2.dp, top = 6.dp),
+              textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
           }
 
           if (showMenu) {
@@ -514,14 +668,17 @@ fun PasswordCard(
   )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPasswordDialog(
   onDismiss: () -> Unit,
-  onSave: (String, String, String) -> Unit
+  onSave: (String, String, String) -> Unit,
+  frequentUsernames: List<String>
 ) {
   var platform by remember { mutableStateOf("") }
   var username by remember { mutableStateOf("") }
   var password by remember { mutableStateOf("") }
+  var usernameExpanded by remember { mutableStateOf(false) }
   val context = LocalContext.current
 
   AlertDialog(
@@ -535,12 +692,36 @@ fun AddPasswordDialog(
           label = { Text(stringResource(R.string.platform)) },
           singleLine = true
         )
-        OutlinedTextField(
-          value = username,
-          onValueChange = { username = it },
-          label = { Text(stringResource(R.string.username)) },
-          singleLine = true
-        )
+        ExposedDropdownMenuBox(
+          expanded = usernameExpanded,
+          onExpandedChange = { usernameExpanded = !usernameExpanded }
+        ) {
+          OutlinedTextField(
+            value = username,
+            onValueChange = { username = it },
+            label = { Text(stringResource(R.string.username)) },
+            singleLine = true,
+            modifier = Modifier.menuAnchor(),
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = usernameExpanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+          )
+          if (frequentUsernames.isNotEmpty()) {
+            ExposedDropdownMenu(
+              expanded = usernameExpanded,
+              onDismissRequest = { usernameExpanded = false }
+            ) {
+              frequentUsernames.forEach { suggestion ->
+                DropdownMenuItem(
+                  text = { Text(suggestion) },
+                  onClick = {
+                    username = suggestion
+                    usernameExpanded = false
+                  }
+                )
+              }
+            }
+          }
+        }
         OutlinedTextField(
           value = password,
           onValueChange = { password = it },
@@ -569,15 +750,18 @@ fun AddPasswordDialog(
   )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditPasswordDialog(
   password: Password,
   onDismiss: () -> Unit,
-  onSave: (Password) -> Unit
+  onSave: (Password) -> Unit,
+  frequentUsernames: List<String>
 ) {
   var platform by remember { mutableStateOf(password.platformName) }
   var username by remember { mutableStateOf(password.username) }
   var pass by remember { mutableStateOf(password.passwordValue) }
+  var usernameExpanded by remember { mutableStateOf(false) }
   val context = LocalContext.current
 
   AlertDialog(
@@ -591,12 +775,36 @@ fun EditPasswordDialog(
           label = { Text(stringResource(R.string.platform)) },
           singleLine = true
         )
-        OutlinedTextField(
-          value = username,
-          onValueChange = { username = it },
-          label = { Text(stringResource(R.string.username)) },
-          singleLine = true
-        )
+        ExposedDropdownMenuBox(
+          expanded = usernameExpanded,
+          onExpandedChange = { usernameExpanded = !usernameExpanded }
+        ) {
+          OutlinedTextField(
+            value = username,
+            onValueChange = { username = it },
+            label = { Text(stringResource(R.string.username)) },
+            singleLine = true,
+            modifier = Modifier.menuAnchor(),
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = usernameExpanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+          )
+          if (frequentUsernames.isNotEmpty()) {
+            ExposedDropdownMenu(
+              expanded = usernameExpanded,
+              onDismissRequest = { usernameExpanded = false }
+            ) {
+              frequentUsernames.forEach { suggestion ->
+                DropdownMenuItem(
+                  text = { Text(suggestion) },
+                  onClick = {
+                    username = suggestion
+                    usernameExpanded = false
+                  }
+                )
+              }
+            }
+          }
+        }
         OutlinedTextField(
           value = pass,
           onValueChange = { pass = it },
@@ -610,7 +818,7 @@ fun EditPasswordDialog(
         onClick = {
           if (platform.isNotBlank() || username.isNotBlank() || pass.isNotBlank()) {
             val finalPlatform = platform.ifBlank { context.getString(R.string.unnamed_record) }
-            onSave(password.copy(platformName = finalPlatform, username = username, passwordValue = pass))
+            onSave(password.copy(platformName = finalPlatform, username = username, passwordValue = pass, updatedAt = System.currentTimeMillis()))
           }
         }
       ) {
@@ -623,4 +831,25 @@ fun EditPasswordDialog(
       }
     }
   )
+}
+
+fun getTimeAgoText(timestamp: Long): String {
+  val date = java.time.Instant.ofEpochMilli(timestamp).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+  val now = java.time.LocalDate.now()
+  val period = java.time.Period.between(date, now)
+  
+  val years = period.years
+  val months = period.months
+  val days = period.days
+
+  if (years == 0 && months == 0 && days == 0) {
+    return "Bugün"
+  }
+
+  val parts = mutableListOf<String>()
+  if (years > 0) parts.add("$years yıl")
+  if (months > 0) parts.add("$months ay")
+  if (days > 0) parts.add("$days gün")
+  
+  return parts.joinToString(" ") + " önce"
 }

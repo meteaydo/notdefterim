@@ -24,6 +24,7 @@ import javax.inject.Inject
 import android.net.Uri
 import java.io.File
 import com.notdefterim.app.R
+import com.notdefterim.app.data.local.AppPreferences
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -32,7 +33,8 @@ class SettingsViewModel @Inject constructor(
   private val backupToCloudUseCase: BackupToCloudUseCase,
   private val restoreFromCloudUseCase: RestoreFromCloudUseCase,
   private val getCloudBackupsUseCase: GetCloudBackupsUseCase,
-  private val localBackupManager: LocalBackupManager
+  private val localBackupManager: LocalBackupManager,
+  private val appPreferences: AppPreferences
 ) : ViewModel() {
 
   val googleAuthState: StateFlow<GoogleAuthState> = googleAuthManager.authState
@@ -54,6 +56,25 @@ class SettingsViewModel @Inject constructor(
   private val _lastBackupTime = MutableStateFlow<Long?>(null)
   val lastBackupTime: StateFlow<Long?> = _lastBackupTime.asStateFlow()
 
+  val autoLockTimeout: StateFlow<Long> = appPreferences.autoLockTimeout
+  val passwordReminderPeriod: StateFlow<Long> = appPreferences.passwordReminderPeriod
+  
+  val appPin: StateFlow<String?> = appPreferences.appPin
+    .stateIn(
+      scope = viewModelScope,
+      started = SharingStarted.WhileSubscribed(5_000),
+      initialValue = null
+    )
+
+  val appPinHint: StateFlow<String?> = appPreferences.appPinHint
+    .stateIn(
+      scope = viewModelScope,
+      started = SharingStarted.WhileSubscribed(5_000),
+      initialValue = null
+    )
+
+  val appPinScope: StateFlow<Int> = appPreferences.appPinScope
+
   private val _events = MutableSharedFlow<SettingsEvent>()
   val events = _events.asSharedFlow()
 
@@ -73,6 +94,22 @@ class SettingsViewModel @Inject constructor(
     viewModelScope.launch {
       googleAuthManager.signOut()
     }
+  }
+
+  fun setAutoLockTimeout(timeoutMs: Long) {
+    appPreferences.setAutoLockTimeout(timeoutMs)
+  }
+
+  fun setAppPinScope(scope: Int) {
+    appPreferences.setAppPinScope(scope)
+  }
+
+  fun setPasswordReminderPeriod(periodMs: Long) {
+    appPreferences.setPasswordReminderPeriod(periodMs)
+  }
+
+  fun setAppPin(pin: String?, hint: String? = null) {
+    appPreferences.setAppPin(pin, hint)
   }
 
   fun backupNow() {

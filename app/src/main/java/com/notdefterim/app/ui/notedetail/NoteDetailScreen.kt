@@ -32,6 +32,7 @@ import androidx.compose.material3.InputChip
 import androidx.compose.material3.Button
 import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.Check
@@ -63,6 +64,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
+import com.notdefterim.app.ui.components.ActionPinDialog
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -93,6 +96,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -121,6 +125,8 @@ import com.notdefterim.app.domain.model.RepeatInterval
 import com.notdefterim.app.ui.theme.LocalNoteCardColors
 import com.notdefterim.app.ui.notelist.components.AddCategoryDialog
 import com.notdefterim.app.ui.notedetail.components.ChecklistEditor
+import com.notdefterim.app.ui.components.SetupAppPinDialog
+import androidx.compose.ui.text.style.TextAlign
 
 /**
  * Not ekleme ve düzenleme ekranı.
@@ -142,8 +148,13 @@ fun NoteDetailScreen(
   val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
   val isChecklist by viewModel.isChecklist.collectAsStateWithLifecycle()
   val checklistItems by viewModel.checklistItems.collectAsStateWithLifecycle()
-
+  val pinPromptState by authViewModel.pinPromptState.collectAsStateWithLifecycle()
+  val appPin by authViewModel.appPin.collectAsStateWithLifecycle()
+  val appPinHint by authViewModel.appPinHint.collectAsStateWithLifecycle()
+  val appPinScope by authViewModel.appPinScope.collectAsStateWithLifecycle()
+  val isPinApplicable = appPin != null && (appPinScope == 0 || appPinScope == 1)
   
+  var showSetupPinDialog by remember { mutableStateOf(false) }
   var isCategoriesExpanded by remember { mutableStateOf(false) }
   val reminderAt by viewModel.reminderAt.collectAsStateWithLifecycle()
   val repeatInterval by viewModel.repeatInterval.collectAsStateWithLifecycle()
@@ -245,25 +256,7 @@ fun NoteDetailScreen(
     }
   }
 
-  val noteCardColors = LocalNoteCardColors.current
-  val parsedCategoryColor = selectedCategory?.colorHex?.let { hex ->
-    try {
-      val hexColor = android.graphics.Color.parseColor(hex)
-      val hsv = FloatArray(3)
-      android.graphics.Color.colorToHSV(hexColor, hsv)
-      hsv[1] = hsv[1] * 0.2f
-      Color(android.graphics.Color.HSVToColor(hsv))
-    } catch (e: Exception) { null }
-  }
-  val backgroundColor = parsedCategoryColor ?: noteCardColors.colors.getOrElse(selectedColor.index) {
-    MaterialTheme.colorScheme.background
-  }
-
-  val animatedBackground by animateColorAsState(
-    targetValue = backgroundColor,
-    animationSpec = tween(durationMillis = 400),
-    label = "bg_anim"
-  )
+  val animatedBackground = MaterialTheme.colorScheme.background
 
   // context moved above
 
@@ -308,7 +301,7 @@ fun NoteDetailScreen(
 
   Scaffold(
     modifier = modifier.fillMaxSize(),
-    containerColor = animatedBackground,
+    containerColor = androidx.compose.ui.graphics.Color.Transparent,
     snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
       TopAppBar(
@@ -360,7 +353,12 @@ fun NoteDetailScreen(
           // Kilit
           IconToggleButton(
             checked = isLocked,
-            onCheckedChange = { viewModel.onLockToggle() },
+            onCheckedChange = { isChecked -> 
+              viewModel.onLockToggle() 
+              if (isChecked) {
+                authViewModel.lockSession()
+              }
+            },
             colors = IconButtonDefaults.iconToggleButtonColors(
               checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
               checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -433,17 +431,42 @@ fun NoteDetailScreen(
       if (!isContentVisible) {
         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
           Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Bu not kilitli", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(16.dp))
+            if (isPinApplicable) {
+              Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+              Spacer(modifier = Modifier.height(16.dp))
+              Text("Bu not kilitli", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+              Spacer(modifier = Modifier.height(16.dp))
+            } else {
+              Icon(Icons.Rounded.Info, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
+              Spacer(modifier = Modifier.height(16.dp))
+              Text(
+                "Güvenlik Tavsiyesi",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+              )
+              Spacer(modifier = Modifier.height(8.dp))
+              Text(
+                "Telefon kilidinizi açma yetkisi olan herkes bu notu görebilir. İsterseniz uygulama içi ekstra pini aktif edebilirsiniz.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp)
+              )
+              Spacer(modifier = Modifier.height(16.dp))
+              Button(onClick = { showSetupPinDialog = true }) {
+                Text("PIN'i Belirle")
+              }
+              Spacer(modifier = Modifier.height(16.dp))
+            }
+            
             Button(onClick = { 
               val activity = context as? androidx.fragment.app.FragmentActivity
               if (activity != null) {
                 authViewModel.authenticateAction(
                   activity = activity,
                   title = context.getString(R.string.app_name),
-                  subtitle = "Kilitli notu görmek için kimliğinizi doğrulayın",
+                  subtitle = "Uygulama içi pin korumasını açtınız. Notu görüntülemek için pini girmeniz gerekiyor.",
+                  targetScope = 1,
                   onSuccess = { isContentVisible = true },
                   onError = { err -> 
                     coroutineScope.launch { snackbarHostState.showSnackbar(err) }
@@ -462,7 +485,7 @@ fun NoteDetailScreen(
       OutlinedTextField(
         value = searchQuery,
         onValueChange = viewModel::onSearchQueryChange,
-        placeholder = { Text(stringResource(R.string.search)) },
+        placeholder = { Text("Herhangi Birşey Ara") },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
           if (searchQuery.isNotEmpty()) {
@@ -484,11 +507,121 @@ fun NoteDetailScreen(
           .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
       )
 
+      // ── Kategori Seçimi (SABİT) ────────────────────────────────────────────
+      val maxChipsWhenCollapsed = 7
+      val visibleCategories = if (isCategoriesExpanded) categories else categories.take(maxChipsWhenCollapsed)
+      val showExpandChip = !isCategoriesExpanded && categories.size > maxChipsWhenCollapsed
+
+      @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+      androidx.compose.foundation.layout.FlowRow(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+      ) {
+        visibleCategories.forEach { cat ->
+          val isSelected = selectedCategory?.id == cat.id
+          
+          androidx.compose.material3.FilterChip(
+            selected = isSelected,
+            onClick = {
+              if (isSelected) viewModel.onCategorySelect(null)
+              else viewModel.onCategorySelect(cat)
+            },
+            label = { 
+               Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                  if (cat.name.equals("Alışveriş", ignoreCase = true)) {
+                      Icon(Icons.Rounded.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp))
+                  } else if (cat.name.equals("Yapılacaklar", ignoreCase = true)) {
+                      Icon(Icons.Rounded.FormatListBulleted, contentDescription = null, modifier = Modifier.size(14.dp))
+                  } else if (cat.name.equals("Fikirler", ignoreCase = true)) {
+                      Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(14.dp))
+                  }
+                  Text(cat.name, style = MaterialTheme.typography.labelMedium)
+               }
+            },
+            leadingIcon = if (isSelected) { { Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(16.dp)) } } else null,
+            modifier = Modifier
+              .height(28.dp)
+              .alpha(if (selectedCategory != null && !isSelected) 0.4f else 1f),
+            colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+              containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+              selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+              labelColor = MaterialTheme.colorScheme.onSurface,
+              selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ),
+            border = androidx.compose.material3.FilterChipDefaults.filterChipBorder(
+              enabled = true,
+              selected = isSelected,
+              borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+              selectedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+              borderWidth = 1.dp,
+              selectedBorderWidth = 1.dp
+            )
+          )
+        }
+
+        if (showExpandChip) {
+          androidx.compose.material3.FilterChip(
+            selected = false,
+            onClick = { isCategoriesExpanded = true },
+            label = { Text("...", style = MaterialTheme.typography.labelMedium) },
+            modifier = Modifier.height(28.dp),
+            colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+              labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            ),
+            border = androidx.compose.material3.FilterChipDefaults.filterChipBorder(
+              enabled = true,
+              selected = false,
+              borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+              borderWidth = 1.dp,
+            )
+          )
+        } else if (isCategoriesExpanded && categories.size > maxChipsWhenCollapsed) {
+          androidx.compose.material3.FilterChip(
+            selected = false,
+            onClick = { isCategoriesExpanded = false },
+            label = { Text("Gizle", style = MaterialTheme.typography.labelMedium) },
+            modifier = Modifier.height(28.dp),
+            colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+              labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            ),
+            border = androidx.compose.material3.FilterChipDefaults.filterChipBorder(
+              enabled = true,
+              selected = false,
+              borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+              borderWidth = 1.dp,
+            )
+          )
+        }
+      }
+
+
+
       Box(
         modifier = Modifier
           .fillMaxWidth()
           .weight(1f)
       ) {
+        // Kaydırma geçiş efekti (sabit alanın alt yüzeyinin erimesi)
+        Box(
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .background(
+              brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                colors = listOf(
+                  MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                  MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                  androidx.compose.ui.graphics.Color.Transparent
+                )
+              )
+            )
+            .align(Alignment.TopCenter)
+            .zIndex(1f)
+        )
+
         Column(
           modifier = Modifier
             .fillMaxSize()
@@ -517,11 +650,11 @@ fun NoteDetailScreen(
                 RepeatInterval.WEEKLY -> stringResource(R.string.repeat_weekly)
                 RepeatInterval.MONTHLY -> stringResource(R.string.repeat_monthly)
                 RepeatInterval.YEARLY -> stringResource(R.string.repeat_yearly)
-                else -> stringResource(R.string.repeat_none)
+                else -> stringResource(R.string.repeat_once)
               }
               
               Text(
-                text = "Hatırlatıcı Kuruldu: ${reminderAt!!.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))} ($repeatText)",
+                text = "Hatırlatıcı Kuruldu: ${reminderAt!!.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yy HH:mm"))} ($repeatText)",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary
               )
@@ -582,102 +715,6 @@ fun NoteDetailScreen(
           }
         }
 
-        // ── Kategori Seçimi ────────────────────────────────────────────
-        val maxChipsWhenCollapsed = 7
-        val visibleCategories = if (isCategoriesExpanded) categories else categories.take(maxChipsWhenCollapsed)
-        val showExpandChip = !isCategoriesExpanded && categories.size > maxChipsWhenCollapsed
-
-        @OptIn(ExperimentalLayoutApi::class)
-        FlowRow(
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
-          verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-          visibleCategories.forEach { cat ->
-            val isSelected = selectedCategory?.id == cat.id
-            val catColor = try { 
-              val hexColor = android.graphics.Color.parseColor(cat.colorHex)
-              val hsv = FloatArray(3)
-              android.graphics.Color.colorToHSV(hexColor, hsv)
-              hsv[1] = hsv[1] * 0.4f
-              Color(android.graphics.Color.HSVToColor(hsv))
-            } catch (e: Exception) { Color.Transparent }
-            
-            FilterChip(
-              selected = isSelected,
-              onClick = {
-                if (isSelected) viewModel.onCategorySelect(null)
-                else viewModel.onCategorySelect(cat)
-              },
-              label = { 
-                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (cat.name.equals("Alışveriş", ignoreCase = true)) {
-                        Icon(Icons.Rounded.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp))
-                    } else if (cat.name.equals("Yapılacaklar", ignoreCase = true)) {
-                        Icon(Icons.Rounded.FormatListBulleted, contentDescription = null, modifier = Modifier.size(14.dp))
-                    } else if (cat.name.equals("Fikirler", ignoreCase = true)) {
-                        Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(14.dp))
-                    }
-                    Text(cat.name, style = MaterialTheme.typography.labelMedium)
-                 }
-              },
-              leadingIcon = if (isSelected) { { Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(16.dp)) } } else null,
-              modifier = Modifier
-                .height(28.dp)
-                .alpha(if (selectedCategory != null && !isSelected) 0.4f else 1f),
-              colors = FilterChipDefaults.filterChipColors(
-                containerColor = catColor.copy(alpha = 0.6f),
-                selectedContainerColor = catColor,
-                labelColor = MaterialTheme.colorScheme.onSurface,
-                selectedLabelColor = MaterialTheme.colorScheme.onSurface
-              ),
-              border = FilterChipDefaults.filterChipBorder(
-                enabled = true,
-                selected = isSelected,
-                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                selectedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                borderWidth = 1.dp,
-                selectedBorderWidth = 1.dp
-              )
-            )
-          }
-
-          if (showExpandChip) {
-            FilterChip(
-              selected = false,
-              onClick = { isCategoriesExpanded = true },
-              label = { Text("...", style = MaterialTheme.typography.labelMedium) },
-              modifier = Modifier.height(28.dp),
-              colors = FilterChipDefaults.filterChipColors(
-                labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-              ),
-              border = FilterChipDefaults.filterChipBorder(
-                enabled = true,
-                selected = false,
-                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                borderWidth = 1.dp,
-              )
-            )
-          } else if (isCategoriesExpanded && categories.size > maxChipsWhenCollapsed) {
-            FilterChip(
-              selected = false,
-              onClick = { isCategoriesExpanded = false },
-              label = { Text("Gizle", style = MaterialTheme.typography.labelMedium) },
-              modifier = Modifier.height(28.dp),
-              colors = FilterChipDefaults.filterChipColors(
-                labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-              ),
-              border = FilterChipDefaults.filterChipBorder(
-                enabled = true,
-                selected = false,
-                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                borderWidth = 1.dp,
-              )
-            )
-          }
-        }
 
         // ── Başlık ─────────────────────────────────────────────────────
         TextField(
@@ -775,8 +812,8 @@ fun NoteDetailScreen(
             .background(
               brush = Brush.radialGradient(
                 colors = listOf(
-                  Color(0xFFE1BEE7).copy(alpha = 0.9f),
-                  Color(0xFFE1BEE7).copy(alpha = 0.0f)
+                  MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                  androidx.compose.ui.graphics.Color.Transparent
                 )
               )
             )
@@ -801,8 +838,8 @@ fun NoteDetailScreen(
             .background(
               brush = Brush.radialGradient(
                 colors = listOf(
-                  Color(0xFFE1BEE7).copy(alpha = 0.9f),
-                  Color(0xFFE1BEE7).copy(alpha = 0.0f)
+                  MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                  androidx.compose.ui.graphics.Color.Transparent
                 )
               )
             )
@@ -849,6 +886,27 @@ fun NoteDetailScreen(
         TextButton(onClick = { showDeleteDialog = false }) {
           Text(stringResource(R.string.cancel))
         }
+      }
+    )
+  }
+
+  if (pinPromptState != null) {
+    ActionPinDialog(
+      pinPromptState = pinPromptState!!,
+      onDismiss = { authViewModel.dismissPinPrompt() },
+      onVerify = { pin, keep -> authViewModel.verifyActionPin(pin, keep) }
+    )
+  }
+
+  if (showSetupPinDialog) {
+    SetupAppPinDialog(
+      appPin = appPin,
+      appPinHint = appPinHint,
+      appPinScope = appPinScope,
+      onDismiss = { showSetupPinDialog = false },
+      onSave = { newPin, newHint, newScope -> 
+        authViewModel.setAppPin(newPin, newHint) 
+        authViewModel.setAppPinScope(newScope)
       }
     )
   }

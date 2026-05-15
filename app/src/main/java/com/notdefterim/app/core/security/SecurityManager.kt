@@ -25,10 +25,13 @@ class SecurityManager(private val context: Context) {
   private val _authState = MutableStateFlow<AuthState>(AuthState.Unauthenticated)
   val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
+  var isSessionUnlocked: Boolean = false
+
   /** Desteklenen kimlik doğrulama yöntemlerini kontrol eder. */
-  fun checkBiometricSupport(): BiometricSupport {
+  fun checkBiometricSupport(useDeviceCredential: Boolean = true): BiometricSupport {
     val biometricManager = BiometricManager.from(context)
-    return when (biometricManager.canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)) {
+    val authenticators = if (useDeviceCredential) BIOMETRIC_STRONG or DEVICE_CREDENTIAL else BIOMETRIC_STRONG
+    return when (biometricManager.canAuthenticate(authenticators)) {
       BiometricManager.BIOMETRIC_SUCCESS -> BiometricSupport.Available
       BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> BiometricSupport.NoHardware
       BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> BiometricSupport.HardwareUnavailable
@@ -41,7 +44,7 @@ class SecurityManager(private val context: Context) {
    * Biyometrik giriş ekranını gösterir.
    * [activity] FragmentActivity gereklidir; BiometricPrompt lifecycle'a bağlıdır.
    */
-  fun authenticate(activity: FragmentActivity) {
+  fun authenticate(activity: FragmentActivity, useDeviceCredential: Boolean = true) {
     _authState.value = AuthState.Authenticating
 
     val executor = ContextCompat.getMainExecutor(activity)
@@ -64,19 +67,28 @@ class SecurityManager(private val context: Context) {
 
     val biometricPrompt = BiometricPrompt(activity, executor, callback)
 
-    val promptInfo = BiometricPrompt.PromptInfo.Builder()
+    val authenticators = if (useDeviceCredential) BIOMETRIC_STRONG or DEVICE_CREDENTIAL else BIOMETRIC_STRONG
+
+    val promptInfoBuilder = BiometricPrompt.PromptInfo.Builder()
       .setTitle("NotDefterim'e Giriş")
       .setSubtitle("Notlarınıza erişmek için kimliğinizi doğrulayın")
-      .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
-      // DEVICE_CREDENTIAL kullanıldığında setNegativeButtonText çağrılamaz
-      .build()
+      .setAllowedAuthenticators(authenticators)
+      
+    if (!useDeviceCredential) {
+      promptInfoBuilder.setNegativeButtonText("İptal / PIN Gir")
+    }
 
-    biometricPrompt.authenticate(promptInfo)
+    biometricPrompt.authenticate(promptInfoBuilder.build())
   }
 
   /** Manuel olarak kimlik doğrulamasını sıfırla (uygulama arka plana geçince). */
   fun resetAuthentication() {
     _authState.value = AuthState.Unauthenticated
+  }
+
+  /** Uygulama içi PIN doğru girildiğinde AuthState'i doğrulanmış olarak işaretler. */
+  fun setAuthenticated() {
+    _authState.value = AuthState.Authenticated
   }
 
   /**
@@ -86,6 +98,7 @@ class SecurityManager(private val context: Context) {
     activity: FragmentActivity,
     title: String,
     subtitle: String,
+    useDeviceCredential: Boolean = true,
     onSuccess: () -> Unit,
     onError: (String) -> Unit
   ) {
@@ -99,12 +112,17 @@ class SecurityManager(private val context: Context) {
       }
     }
     val biometricPrompt = BiometricPrompt(activity, executor, callback)
-    val promptInfo = BiometricPrompt.PromptInfo.Builder()
+    val authenticators = if (useDeviceCredential) BIOMETRIC_STRONG or DEVICE_CREDENTIAL else BIOMETRIC_STRONG
+    val promptInfoBuilder = BiometricPrompt.PromptInfo.Builder()
       .setTitle(title)
       .setSubtitle(subtitle)
-      .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
-      .build()
-    biometricPrompt.authenticate(promptInfo)
+      .setAllowedAuthenticators(authenticators)
+      
+    if (!useDeviceCredential) {
+      promptInfoBuilder.setNegativeButtonText("İptal / PIN Gir")
+    }
+    
+    biometricPrompt.authenticate(promptInfoBuilder.build())
   }
 }
 

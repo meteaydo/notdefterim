@@ -67,25 +67,7 @@ fun NoteCard(
   onTogglePin: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  val noteCardColors = LocalNoteCardColors.current
-  
-  val parsedCategoryColor = note.category?.colorHex?.let { hex ->
-    try {
-      Color(android.graphics.Color.parseColor(hex)).copy(alpha = 0.3f)
-    } catch (e: Exception) { null }
-  }
-
-  val baseCardColor = parsedCategoryColor ?: noteCardColors.colors.getOrElse(note.color.index) {
-    MaterialTheme.colorScheme.surface
-  }
-
-  val cardColor = baseCardColor
-
-  val animatedCardColor by animateColorAsState(
-    targetValue = cardColor,
-    animationSpec = tween(durationMillis = 300),
-    label = "card_color_anim"
-  )
+  val animatedCardColor = MaterialTheme.colorScheme.surface
 
   val borderColor = if (isHighlighted) {
     MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)

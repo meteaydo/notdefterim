@@ -72,6 +72,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -128,14 +129,15 @@ fun NoteListScreen(
 
   Scaffold(
     modifier = modifier.fillMaxSize(),
-    containerColor = MaterialTheme.colorScheme.background,
+    containerColor = androidx.compose.ui.graphics.Color.Transparent,
     topBar = {
-      AnimatedVisibility(
-        visible = !isSearchActive && !hideTopBar,
-        enter = slideInVertically() + fadeIn(),
-        exit = slideOutVertically() + fadeOut()
-      ) {
-        TopAppBar(
+      if (!hideTopBar) {
+        AnimatedVisibility(
+          visible = !isSearchActive,
+          enter = slideInVertically() + fadeIn(),
+          exit = slideOutVertically() + fadeOut()
+        ) {
+          TopAppBar(
           title = {
             Text(
               text = stringResource(R.string.my_notes),
@@ -152,7 +154,7 @@ fun NoteListScreen(
           )
         )
       }
-    },
+    }},
     floatingActionButton = {
       if (!isSearchActive) {
         FloatingActionButton(
@@ -179,7 +181,7 @@ fun NoteListScreen(
       OutlinedTextField(
         value = searchQuery,
         onValueChange = viewModel::onSearchQueryChange,
-        placeholder = { Text(stringResource(R.string.search)) },
+        placeholder = { Text("Herhangi Birşey Ara") },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
           if (searchQuery.isNotEmpty()) {
@@ -268,13 +270,7 @@ fun NoteListScreen(
           visibleCategories.forEach { cat ->
             val isSelected = selectedFilterType == NoteListViewModel.FilterType.CATEGORY && selectedCategoryId == cat.id
             val isProtected = viewModel.isCategoryProtected(cat)
-            val catColor = try { 
-              val hexColor = android.graphics.Color.parseColor(cat.colorHex)
-              val hsv = FloatArray(3)
-              android.graphics.Color.colorToHSV(hexColor, hsv)
-              hsv[1] = hsv[1] * 0.4f
-              Color(android.graphics.Color.HSVToColor(hsv))
-            } catch (e: Exception) { Color.Transparent }
+            
             
             var showCatMenu by remember { mutableStateOf(false) }
             
@@ -298,10 +294,10 @@ fun NoteListScreen(
                   .height(28.dp)
                   .alpha(if (isSelected) 1f else 0.4f),
                 colors = FilterChipDefaults.filterChipColors(
-                  containerColor = catColor.copy(alpha = 0.6f),
-                  selectedContainerColor = catColor,
+                  containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                  selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                   labelColor = MaterialTheme.colorScheme.onSurface,
-                  selectedLabelColor = MaterialTheme.colorScheme.onSurface
+                  selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 border = FilterChipDefaults.filterChipBorder(
                   enabled = true,
@@ -410,6 +406,24 @@ fun NoteListScreen(
       }
 
       Box(modifier = Modifier.weight(1f)) {
+        // Kaydırma geçiş efekti (sabit alanın alt yüzeyinin erimesi)
+        Box(
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .background(
+              brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                colors = listOf(
+                  MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                  MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                  androidx.compose.ui.graphics.Color.Transparent
+                )
+              )
+            )
+            .align(Alignment.TopCenter)
+            .zIndex(1f)
+        )
+
         // ── Not Grid veya Boş Durum ─────────────────────────────────────
         AnimatedContent(
           targetState = isEmpty && searchQuery.isEmpty(),

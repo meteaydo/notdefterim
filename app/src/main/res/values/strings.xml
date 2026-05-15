@@ -113,9 +113,35 @@
     <string name="remove_reminder">Hatırlatıcıyı kaldır</string>
     <string name="reminder_set_for">%s için hatırlatıcı kuruldu</string>
     <string name="repeat_none">Sadece bir kez</string>
+    <string name="repeat_once">Bir kez</string>
     <string name="repeat_daily">Her Gün</string>
     <string name="repeat_weekly">Her Hafta</string>
     <string name="repeat_monthly">Her Ay</string>
     <string name="repeat_yearly">Her Yıl</string>
     <string name="cancel_reminder">Hatırlatıcıyı İptal Et</string>
+    <string name="auto_lock_section">Otomatik Kilitleme</string>
+    <string name="auto_lock_desc">Uygulama arka plana atıldığında ne kadar süre sonra kilitlensin</string>
+    <string name="timeout_immediately">Hemen</string>
+    <string name="timeout_2_min">2 Dakika</string>
+    <string name="timeout_5_min">5 Dakika</string>
+    <string name="timeout_10_min">10 Dakika</string>
+    <string name="timeout_30_min">30 Dakika</string>
+    <string name="timeout_never">Hiçbir Zaman</string>
+    
+    <string name="reminder_section">Parola Değiştirme Tavsiyesi</string>
+    <string name="reminder_desc">Güvenliğiniz için parolalarınızın belirli periyotlarla güncellenmesi önerilir.</string>
+    <string name="reminder_3_months">3 Ay</string>
+    <string name="reminder_6_months">6 Ay</string>
+    <string name="reminder_9_months">9 Ay</string>
+    <string name="reminder_12_months">12 Ay</string>
+    <string name="password_expired_alert">Güvenliğiniz için şu parolalarınızı güncellemeniz önerilir: %1$s</string>
+    
+    <string name="app_pin_title">Uygulama İçi PIN</string>
+    <string name="app_pin_not_set">Belirlenmedi</string>
+    <string name="app_pin_active">PIN Aktif</string>
+    <string name="set_new_pin">Uygulama İçi PIN\'ini Belirle</string>
+    <string name="change_remove_pin">PIN Yönetimi</string>
+    <string name="enter_current_pin">Mevcut PIN\'i Girin</string>
+    <string name="enter_new_pin">Yeni PIN\'i Girin (4 Haneli)</string>
+    <string name="remove_pin">PIN\'i Kaldır</string>
 </resources>

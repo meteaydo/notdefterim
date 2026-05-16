@@ -13,6 +13,9 @@ interface CategoryDao {
   @Query("SELECT * FROM categories ORDER BY createdAt ASC")
   fun getAllCategories(): Flow<List<CategoryEntity>>
 
+  @Query("SELECT * FROM categories WHERE type = :type ORDER BY createdAt ASC")
+  fun getCategoriesByType(type: String): Flow<List<CategoryEntity>>
+
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertCategory(category: CategoryEntity): Long
 

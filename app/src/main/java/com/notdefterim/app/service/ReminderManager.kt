@@ -31,6 +31,7 @@ class ReminderManager @Inject constructor(
       putExtra("NOTE_ID", note.id)
       putExtra("NOTE_TITLE", note.title)
       putExtra("NOTE_CONTENT", note.content)
+      putExtra("IS_CHECKLIST", note.isChecklist)
     }
 
     val pendingIntent = PendingIntent.getBroadcast(

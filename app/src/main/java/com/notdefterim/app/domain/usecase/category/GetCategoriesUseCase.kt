@@ -8,5 +8,11 @@ import javax.inject.Inject
 class GetCategoriesUseCase @Inject constructor(
   private val repository: CategoryRepository
 ) {
-  operator fun invoke(): Flow<List<Category>> = repository.getAllCategories()
+  operator fun invoke(type: com.notdefterim.app.domain.model.CategoryType? = null): Flow<List<Category>> {
+    return if (type != null) {
+        repository.getCategoriesByType(type)
+    } else {
+        repository.getAllCategories()
+    }
+  }
 }

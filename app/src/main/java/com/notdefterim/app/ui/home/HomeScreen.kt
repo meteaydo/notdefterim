@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.data.local.ThemePreferences
+import com.notdefterim.app.data.local.AppPreferences
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -47,13 +48,22 @@ import com.notdefterim.app.R
 @Composable
 fun HomeScreen(
     themePreferences: ThemePreferences,
+    appPreferences: AppPreferences,
     systemDark: Boolean,
     onNoteClick: (Long) -> Unit,
     onNewNoteClick: (Long?) -> Unit,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedTab by rememberSaveable { mutableIntStateOf(1) } // 0: Notlar, 1: Parolalar
+    var selectedTab by rememberSaveable { 
+        mutableIntStateOf(
+            when (appPreferences.startupBehavior.value) {
+                1 -> 0 // Notlarım
+                2 -> 1 // Parolalarım
+                else -> appPreferences.lastOpenedTab.value // En son açılan
+            }
+        ) 
+    }
 
     val userDarkTheme by themePreferences.isDarkTheme.collectAsStateWithLifecycle()
     val isDark = userDarkTheme ?: systemDark
@@ -70,7 +80,10 @@ fun HomeScreen(
             Spacer(modifier = Modifier.weight(1f))
             SegmentedControl(
                 selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it },
+                onTabSelected = { 
+                    selectedTab = it 
+                    appPreferences.setLastOpenedTab(it)
+                },
                 modifier = Modifier.weight(5f)
             )
             Row(

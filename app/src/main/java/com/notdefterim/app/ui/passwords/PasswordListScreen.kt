@@ -62,8 +62,23 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import com.notdefterim.app.ui.notelist.components.SmartFlowRow
+import androidx.compose.material.icons.rounded.AccountBalance
+import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.BusinessCenter
+import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.Domain
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import com.notdefterim.app.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -103,10 +118,18 @@ fun PasswordListScreen(
   val expiredPasswordAlert by viewModel.expiredPasswordAlert.collectAsStateWithLifecycle()
   val pinPromptState by authViewModel.pinPromptState.collectAsStateWithLifecycle()
   val unlockedPasswords = remember { androidx.compose.runtime.mutableStateListOf<Long>() }
+  val categories by viewModel.categories.collectAsStateWithLifecycle()
+  val selectedCategoryId by viewModel.selectedCategoryId.collectAsStateWithLifecycle()
+  var isCategoriesExpanded by remember { mutableStateOf(false) }
 
   var showAddDialog by remember { mutableStateOf(false) }
   var passwordToEdit by remember { mutableStateOf<Password?>(null) }
   var passwordToDelete by remember { mutableStateOf<Password?>(null) }
+  
+  var showAddCategoryDialog by remember { mutableStateOf(false) }
+  var newCategoryName by remember { mutableStateOf("") }
+  val defaultCategoryColors = listOf("#4CAF50", "#2196F3", "#FF9800", "#E91E63", "#9C27B0", "#00BCD4", "#795548")
+  var newCategoryColor by remember { mutableStateOf(defaultCategoryColors.first()) }
 
   Scaffold(
     modifier = modifier.fillMaxSize(),
@@ -203,34 +226,124 @@ fun PasswordListScreen(
           .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
       )
 
-      Row(
+      // ── Kategori Filtre Çubuğu ──────────────────────────────────────
+      val maxChipsWhenCollapsed = 7
+      val visibleCategories = if (isCategoriesExpanded) categories else categories.take(maxChipsWhenCollapsed)
+      val showExpandChip = !isCategoriesExpanded && categories.size > maxChipsWhenCollapsed
+
+      SmartFlowRow(
         modifier = Modifier
           .fillMaxWidth()
-          .padding(horizontal = 16.dp)
-          .padding(bottom = 12.dp)
-          .alpha(0.6f),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+          .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+        horizontalSpacing = 8.dp,
+        verticalSpacing = 8.dp
       ) {
-        Icon(
-          imageVector = Icons.Rounded.SwipeRight,
-          contentDescription = stringResource(R.string.swipe_to_edit_desc),
-          tint = MaterialTheme.colorScheme.primary,
-          modifier = Modifier.size(16.dp)
+        // Tümü
+        FilterChip(
+          selected = selectedCategoryId == null,
+          onClick = { viewModel.onCategorySelected(null) },
+          label = { Text("Tümü", style = MaterialTheme.typography.labelMedium) },
+          modifier = Modifier
+            .height(28.dp)
+            .alpha(if (selectedCategoryId == null) 1f else 0.4f),
+          colors = FilterChipDefaults.filterChipColors(
+            labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            selectedLabelColor = MaterialTheme.colorScheme.onSurface
+          ),
+          border = FilterChipDefaults.filterChipBorder(
+            enabled = true,
+            selected = selectedCategoryId == null,
+            borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+            selectedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+            borderWidth = 1.dp,
+            selectedBorderWidth = 1.dp
+          )
         )
 
-        Icon(
-          imageVector = Icons.Rounded.TouchApp,
-          contentDescription = stringResource(R.string.tap_to_copy_desc),
-          tint = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.size(16.dp)
-        )
+        // Kategoriler
+        visibleCategories.forEach { cat ->
+          val isSelected = selectedCategoryId == cat.id
+          
+          FilterChip(
+            selected = isSelected,
+            onClick = { 
+              if (isSelected) viewModel.onCategorySelected(null)
+              else viewModel.onCategorySelected(cat.id)
+            },
+            label = { 
+               Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                  CategoryIcon(
+                    categoryName = cat.name,
+                    tint = Color.Black.copy(alpha = 0.8f),
+                    modifier = Modifier.size(15.dp)
+                  )
+                  Text(cat.name, style = MaterialTheme.typography.labelMedium)
+               }
+            },
+            modifier = Modifier
+              .height(28.dp)
+              .alpha(if (isSelected) 1f else 0.4f),
+            colors = FilterChipDefaults.filterChipColors(
+              containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+              selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+              labelColor = MaterialTheme.colorScheme.onSurface,
+              selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ),
+            border = FilterChipDefaults.filterChipBorder(
+              enabled = true,
+              selected = isSelected,
+              borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+              selectedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+              borderWidth = 1.dp,
+              selectedBorderWidth = 1.dp
+            )
+          )
+        }
 
-        Icon(
-          imageVector = Icons.Rounded.SwipeLeft,
-          contentDescription = stringResource(R.string.swipe_to_delete_desc),
-          tint = MaterialTheme.colorScheme.error,
-          modifier = Modifier.size(16.dp)
+        if (showExpandChip) {
+          FilterChip(
+            selected = false,
+            onClick = { isCategoriesExpanded = true },
+            label = { Text("...", style = MaterialTheme.typography.labelMedium) },
+            modifier = Modifier.height(28.dp),
+            colors = FilterChipDefaults.filterChipColors(
+              labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            ),
+            border = FilterChipDefaults.filterChipBorder(
+              enabled = true,
+              selected = false,
+              borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+              borderWidth = 1.dp,
+            )
+          )
+        } else if (isCategoriesExpanded && categories.size > maxChipsWhenCollapsed) {
+          FilterChip(
+            selected = false,
+            onClick = { isCategoriesExpanded = false },
+            label = { Text("Gizle", style = MaterialTheme.typography.labelMedium) },
+            modifier = Modifier.height(28.dp),
+            colors = FilterChipDefaults.filterChipColors(
+              labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            ),
+            border = FilterChipDefaults.filterChipBorder(
+              enabled = true,
+              selected = false,
+              borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+              borderWidth = 1.dp,
+            )
+          )
+        }
+
+        // Yeni kategori ekleme butonu
+        androidx.compose.material3.InputChip(
+          selected = false,
+          onClick = {
+            newCategoryName = ""
+            newCategoryColor = defaultCategoryColors.first()
+            showAddCategoryDialog = true
+          },
+          label = { Text("+ Kategori Ekle", style = MaterialTheme.typography.labelMedium) },
+          modifier = Modifier.height(28.dp).alpha(0.4f)
         )
       }
 
@@ -253,28 +366,41 @@ fun PasswordListScreen(
             .zIndex(1f)
         )
 
-        LazyColumn(
-          modifier = Modifier.fillMaxSize(),
-          contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp),
-          verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-          items(passwords, key = { it.id }) { password ->
-            PasswordCard(
-              password = password,
-              copiedState = copiedState,
-              isAnyPasswordUnlocked = unlockedPasswords.isNotEmpty(),
-              onUnlockedStateChange = { isUnlocked ->
-                if (isUnlocked) {
-                  if (!unlockedPasswords.contains(password.id)) unlockedPasswords.add(password.id)
-                } else {
-                  unlockedPasswords.remove(password.id)
-                }
-              },
-              onCopy = { field -> viewModel.onPasswordCopied(password, field) },
-              onEdit = { passwordToEdit = password },
-              onDelete = { passwordToDelete = password },
-              authViewModel = authViewModel
+        androidx.compose.animation.AnimatedContent(
+          targetState = passwords.isEmpty(),
+          transitionSpec = { androidx.compose.animation.fadeIn() togetherWith androidx.compose.animation.fadeOut() },
+          label = "empty_state_transition"
+        ) { isEmptyState ->
+          if (isEmptyState) {
+            EmptyPasswordsContent(
+              selectedCategoryId = selectedCategoryId,
+              hasSearchQuery = searchQuery.isNotEmpty()
             )
+          } else {
+            LazyColumn(
+              modifier = Modifier.fillMaxSize(),
+              contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp),
+              verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              items(passwords, key = { it.id }) { password ->
+                PasswordCard(
+                  password = password,
+                  copiedState = copiedState,
+                  isAnyPasswordUnlocked = unlockedPasswords.isNotEmpty(),
+                  onUnlockedStateChange = { isUnlocked ->
+                    if (isUnlocked) {
+                      if (!unlockedPasswords.contains(password.id)) unlockedPasswords.add(password.id)
+                    } else {
+                      unlockedPasswords.remove(password.id)
+                    }
+                  },
+                  onCopy = { field -> viewModel.onPasswordCopied(password, field) },
+                  onEdit = { passwordToEdit = password },
+                  onDelete = { passwordToDelete = password },
+                  authViewModel = authViewModel
+                )
+              }
+            }
           }
         }
       }
@@ -284,11 +410,12 @@ fun PasswordListScreen(
   if (showAddDialog) {
     AddPasswordDialog(
       onDismiss = { showAddDialog = false },
-      onSave = { platform, user, pass ->
-        viewModel.savePassword(platform, user, pass)
+      onSave = { platform, user, pass, category ->
+        viewModel.savePassword(platform, user, pass, category)
         showAddDialog = false
       },
-      frequentUsernames = frequentUsernames
+      frequentUsernames = frequentUsernames,
+      categories = categories
     )
   }
 
@@ -300,7 +427,8 @@ fun PasswordListScreen(
         viewModel.updatePassword(updatedPassword)
         passwordToEdit = null
       },
-      frequentUsernames = frequentUsernames
+      frequentUsernames = frequentUsernames,
+      categories = categories
     )
   }
 
@@ -332,6 +460,58 @@ fun PasswordListScreen(
       pinPromptState = pinPromptState!!,
       onDismiss = { authViewModel.dismissPinPrompt() },
       onVerify = { pin, keep -> authViewModel.verifyActionPin(pin, keep) }
+    )
+  }
+
+  // ── Yeni Kategori Ekleme Diyalogu ──────────────────────────────────────────
+  if (showAddCategoryDialog) {
+    AlertDialog(
+      onDismissRequest = { showAddCategoryDialog = false },
+      title = { Text("Yeni Kategori") },
+      text = {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+          OutlinedTextField(
+            value = newCategoryName,
+            onValueChange = { newCategoryName = it },
+            label = { Text("Kategori Adı") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+          )
+          Text("Renk Seçin", style = MaterialTheme.typography.labelMedium)
+          Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            defaultCategoryColors.forEach { colorHex ->
+              val color = try { Color(android.graphics.Color.parseColor(colorHex)) } catch (e: Exception) { Color.Gray }
+              Box(
+                modifier = Modifier
+                  .size(32.dp)
+                  .background(color, CircleShape)
+                  .then(
+                    if (newCategoryColor == colorHex) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                    else Modifier
+                  )
+                  .combinedClickable(onClick = { newCategoryColor = colorHex })
+              )
+            }
+          }
+        }
+      },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            if (newCategoryName.isNotBlank()) {
+              viewModel.addCategory(newCategoryName.trim(), newCategoryColor)
+            }
+            showAddCategoryDialog = false
+          }
+        ) {
+          Text("Ekle")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showAddCategoryDialog = false }) {
+          Text("İptal")
+        }
+      }
     )
   }
 }
@@ -409,14 +589,18 @@ fun PasswordCard(
       val borderModifier = if (isThisCardCopied) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium) else Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), MaterialTheme.shapes.medium)
       val cardColor = if (isThisCardCopied) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
 
-      ElevatedCard(
-        modifier = Modifier
-          .fillMaxWidth()
-          .then(borderModifier),
-        colors = CardDefaults.elevatedCardColors(
-          containerColor = cardColor
-        )
-      ) {
+      Box(modifier = Modifier.fillMaxWidth()) {
+        val topPadding = if (password.category != null) 12.dp else 0.dp
+        
+        ElevatedCard(
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = topPadding)
+            .then(borderModifier),
+          colors = CardDefaults.elevatedCardColors(
+            containerColor = cardColor
+          )
+        ) {
         Box(
           modifier = Modifier.combinedClickable(
             onClick = {}, // Required for combinedClickable to capture long clicks properly without disabling inner clickable
@@ -664,6 +848,29 @@ fun PasswordCard(
           }
         }
       }
+      
+      if (password.category != null) {
+        val catName = password.category.name
+        val catColorHex = password.category.colorHex
+        val catColor = try { Color(android.graphics.Color.parseColor(catColorHex)) } catch (e: Exception) { MaterialTheme.colorScheme.primary }
+
+        Box(
+          modifier = Modifier
+            .align(Alignment.TopCenter)
+            .background(MaterialTheme.colorScheme.background, CircleShape)
+            .border(2.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
+            .padding(6.dp),
+          contentAlignment = Alignment.Center
+        ) {
+           CategoryIcon(
+             categoryName = catName,
+             modifier = Modifier.size(15.dp),
+             tint = Color.Black.copy(alpha = 0.8f)
+           )
+        }
+      }
+      
+    }
     }
   )
 }
@@ -672,13 +879,16 @@ fun PasswordCard(
 @Composable
 fun AddPasswordDialog(
   onDismiss: () -> Unit,
-  onSave: (String, String, String) -> Unit,
-  frequentUsernames: List<String>
+  onSave: (String, String, String, com.notdefterim.app.domain.model.Category?) -> Unit,
+  frequentUsernames: List<String>,
+  categories: List<com.notdefterim.app.domain.model.Category>
 ) {
   var platform by remember { mutableStateOf("") }
   var username by remember { mutableStateOf("") }
   var password by remember { mutableStateOf("") }
+  var selectedCategory by remember { mutableStateOf<com.notdefterim.app.domain.model.Category?>(null) }
   var usernameExpanded by remember { mutableStateOf(false) }
+  var categoryExpanded by remember { mutableStateOf(false) }
   val context = LocalContext.current
 
   AlertDialog(
@@ -728,6 +938,56 @@ fun AddPasswordDialog(
           label = { Text(stringResource(R.string.password)) },
           singleLine = true
         )
+        
+        ExposedDropdownMenuBox(
+          expanded = categoryExpanded,
+          onExpandedChange = { categoryExpanded = !categoryExpanded }
+        ) {
+          OutlinedTextField(
+            value = selectedCategory?.name ?: "Kategori Yok",
+            onValueChange = { },
+            readOnly = true,
+            label = { Text("Kategori") },
+            modifier = Modifier.menuAnchor(),
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+          )
+          ExposedDropdownMenu(
+            expanded = categoryExpanded,
+            onDismissRequest = { categoryExpanded = false }
+          ) {
+            DropdownMenuItem(
+              text = { Text("Kategori Yok") },
+              leadingIcon = {
+                Icon(
+                  imageVector = Icons.Rounded.BookmarkBorder,
+                  contentDescription = null,
+                  modifier = Modifier.size(24.dp)
+                )
+              },
+              onClick = {
+                selectedCategory = null
+                categoryExpanded = false
+              }
+            )
+            categories.forEach { category ->
+              DropdownMenuItem(
+                text = { Text(category.name) },
+                leadingIcon = {
+                  CategoryIcon(
+                    categoryName = category.name,
+                    tint = Color.Black.copy(alpha = 0.8f),
+                    modifier = Modifier.size(24.dp)
+                  )
+                },
+                onClick = {
+                  selectedCategory = category
+                  categoryExpanded = false
+                }
+              )
+            }
+          }
+        }
       }
     },
     confirmButton = {
@@ -735,7 +995,7 @@ fun AddPasswordDialog(
         onClick = {
           if (platform.isNotBlank() || username.isNotBlank() || password.isNotBlank()) {
             val finalPlatform = platform.ifBlank { context.getString(R.string.unnamed_record) }
-            onSave(finalPlatform, username, password)
+            onSave(finalPlatform, username, password, selectedCategory)
           }
         }
       ) {
@@ -756,12 +1016,15 @@ fun EditPasswordDialog(
   password: Password,
   onDismiss: () -> Unit,
   onSave: (Password) -> Unit,
-  frequentUsernames: List<String>
+  frequentUsernames: List<String>,
+  categories: List<com.notdefterim.app.domain.model.Category>
 ) {
   var platform by remember { mutableStateOf(password.platformName) }
   var username by remember { mutableStateOf(password.username) }
   var pass by remember { mutableStateOf(password.passwordValue) }
+  var selectedCategory by remember { mutableStateOf<com.notdefterim.app.domain.model.Category?>(password.category) }
   var usernameExpanded by remember { mutableStateOf(false) }
+  var categoryExpanded by remember { mutableStateOf(false) }
   val context = LocalContext.current
 
   AlertDialog(
@@ -811,6 +1074,56 @@ fun EditPasswordDialog(
           label = { Text(stringResource(R.string.password)) },
           singleLine = true
         )
+        
+        ExposedDropdownMenuBox(
+          expanded = categoryExpanded,
+          onExpandedChange = { categoryExpanded = !categoryExpanded }
+        ) {
+          OutlinedTextField(
+            value = selectedCategory?.name ?: "Kategori Yok",
+            onValueChange = { },
+            readOnly = true,
+            label = { Text("Kategori") },
+            modifier = Modifier.menuAnchor(),
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+          )
+          ExposedDropdownMenu(
+            expanded = categoryExpanded,
+            onDismissRequest = { categoryExpanded = false }
+          ) {
+            DropdownMenuItem(
+              text = { Text("Kategori Yok") },
+              leadingIcon = {
+                Icon(
+                  imageVector = Icons.Rounded.BookmarkBorder,
+                  contentDescription = null,
+                  modifier = Modifier.size(24.dp)
+                )
+              },
+              onClick = {
+                selectedCategory = null
+                categoryExpanded = false
+              }
+            )
+            categories.forEach { category ->
+              DropdownMenuItem(
+                text = { Text(category.name) },
+                leadingIcon = {
+                  CategoryIcon(
+                    categoryName = category.name,
+                    tint = Color.Black.copy(alpha = 0.8f),
+                    modifier = Modifier.size(24.dp)
+                  )
+                },
+                onClick = {
+                  selectedCategory = category
+                  categoryExpanded = false
+                }
+              )
+            }
+          }
+        }
       }
     },
     confirmButton = {
@@ -818,7 +1131,7 @@ fun EditPasswordDialog(
         onClick = {
           if (platform.isNotBlank() || username.isNotBlank() || pass.isNotBlank()) {
             val finalPlatform = platform.ifBlank { context.getString(R.string.unnamed_record) }
-            onSave(password.copy(platformName = finalPlatform, username = username, passwordValue = pass, updatedAt = System.currentTimeMillis()))
+            onSave(password.copy(platformName = finalPlatform, username = username, passwordValue = pass, category = selectedCategory, updatedAt = System.currentTimeMillis()))
           }
         }
       ) {
@@ -852,4 +1165,53 @@ fun getTimeAgoText(timestamp: Long): String {
   if (days > 0) parts.add("$days gün")
   
   return parts.joinToString(" ") + " önce"
+}
+
+@Composable
+fun CategoryIcon(categoryName: String, tint: Color, modifier: Modifier = Modifier) {
+  val catIcon = when {
+    categoryName.equals("Banka", ignoreCase = true) -> Icons.Rounded.AccountBalance
+    categoryName.equals("Google", ignoreCase = true) -> androidx.compose.ui.graphics.vector.ImageVector.vectorResource(id = R.drawable.ic_google)
+    categoryName.equals("S. Medya", ignoreCase = true) -> Icons.Rounded.Share
+    categoryName.equals("Resmi", ignoreCase = true) -> Icons.Rounded.Domain
+    categoryName.equals("Aile", ignoreCase = true) -> Icons.Rounded.Groups
+    else -> Icons.Rounded.Bookmark
+  }
+  Icon(
+    imageVector = catIcon,
+    contentDescription = categoryName,
+    modifier = modifier,
+    tint = tint
+  )
+}
+
+@Composable
+private fun EmptyPasswordsContent(
+  selectedCategoryId: Long?,
+  hasSearchQuery: Boolean,
+  modifier: Modifier = Modifier
+) {
+  val emptyText = when {
+    hasSearchQuery -> "Eşleşen parola bulunamadı"
+    selectedCategoryId != null -> "Bu kategoride parola yok"
+    else -> "Henüz parola eklenmemiş"
+  }
+  Column(
+    modifier = modifier.fillMaxSize(),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.Center
+  ) {
+    Icon(
+      imageVector = Icons.Rounded.Lock,
+      contentDescription = null,
+      modifier = Modifier.size(80.dp),
+      tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+    Text(
+      text = emptyText,
+      style = MaterialTheme.typography.titleMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+    )
+  }
 }

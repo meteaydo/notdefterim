@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
+import com.notdefterim.app.data.local.entity.PasswordWithCategory
+import com.notdefterim.app.data.mapper.toDomain
+
 class PasswordRepositoryImpl @Inject constructor(
   private val dao: PasswordDao
 ) : PasswordRepository {
@@ -51,12 +54,17 @@ fun PasswordEntity.toDomain() = Password(
   updatedAt = updatedAt
 )
 
+fun PasswordWithCategory.toDomain() = password.toDomain().copy(
+  category = category?.toDomain()
+)
+
 fun Password.toEntity() = PasswordEntity(
   id = id,
   platformName = platformName,
   username = username,
   passwordValue = passwordValue,
   usageCount = usageCount,
+  categoryId = category?.id,
   createdAt = createdAt,
   updatedAt = updatedAt
 )

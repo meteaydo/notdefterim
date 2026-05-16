@@ -8,7 +8,6 @@ import com.notdefterim.app.domain.repository.CategoryRepository
 import com.notdefterim.app.domain.usecase.category.GetCategoriesUseCase
 import com.notdefterim.app.domain.usecase.note.DeleteNoteUseCase
 import com.notdefterim.app.domain.usecase.note.GetNotesUseCase
-import com.notdefterim.app.domain.usecase.note.SearchNotesUseCase
 import com.notdefterim.app.domain.usecase.note.UpdateNoteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
@@ -22,11 +21,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.notdefterim.app.util.normalizeForSearch
 
 @HiltViewModel
 class NoteListViewModel @Inject constructor(
   private val getNotesUseCase: GetNotesUseCase,
-  private val searchNotesUseCase: SearchNotesUseCase,
   private val deleteNoteUseCase: DeleteNoteUseCase,
   private val updateNoteUseCase: UpdateNoteUseCase,
   private val getCategoriesUseCase: GetCategoriesUseCase,
@@ -48,7 +47,7 @@ class NoteListViewModel @Inject constructor(
   private val _selectedCategoryId = MutableStateFlow<Long?>(null)
   val selectedCategoryId = _selectedCategoryId.asStateFlow()
 
-  val categories: StateFlow<List<Category>> = getCategoriesUseCase()
+  val categories: StateFlow<List<Category>> = getCategoriesUseCase(com.notdefterim.app.domain.model.CategoryType.NOTE)
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
   private val _searchQuery = MutableStateFlow("")
@@ -63,32 +62,39 @@ class NoteListViewModel @Inject constructor(
    */
   @OptIn(FlowPreview::class)
   val notes: StateFlow<List<Note>> = kotlinx.coroutines.flow.combine(
-    _searchQuery
-      .debounce(300L)
-      .flatMapLatest { query ->
-        if (query.isBlank()) getNotesUseCase() else searchNotesUseCase(query)
-      },
+    getNotesUseCase(),
+    _searchQuery.debounce(300L),
     _selectedFilterType,
     _selectedCategoryId
-  ) { noteList, filterType, categoryId ->
+  ) { noteList, query, filterType, categoryId ->
+      val filteredList = if (query.isBlank()) {
+          noteList
+      } else {
+          val normalizedQuery = query.normalizeForSearch()
+          noteList.filter { 
+              it.title.normalizeForSearch().contains(normalizedQuery) || 
+              it.content.normalizeForSearch().contains(normalizedQuery) 
+          }
+      }
+
     when (filterType) {
-      FilterType.ALL -> noteList.sortedWith(compareByDescending<Note> { it.isPinned }.thenByDescending { it.updatedAt })
-      FilterType.LOCKED -> noteList.sortedWith(
+      FilterType.ALL -> filteredList.sortedWith(compareByDescending<Note> { it.isPinned }.thenByDescending { it.updatedAt })
+      FilterType.LOCKED -> filteredList.sortedWith(
         compareByDescending<Note> { it.isLocked }
           .thenByDescending { it.isPinned }
           .thenByDescending { it.updatedAt }
       )
-      FilterType.FREQUENT -> noteList.sortedByDescending { it.viewCount }
+      FilterType.FREQUENT -> filteredList.sortedByDescending { it.viewCount }
       FilterType.CATEGORY -> {
         if (categoryId != null) {
           // Seçili kategori notlarını EN ÜSTE koy, diğerlerini alta bırak.
-          noteList.sortedWith(
+          filteredList.sortedWith(
             compareByDescending<Note> { it.category?.id == categoryId }
               .thenByDescending { it.isPinned }
               .thenByDescending { it.updatedAt }
           )
         } else {
-          noteList.sortedWith(compareByDescending<Note> { it.isPinned }.thenByDescending { it.updatedAt })
+          filteredList.sortedWith(compareByDescending<Note> { it.isPinned }.thenByDescending { it.updatedAt })
         }
       }
     }

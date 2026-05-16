@@ -35,22 +35,6 @@ interface NoteDao {
   @Query("SELECT * FROM notes WHERE id = :id LIMIT 1")
   suspend fun getNoteById(id: Long): NoteWithCategory?
 
-  /**
-   * Spotlight akıllı arama — başlık ve içerikte arar.
-   * LIKE kullanımı SQLCipher ile uyumludur; FTS kullanmak için
-   * ayrı bir FTS entity tanımlanabilir (performans artışı için önerilir).
-   */
-  @Transaction
-  @Query(
-    """
-    SELECT * FROM notes
-    WHERE title LIKE '%' || :query || '%'
-    OR content LIKE '%' || :query || '%'
-    ORDER BY isPinned DESC, updatedAt DESC
-    """
-  )
-  fun searchNotes(query: String): Flow<List<NoteWithCategory>>
-
   /** Yeni not ekler; ID çakışırsa günceller. */
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insertNote(note: NoteEntity): Long

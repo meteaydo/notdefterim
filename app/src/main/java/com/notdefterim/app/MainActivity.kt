@@ -106,6 +106,7 @@ class MainActivity : AppCompatActivity() {
             AppNavigation(
               googleAuthManager = googleAuthManager,
               themePreferences = themePreferences,
+              appPreferences = appPreferences,
               systemDark = systemDark,
               modifier = Modifier.fillMaxSize()
             )

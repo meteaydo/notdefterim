@@ -36,6 +36,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.notdefterim.app.data.remote.GoogleAuthManager
 import com.notdefterim.app.data.local.ThemePreferences
+import com.notdefterim.app.data.local.AppPreferences
 import com.notdefterim.app.ui.notedetail.NoteDetailScreen
 import com.notdefterim.app.ui.notelist.NoteListScreen
 import com.notdefterim.app.ui.settings.SettingsScreen
@@ -54,6 +55,7 @@ object AppRoutes {
 fun AppNavigation(
   googleAuthManager: GoogleAuthManager,
   themePreferences: ThemePreferences,
+  appPreferences: AppPreferences,
   systemDark: Boolean,
   modifier: Modifier = Modifier
 ) {
@@ -70,6 +72,7 @@ fun AppNavigation(
       composable(route = AppRoutes.NOTE_LIST) {
         com.notdefterim.app.ui.home.HomeScreen(
           themePreferences = themePreferences,
+          appPreferences = appPreferences,
           systemDark = systemDark,
           onNoteClick = { noteId ->
             navController.navigate(AppRoutes.noteDetail(noteId))

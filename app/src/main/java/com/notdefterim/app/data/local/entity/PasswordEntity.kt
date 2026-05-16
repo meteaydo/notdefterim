@@ -10,6 +10,7 @@ data class PasswordEntity(
   val username: String,
   val passwordValue: String,
   val usageCount: Int = 0,
+  val categoryId: Long? = null,
   val createdAt: Long,
   val updatedAt: Long? = null
 )

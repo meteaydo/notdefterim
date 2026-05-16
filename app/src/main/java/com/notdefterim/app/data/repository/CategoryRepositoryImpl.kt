@@ -17,6 +17,9 @@ class CategoryRepositoryImpl @Inject constructor(
   override fun getAllCategories(): Flow<List<Category>> =
     categoryDao.getAllCategories().map { list -> list.map { it.toDomain() } }
 
+  override fun getCategoriesByType(type: com.notdefterim.app.domain.model.CategoryType): Flow<List<Category>> =
+    categoryDao.getCategoriesByType(type.name).map { list -> list.map { it.toDomain() } }
+
   override suspend fun addCategory(category: Category): Long =
     categoryDao.insertCategory(category.toEntity())
 

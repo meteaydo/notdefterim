@@ -55,14 +55,16 @@ fun NoteWithCategory.toDomain(): Note {
 fun CategoryEntity.toDomain(): Category = Category(
   id = id,
   name = name,
-  colorHex = colorHex
+  colorHex = colorHex,
+  type = try { com.notdefterim.app.domain.model.CategoryType.valueOf(type) } catch (e: Exception) { com.notdefterim.app.domain.model.CategoryType.NOTE }
 )
 
 /** Domain Category → CategoryEntity */
 fun Category.toEntity(): CategoryEntity = CategoryEntity(
   id = id,
   name = name,
-  colorHex = colorHex
+  colorHex = colorHex,
+  type = type.name
 )
 
 /** Domain Note → NoteEntity */

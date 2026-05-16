@@ -127,6 +127,7 @@ import com.notdefterim.app.ui.notelist.components.AddCategoryDialog
 import com.notdefterim.app.ui.notedetail.components.ChecklistEditor
 import com.notdefterim.app.ui.components.SetupAppPinDialog
 import androidx.compose.ui.text.style.TextAlign
+import com.notdefterim.app.util.normalizeForSearch
 
 /**
  * Not ekleme ve düzenleme ekranı.
@@ -186,7 +187,7 @@ fun NoteDetailScreen(
   // Arama sorgusu değiştiğinde ilk eşleşmeye scroll yap
   LaunchedEffect(searchQuery) {
     if (searchQuery.isNotBlank()) {
-      val index = content.lowercase().indexOf(searchQuery.lowercase())
+      val index = content.normalizeForSearch().indexOf(searchQuery.normalizeForSearch())
       if (index >= 0) {
         textLayoutResult?.let { layout ->
           val line = layout.getLineForOffset(index)
@@ -215,8 +216,8 @@ fun NoteDetailScreen(
     else VisualTransformation { text ->
       val annotated = buildAnnotatedString {
         append(text)
-        val lowerText = text.toString().lowercase()
-        val lowerQuery = searchQuery.lowercase()
+        val lowerText = text.toString().normalizeForSearch()
+        val lowerQuery = searchQuery.normalizeForSearch()
         var startIndex = 0
         while (startIndex < lowerText.length) {
           val index = lowerText.indexOf(lowerQuery, startIndex)
@@ -710,6 +711,24 @@ fun NoteDetailScreen(
                 TextButton(onClick = { showRepeatMenu = false }) {
                   Text("Tamam")
                 }
+              },
+              dismissButton = {
+                TextButton(
+                  onClick = {
+                    showRepeatMenu = false
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                      if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                        showAlarmDialog()
+                      } else {
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                      }
+                    } else {
+                      showAlarmDialog()
+                    }
+                  }
+                ) {
+                  Text("Tarihi Değiştir")
+                }
               }
             )
           }
@@ -753,6 +772,7 @@ fun NoteDetailScreen(
         if (isChecklist) {
             ChecklistEditor(
                 items = checklistItems,
+                searchQuery = searchQuery,
                 onItemChange = { item -> viewModel.updateChecklistItem(item) },
                 onAddItem = { text -> viewModel.addChecklistItem(text) },
                 onRemoveItem = { id -> viewModel.removeChecklistItem(id) },
@@ -903,6 +923,7 @@ fun NoteDetailScreen(
       appPin = appPin,
       appPinHint = appPinHint,
       appPinScope = appPinScope,
+      targetScope = 1,
       onDismiss = { showSetupPinDialog = false },
       onSave = { newPin, newHint, newScope -> 
         authViewModel.setAppPin(newPin, newHint) 

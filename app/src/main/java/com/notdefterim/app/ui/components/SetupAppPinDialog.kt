@@ -41,6 +41,7 @@ fun SetupAppPinDialog(
   appPin: String?,
   appPinHint: String?,
   appPinScope: Int,
+  targetScope: Int = 0,
   onDismiss: () -> Unit,
   onSave: (String?, String?, Int) -> Unit
 ) {
@@ -51,8 +52,8 @@ fun SetupAppPinDialog(
   var passwordVisible by remember { mutableStateOf(false) }
   var errorMessage by remember { mutableStateOf<String?>(null) }
   var step by remember { mutableStateOf(if (appPin == null) 1 else 0) }
-  var isNotesSelected by remember { mutableStateOf(appPinScope == 0 || appPinScope == 1) }
-  var isPasswordsSelected by remember { mutableStateOf(appPinScope == 0 || appPinScope == 2) }
+  var isNotesSelected by remember { mutableStateOf(if (appPin == null) targetScope == 0 || targetScope == 1 else appPinScope == 0 || appPinScope == 1) }
+  var isPasswordsSelected by remember { mutableStateOf(if (appPin == null) targetScope == 0 || targetScope == 2 else appPinScope == 0 || appPinScope == 2) }
 
   AlertDialog(
     onDismissRequest = onDismiss,
@@ -128,8 +129,9 @@ fun SetupAppPinDialog(
             value = pinHintInput,
             onValueChange = { 
               if (it.length <= 30) pinHintInput = it
+              errorMessage = null
             },
-            label = { Text("PIN İpucu (İsteğe Bağlı)") },
+            label = { Text("PIN İpucu") },
             singleLine = true
           )
           
@@ -160,6 +162,13 @@ fun SetupAppPinDialog(
             Spacer(modifier = Modifier.height(4.dp))
             Text(errorMessage!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
           }
+
+          Spacer(modifier = Modifier.height(16.dp))
+          Text(
+            "DİKKAT: PIN kodunuzu unutursanız, kilitli notlarınıza kesinlikle ulaşılamaz! Bu kod cihazınızda şifrelenerek saklanır ve hiçbir sunucuya gönderilmez.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error
+          )
         }
       }
     },
@@ -176,9 +185,11 @@ fun SetupAppPinDialog(
             if (newPinInput.length >= 4) {
               if (!isNotesSelected && !isPasswordsSelected) {
                 errorMessage = "En az bir kullanım alanı seçmelisiniz."
+              } else if (pinHintInput.isBlank()) {
+                errorMessage = "PIN İpucu girilmesi zorunludur."
               } else if (passwordVisible || newPinInput == newPinConfirmInput) {
                 val newScope = if (isNotesSelected && isPasswordsSelected) 0 else if (isNotesSelected) 1 else 2
-                onSave(newPinInput, pinHintInput.ifBlank { null }, newScope)
+                onSave(newPinInput, pinHintInput, newScope)
                 onDismiss()
               } else {
                 errorMessage = "Girdiğiniz PIN'ler eşleşmiyor."

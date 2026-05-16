@@ -6,6 +6,7 @@ data class Password(
   val username: String,
   val passwordValue: String,
   val usageCount: Int = 0,
+  val category: Category? = null,
   val createdAt: Long = System.currentTimeMillis(),
   val updatedAt: Long? = null
 )

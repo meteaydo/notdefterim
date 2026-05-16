@@ -26,9 +26,6 @@ class NoteRepositoryImpl @Inject constructor(
   override suspend fun getNoteById(id: Long): Note? =
     noteDao.getNoteById(id)?.toDomain()
 
-  override fun searchNotes(query: String): Flow<List<Note>> =
-    noteDao.searchNotes(query).map { it.toDomainList() }
-
   override suspend fun addNote(note: Note): Long =
     noteDao.insertNote(note.toEntity())
 

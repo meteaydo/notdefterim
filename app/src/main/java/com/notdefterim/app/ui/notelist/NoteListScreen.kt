@@ -12,6 +12,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -108,9 +109,6 @@ fun NoteListScreen(
   val selectedCategoryId by viewModel.selectedCategoryId.collectAsStateWithLifecycle()
   var isCategoriesExpanded by remember { mutableStateOf(false) }
 
-  // Uzun basma context menüsü için seçili not
-  var selectedNote by remember { mutableStateOf<Note?>(null) }
-  var showContextMenu by remember { mutableStateOf(false) }
   var showDeleteDialog by remember { mutableStateOf<Note?>(null) }
 
   // Kategori düzenleme/silme state'leri
@@ -447,9 +445,8 @@ fun NoteListScreen(
                 onNoteClick = { noteId ->
                   onNoteClick(noteId)
                 },
-                onNoteLongClick = { note ->
-                  selectedNote = note
-                  showContextMenu = true
+                onDeleteClick = { note ->
+                  showDeleteDialog = note
                 },
                 onTogglePin = { note ->
                   viewModel.togglePin(note)
@@ -476,40 +473,6 @@ fun NoteListScreen(
       }
     }
 
-    // ── Context Menüsü (uzun basma) ─────────────────────────────────────
-    if (showContextMenu && selectedNote != null) {
-      Box {
-        DropdownMenu(
-          expanded = showContextMenu,
-          onDismissRequest = { showContextMenu = false }
-        ) {
-          DropdownMenuItem(
-            text = {
-              Text(if (selectedNote!!.isPinned) stringResource(R.string.unpin) else stringResource(R.string.pin))
-            },
-            leadingIcon = { Icon(Icons.Rounded.PushPin, contentDescription = null) },
-            onClick = {
-              selectedNote?.let { viewModel.togglePin(it) }
-              showContextMenu = false
-            }
-          )
-          DropdownMenuItem(
-            text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
-            leadingIcon = {
-              Icon(
-                Icons.Rounded.Delete,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error
-              )
-            },
-            onClick = {
-              showDeleteDialog = selectedNote
-              showContextMenu = false
-            }
-          )
-        }
-      }
-    }
 
     if (showDeleteDialog != null) {
       AlertDialog(
@@ -664,13 +627,14 @@ fun NoteListScreen(
 
 // ─── Staggered Grid Bileşeni ─────────────────────────────────────────────────
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun NoteGrid(
   notes: List<Note>,
   selectedCategoryId: Long?,
   selectedFilterType: NoteListViewModel.FilterType,
   onNoteClick: (Long) -> Unit,
-  onNoteLongClick: (Note) -> Unit,
+  onDeleteClick: (Note) -> Unit,
   onTogglePin: (Note) -> Unit,
   modifier: Modifier = Modifier
 ) {
@@ -697,14 +661,53 @@ private fun NoteGrid(
         else -> false
       }
 
-      NoteCard(
-        note = note,
-        isDisabled = isDisabled,
-        isHighlighted = isHighlighted,
-        onClick = { onNoteClick(note.id) },
-        onLongClick = { onNoteLongClick(note) },
-        onTogglePin = { onTogglePin(note) }
-      )
+      var showMenu by remember { androidx.compose.runtime.mutableStateOf(false) }
+
+      Box {
+        NoteCard(
+          note = note,
+          isDisabled = isDisabled,
+          isHighlighted = isHighlighted,
+          onClick = { onNoteClick(note.id) },
+          onLongClick = { showMenu = true },
+          onTogglePin = { onTogglePin(note) }
+        )
+
+        if (showMenu) {
+          androidx.compose.material3.ModalBottomSheet(
+            onDismissRequest = { showMenu = false }
+          ) {
+            Column(
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp, top = 8.dp)
+            ) {
+              Text(
+                text = "Not Seçenekleri",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.primary
+              )
+              androidx.compose.material3.ListItem(
+                headlineContent = { Text(if (note.isPinned) stringResource(R.string.unpin) else stringResource(R.string.pin)) },
+                leadingContent = { Icon(Icons.Rounded.PushPin, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
+                modifier = Modifier.clickable {
+                  onTogglePin(note)
+                  showMenu = false
+                }
+              )
+              androidx.compose.material3.ListItem(
+                headlineContent = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
+                leadingContent = { Icon(Icons.Rounded.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                modifier = Modifier.clickable {
+                  onDeleteClick(note)
+                  showMenu = false
+                }
+              )
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -8,5 +8,6 @@ data class CategoryEntity(
   @PrimaryKey(autoGenerate = true) val id: Long = 0,
   val name: String,
   val colorHex: String,
+  val type: String = "NOTE",
   val createdAt: Long = System.currentTimeMillis()
 )

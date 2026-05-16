@@ -38,6 +38,12 @@ class AppPreferences @Inject constructor(
     private val _appPinScope = MutableStateFlow(prefs.getInt("app_pin_scope", 0)) // 0: All, 1: Notes, 2: Passwords
     val appPinScope: StateFlow<Int> = _appPinScope.asStateFlow()
 
+    private val _startupBehavior = MutableStateFlow(prefs.getInt("startup_behavior", 0)) // 0: Last Opened, 1: Notes, 2: Passwords
+    val startupBehavior: StateFlow<Int> = _startupBehavior.asStateFlow()
+
+    private val _lastOpenedTab = MutableStateFlow(prefs.getInt("last_opened_tab", 0)) // 0: Notes, 1: Passwords
+    val lastOpenedTab: StateFlow<Int> = _lastOpenedTab.asStateFlow()
+
     fun setAutoLockTimeout(timeoutMs: Long) {
         prefs.edit().putLong("auto_lock_timeout", timeoutMs).apply()
         _autoLockTimeout.value = timeoutMs
@@ -46,6 +52,16 @@ class AppPreferences @Inject constructor(
     fun setAppPinScope(scope: Int) {
         prefs.edit().putInt("app_pin_scope", scope).apply()
         _appPinScope.value = scope
+    }
+
+    fun setStartupBehavior(behavior: Int) {
+        prefs.edit().putInt("startup_behavior", behavior).apply()
+        _startupBehavior.value = behavior
+    }
+
+    fun setLastOpenedTab(tab: Int) {
+        prefs.edit().putInt("last_opened_tab", tab).apply()
+        _lastOpenedTab.value = tab
     }
 
     fun setPasswordReminderPeriod(periodMs: Long) {

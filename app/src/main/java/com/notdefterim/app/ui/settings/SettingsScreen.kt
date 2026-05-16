@@ -98,6 +98,7 @@ fun SettingsScreen(
   val appPin by viewModel.appPin.collectAsStateWithLifecycle()
   val appPinHint by viewModel.appPinHint.collectAsStateWithLifecycle()
   val appPinScope by viewModel.appPinScope.collectAsStateWithLifecycle()
+  val startupBehavior by viewModel.startupBehavior.collectAsStateWithLifecycle()
 
   val snackbarHostState = remember { SnackbarHostState() }
 
@@ -116,6 +117,7 @@ fun SettingsScreen(
   var showAutoLockDialog by remember { mutableStateOf(false) }
   var showReminderDialog by remember { mutableStateOf(false) }
   var showAppPinDialog by remember { mutableStateOf(false) }
+  var showStartupBehaviorDialog by remember { mutableStateOf(false) }
   var showBackupListDialog by remember { mutableStateOf(false) }
   var selectedBackupToRestore by remember { mutableStateOf<com.notdefterim.app.data.remote.BackupInfo?>(null) }
   var dialogPassword by remember { mutableStateOf("") }
@@ -208,6 +210,29 @@ fun SettingsScreen(
           colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
           headlineContent = { Text(stringResource(R.string.language_section)) },
           supportingContent = { Text(stringResource(R.string.language_description)) },
+          trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+        )
+      }
+
+      Spacer(modifier = Modifier.height(24.dp))
+
+      // ── Başlangıç Ekranı Bölümü ────────────────────────────────
+      SectionTitle("Başlangıç Ekranı")
+      Card(
+        colors = CardDefaults.cardColors(
+          containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth().clickable { showStartupBehaviorDialog = true }
+      ) {
+        val behaviorText = when(startupBehavior) {
+          1 -> "Notlarım"
+          2 -> "Parolalarım"
+          else -> "En Son Açılan"
+        }
+        ListItem(
+          colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+          headlineContent = { Text("Başlangıç Ekranı") },
+          supportingContent = { Text(behaviorText) },
           trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
         )
       }
@@ -685,6 +710,50 @@ fun SettingsScreen(
       },
       confirmButton = {
         TextButton(onClick = { showAutoLockDialog = false }) {
+          Text(stringResource(R.string.cancel))
+        }
+      }
+    )
+  }
+
+  if (showStartupBehaviorDialog) {
+    val behaviors = listOf(
+      0 to "En Son Açılan",
+      1 to "Notlarım",
+      2 to "Parolalarım"
+    )
+
+    AlertDialog(
+      onDismissRequest = { showStartupBehaviorDialog = false },
+      title = { Text("Başlangıç Ekranı") },
+      text = {
+        Column {
+          Text("Uygulama açıldığında hangi sayfanın gösterileceğini seçin.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+          Spacer(modifier = Modifier.height(8.dp))
+          behaviors.forEach { (value, title) ->
+            TextButton(
+              onClick = {
+                viewModel.setStartupBehavior(value)
+                showStartupBehaviorDialog = false
+              },
+              modifier = Modifier.fillMaxWidth()
+            ) {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Text(title)
+                if (startupBehavior == value) {
+                  Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                }
+              }
+            }
+          }
+        }
+      },
+      confirmButton = {
+        TextButton(onClick = { showStartupBehaviorDialog = false }) {
           Text(stringResource(R.string.cancel))
         }
       }

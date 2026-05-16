@@ -19,11 +19,23 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalDensity
+import com.notdefterim.app.util.normalizeForSearch
 import com.notdefterim.app.domain.model.ChecklistItem
+
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 
 @Composable
 fun ChecklistEditor(
     items: List<ChecklistItem>,
+    searchQuery: String = "",
     onItemChange: (ChecklistItem) -> Unit,
     onAddItem: (String) -> Unit,
     onRemoveItem: (String) -> Unit,
@@ -33,6 +45,7 @@ fun ChecklistEditor(
         items.forEachIndexed { index, item ->
             ChecklistItemRow(
                 item = item,
+                searchQuery = searchQuery,
                 onItemChange = onItemChange,
                 onRemove = { onRemoveItem(item.id) },
                 onNext = { onAddItem("") },
@@ -42,16 +55,18 @@ fun ChecklistEditor(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun ChecklistItemRow(
     item: ChecklistItem,
+    searchQuery: String,
     onItemChange: (ChecklistItem) -> Unit,
     onRemove: () -> Unit,
     onNext: () -> Unit,
     isLastItem: Boolean
 ) {
     val focusRequester = remember { FocusRequester() }
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(item.id) {
@@ -61,12 +76,54 @@ private fun ChecklistItemRow(
             } catch (e: Exception) { }
         }
     }
+    val density = LocalDensity.current
+    
+    LaunchedEffect(searchQuery, item.text) {
+        if (searchQuery.isNotBlank() && item.text.normalizeForSearch().contains(searchQuery.normalizeForSearch())) {
+            try {
+                // Yaklaşık 4-5 satır (200dp) yukarıdan pay bırakarak kaydır (Rect kullanarak)
+                val offset = with(density) { 200.dp.toPx() }
+                bringIntoViewRequester.bringIntoView(androidx.compose.ui.geometry.Rect(0f, -offset, 1f, 1f))
+            } catch (e: Exception) { }
+        }
+    }
+
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+    val onPrimaryContainer = MaterialTheme.colorScheme.onPrimaryContainer
+    
+    val visualTransformation = remember(searchQuery, primaryContainer, onPrimaryContainer) {
+        if (searchQuery.isBlank()) VisualTransformation.None
+        else VisualTransformation { text ->
+            val annotated = buildAnnotatedString {
+                append(text)
+                val lowerText = text.toString().normalizeForSearch()
+                val lowerQuery = searchQuery.normalizeForSearch()
+                var startIndex = 0
+                while (startIndex < lowerText.length) {
+                    val index = lowerText.indexOf(lowerQuery, startIndex)
+                    if (index < 0) break
+                    addStyle(
+                        style = SpanStyle(
+                            background = primaryContainer,
+                            color = onPrimaryContainer,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        start = index,
+                        end = index + lowerQuery.length
+                    )
+                    startIndex = index + lowerQuery.length
+                }
+            }
+            TransformedText(annotated, OffsetMapping.Identity)
+        }
+    }
 
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = 8.dp)
+                .bringIntoViewRequester(bringIntoViewRequester),
             verticalAlignment = Alignment.Top
         ) {
             if (item.hasCheckbox) {
@@ -90,6 +147,7 @@ private fun ChecklistItemRow(
                     color = if (item.isChecked && item.hasCheckbox) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onBackground,
                     textDecoration = if (item.isChecked && item.hasCheckbox) TextDecoration.LineThrough else null
                 ),
+                visualTransformation = visualTransformation,
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { onNext() }),

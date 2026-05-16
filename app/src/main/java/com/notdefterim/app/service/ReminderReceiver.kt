@@ -33,9 +33,23 @@ class ReminderReceiver : BroadcastReceiver() {
 
     val noteId = intent.getLongExtra("NOTE_ID", -1)
     val noteTitle = intent.getStringExtra("NOTE_TITLE") ?: context.getString(R.string.app_name)
-    val noteContent = intent.getStringExtra("NOTE_CONTENT") ?: ""
+    val rawContent = intent.getStringExtra("NOTE_CONTENT") ?: ""
+    val isChecklist = intent.getBooleanExtra("IS_CHECKLIST", false)
+    
+    var displayContent = rawContent
+    if (isChecklist || (rawContent.trim().startsWith("[") && rawContent.contains("\"text\""))) {
+      try {
+        val items = kotlinx.serialization.json.Json.decodeFromString<List<com.notdefterim.app.domain.model.ChecklistItem>>(rawContent)
+        val checkedCount = items.count { it.isChecked }
+        val summary = "[$checkedCount/${items.size} tamamlandı]"
+        val previewLines = items.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
+        displayContent = "$summary\n$previewLines"
+      } catch (e: Exception) {
+        // Fallback to original raw content if parsing fails
+      }
+    }
 
-    showNotification(context, noteId, noteTitle, noteContent)
+    showNotification(context, noteId, noteTitle, displayContent)
 
     if (noteId > 0) {
       val pendingResult = goAsync()

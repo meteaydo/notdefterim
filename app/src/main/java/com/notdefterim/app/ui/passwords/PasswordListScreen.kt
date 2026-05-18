@@ -108,6 +108,7 @@ fun PasswordListScreen(
   modifier: Modifier = Modifier,
   onNavigateBack: (() -> Unit)? = null,
   hideTopBar: Boolean = false,
+  initialShowAddDialog: Boolean = false,
   viewModel: PasswordListViewModel = hiltViewModel(),
   authViewModel: AuthViewModel = hiltViewModel()
 ) {
@@ -122,7 +123,7 @@ fun PasswordListScreen(
   val selectedCategoryId by viewModel.selectedCategoryId.collectAsStateWithLifecycle()
   var isCategoriesExpanded by remember { mutableStateOf(false) }
 
-  var showAddDialog by remember { mutableStateOf(false) }
+  var showAddDialog by remember { mutableStateOf(initialShowAddDialog) }
   var passwordToEdit by remember { mutableStateOf<Password?>(null) }
   var passwordToDelete by remember { mutableStateOf<Password?>(null) }
   
@@ -380,7 +381,7 @@ fun PasswordListScreen(
             LazyColumn(
               modifier = Modifier.fillMaxSize(),
               contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp),
-              verticalArrangement = Arrangement.spacedBy(12.dp)
+              verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
               items(passwords, key = { it.id }) { password ->
                 PasswordCard(

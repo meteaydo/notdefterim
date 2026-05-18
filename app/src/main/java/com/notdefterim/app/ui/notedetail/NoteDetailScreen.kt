@@ -32,6 +32,7 @@ import androidx.compose.material3.InputChip
 import androidx.compose.material3.Button
 import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Alarm
@@ -242,8 +243,9 @@ fun NoteDetailScreen(
 
   val context = LocalContext.current
 
-  // Tek seferlik olayları dinle
+  // Tek seferlik olayları dinle ve ilk açılışta klavyeyi gizle
   LaunchedEffect(Unit) {
+    focusManager.clearFocus()
     viewModel.events.collect { event ->
       when (event) {
         is NoteDetailEvent.NavigateBack -> {
@@ -385,6 +387,23 @@ fun NoteDetailScreen(
             Icon(
               imageVector = Icons.Rounded.FormatListBulleted,
               contentDescription = "Liste Modu"
+            )
+          }
+
+          // Yüzen Pencerede Aç
+          IconButton(onClick = {
+            val displayContent = if (isChecklist) {
+                viewModel.checklistItems.value.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
+            } else {
+                content
+            }
+            com.notdefterim.app.service.FloatingNoteManager.show(context, title, displayContent)
+            // Optional: Close current activity/screen if requested, but better to keep it or let user decide
+          }) {
+            Icon(
+              imageVector = Icons.Rounded.ExitToApp,
+              contentDescription = "Yüzen Pencerede Aç",
+              tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
           }
 
@@ -599,39 +618,6 @@ fun NoteDetailScreen(
       }
 
 
-
-      Box(
-        modifier = Modifier
-          .fillMaxWidth()
-          .weight(1f)
-      ) {
-        // Kaydırma geçiş efekti (sabit alanın alt yüzeyinin erimesi)
-        Box(
-          modifier = Modifier
-            .fillMaxWidth()
-            .height(24.dp)
-            .background(
-              brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                colors = listOf(
-                  MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                  MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
-                  androidx.compose.ui.graphics.Color.Transparent
-                )
-              )
-            )
-            .align(Alignment.TopCenter)
-            .zIndex(1f)
-        )
-
-        Column(
-          modifier = Modifier
-            .fillMaxSize()
-            .onGloballyPositioned { coordinates ->
-              viewportHeight = coordinates.size.height
-            }
-            .verticalScroll(scrollState)
-        ) {
-
         if (reminderAt != null) {
           var showRepeatMenu by remember { mutableStateOf(false) }
 
@@ -733,6 +719,40 @@ fun NoteDetailScreen(
             )
           }
         }
+
+      Box(
+        modifier = Modifier
+          .fillMaxWidth()
+          .weight(1f)
+      ) {
+        // Kaydırma geçiş efekti (sabit alanın alt yüzeyinin erimesi)
+        Box(
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .background(
+              brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                colors = listOf(
+                  MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                  MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                  androidx.compose.ui.graphics.Color.Transparent
+                )
+              )
+            )
+            .align(Alignment.TopCenter)
+            .zIndex(1f)
+        )
+
+        Column(
+          modifier = Modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coordinates ->
+              viewportHeight = coordinates.size.height
+            }
+            .verticalScroll(scrollState)
+        ) {
+
+    // Reminder logic moved outside the column
 
 
         // ── Başlık ─────────────────────────────────────────────────────

@@ -144,4 +144,8 @@
     <string name="enter_current_pin">Mevcut PIN\'i Girin</string>
     <string name="enter_new_pin">Yeni PIN\'i Girin (4 Haneli)</string>
     <string name="remove_pin">PIN\'i Kaldır</string>
+    <string name="shortcut_add_note_short">Not Ekle</string>
+    <string name="shortcut_add_note_long">Yeni Not Ekle</string>
+    <string name="shortcut_add_password_short">Parola Ekle</string>
+    <string name="shortcut_add_password_long">Yeni Parola Ekle</string>
 </resources>

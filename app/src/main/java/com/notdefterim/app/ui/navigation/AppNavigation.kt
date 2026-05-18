@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,10 +58,35 @@ fun AppNavigation(
   themePreferences: ThemePreferences,
   appPreferences: AppPreferences,
   systemDark: Boolean,
+  initialNoteId: Long? = null,
+  initialShortcutAction: String? = null,
   modifier: Modifier = Modifier
 ) {
   val navController = rememberNavController()
   var showSavedNotification by remember { mutableStateOf(false) }
+  var initialNoteNavigated by rememberSaveable { mutableStateOf(false) }
+  var shortcutNavigated by rememberSaveable { mutableStateOf(false) }
+
+  LaunchedEffect(initialNoteId) {
+    if (initialNoteId != null && !initialNoteNavigated) {
+      navController.navigate(AppRoutes.noteDetail(initialNoteId))
+      initialNoteNavigated = true
+    }
+  }
+
+  LaunchedEffect(initialShortcutAction) {
+    if (initialShortcutAction != null && !shortcutNavigated) {
+        when (initialShortcutAction) {
+            "com.notdefterim.app.ACTION_ADD_NOTE" -> {
+                navController.navigate(AppRoutes.noteDetail(0L))
+            }
+            "com.notdefterim.app.ACTION_ADD_PASSWORD" -> {
+                // Pass to HomeScreen instead of navigating
+            }
+        }
+        shortcutNavigated = true
+    }
+  }
 
   Box(modifier = Modifier.fillMaxSize()) {
     NavHost(
@@ -74,6 +100,7 @@ fun AppNavigation(
           themePreferences = themePreferences,
           appPreferences = appPreferences,
           systemDark = systemDark,
+          initialShortcutAction = initialShortcutAction,
           onNoteClick = { noteId ->
             navController.navigate(AppRoutes.noteDetail(noteId))
           },

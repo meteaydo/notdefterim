@@ -46,13 +46,18 @@ class ReminderManager @Inject constructor(
         if (alarmManager.canScheduleExactAlarms()) {
           alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
         } else {
-          alarmManager.setWindow(AlarmManager.RTC_WAKEUP, timeInMillis, 1000 * 60, pendingIntent)
+          alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
         }
       } else {
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
       }
     } catch (e: SecurityException) {
       e.printStackTrace()
+      try {
+          alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
+      } catch (ex: Exception) {
+          ex.printStackTrace()
+      }
     }
   }
 

@@ -73,6 +73,8 @@ class MainActivity : AppCompatActivity() {
     enableEdgeToEdge()
 
     setContent {
+      val initialNoteId = remember { intent.getLongExtra("NOTE_ID", -1L).takeIf { it != -1L } }
+      val initialShortcutAction = remember { intent.action }
       val systemDark = isSystemInDarkTheme()
       val userDarkTheme by themePreferences.isDarkTheme.collectAsStateWithLifecycle()
       val darkTheme = userDarkTheme ?: systemDark
@@ -108,6 +110,8 @@ class MainActivity : AppCompatActivity() {
               themePreferences = themePreferences,
               appPreferences = appPreferences,
               systemDark = systemDark,
+              initialNoteId = initialNoteId,
+              initialShortcutAction = initialShortcutAction,
               modifier = Modifier.fillMaxSize()
             )
           } else {

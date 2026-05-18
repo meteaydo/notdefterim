@@ -36,6 +36,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -638,6 +639,7 @@ private fun NoteGrid(
   onTogglePin: (Note) -> Unit,
   modifier: Modifier = Modifier
 ) {
+  val context = androidx.compose.ui.platform.LocalContext.current
   LazyVerticalStaggeredGrid(
     columns = StaggeredGridCells.Adaptive(minSize = 160.dp),
     verticalItemSpacing = 8.dp,
@@ -693,6 +695,28 @@ private fun NoteGrid(
                 leadingContent = { Icon(Icons.Rounded.PushPin, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
                 modifier = Modifier.clickable {
                   onTogglePin(note)
+                  showMenu = false
+                }
+              )
+              androidx.compose.material3.ListItem(
+                headlineContent = { Text("Yüzen Pencerede Aç") },
+                leadingContent = { Icon(Icons.Rounded.ExitToApp, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
+                modifier = Modifier.clickable {
+                  val displayContent = if (note.isChecklist) {
+                      try {
+                          val items = kotlinx.serialization.json.Json.decodeFromString<List<com.notdefterim.app.domain.model.ChecklistItem>>(note.content)
+                          items.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
+                      } catch (e: Exception) {
+                          note.content
+                      }
+                  } else {
+                      note.content
+                  }
+                  com.notdefterim.app.service.FloatingNoteManager.show(
+                    context,
+                    note.title,
+                    displayContent
+                  )
                   showMenu = false
                 }
               )

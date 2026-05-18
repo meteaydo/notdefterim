@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add_note"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:shortcutShortLabel="@string/shortcut_add_note_short"
+        android:shortcutLongLabel="@string/shortcut_add_note_long">
+        <intent
+            android:action="com.notdefterim.app.ACTION_ADD_NOTE"
+            android:targetPackage="com.notdefterim.app"
+            android:targetClass="com.notdefterim.app.MainActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="add_password"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_lock_lock"
+        android:shortcutShortLabel="@string/shortcut_add_password_short"
+        android:shortcutLongLabel="@string/shortcut_add_password_long">
+        <intent
+            android:action="com.notdefterim.app.ACTION_ADD_PASSWORD"
+            android:targetPackage="com.notdefterim.app"
+            android:targetClass="com.notdefterim.app.MainActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

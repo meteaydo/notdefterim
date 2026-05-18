@@ -53,7 +53,7 @@ class NoteDetailViewModel @Inject constructor(
   private val _content = MutableStateFlow("")
   val content: StateFlow<String> = _content.asStateFlow()
 
-  val categories: StateFlow<List<Category>> = getCategoriesUseCase()
+  val categories: StateFlow<List<Category>> = getCategoriesUseCase(com.notdefterim.app.domain.model.CategoryType.NOTE)
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
   private val _selectedCategory = MutableStateFlow<Category?>(null)
@@ -97,7 +97,7 @@ class NoteDetailViewModel @Inject constructor(
       loadNote()
     } else if (initialCategoryId != null) {
       viewModelScope.launch {
-        getCategoriesUseCase().collect { catList ->
+        getCategoriesUseCase(com.notdefterim.app.domain.model.CategoryType.NOTE).collect { catList ->
            val cat = catList.find { it.id == initialCategoryId }
            if (cat != null && _selectedCategory.value == null) {
                _selectedCategory.value = cat

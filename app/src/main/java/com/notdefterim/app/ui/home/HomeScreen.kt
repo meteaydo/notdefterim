@@ -53,11 +53,13 @@ fun HomeScreen(
     onNoteClick: (Long) -> Unit,
     onNewNoteClick: (Long?) -> Unit,
     onSettingsClick: () -> Unit,
+    initialShortcutAction: String? = null,
     modifier: Modifier = Modifier
 ) {
     var selectedTab by rememberSaveable { 
         mutableIntStateOf(
-            when (appPreferences.startupBehavior.value) {
+            if (initialShortcutAction == "com.notdefterim.app.ACTION_ADD_PASSWORD") 1
+            else when (appPreferences.startupBehavior.value) {
                 1 -> 0 // Notlarım
                 2 -> 1 // Parolalarım
                 else -> appPreferences.lastOpenedTab.value // En son açılan
@@ -120,7 +122,8 @@ fun HomeScreen(
                     hideTopBar = true
                 )
                 1 -> PasswordListScreen(
-                    hideTopBar = true
+                    hideTopBar = true,
+                    initialShowAddDialog = (initialShortcutAction == "com.notdefterim.app.ACTION_ADD_PASSWORD")
                 )
             }
         }

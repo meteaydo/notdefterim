@@ -105,7 +105,8 @@ class AuthViewModel @Inject constructor(
 
   fun verifyActionPin(pin: String, keepUnlocked: Boolean = false): Boolean {
     val prompt = _pinPromptState.value ?: return false
-    if (appPin.value == pin) {
+    // Ham PIN ile karşılaştırma YAPILMAZ; PBKDF2 hash doğrulaması kullanılır
+    if (appPreferences.verifyPin(pin)) {
       if (keepUnlocked) {
         isSessionUnlocked = true
       }

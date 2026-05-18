@@ -20,8 +20,16 @@ import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import com.notdefterim.app.BuildConfig
 import com.notdefterim.app.data.local.NoteDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.security.SecureRandom
+import java.security.spec.KeySpec
+import javax.crypto.Cipher
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.PBEKeySpec
+import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 
 class GoogleDriveBackupRepositoryImpl @Inject constructor(
@@ -36,6 +44,11 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
     private const val MIME_TYPE_ZIP = "application/zip"
     private const val DB_NAME = "notdefterim_encrypted.db"
     private const val MAX_BACKUP_FILES = 5
+    /** Passphrase sarmalama için sabitler */
+    private const val ITERATION_COUNT = 65536
+    private const val KEY_LENGTH = 256
+    private const val KEY_WRAP_SALT_SIZE = 16
+    // DRIVE_BACKUP_WRAP_PASSWORD artık BuildConfig üzerinden okunuyor (local.properties'tan gelir)
   }
 
   override suspend fun backupToCloud(): Result<Unit> = withContext(Dispatchers.IO) {
@@ -168,7 +181,12 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
       .build()
   }
 
-  /** Veritabanı dosyalarını ve şifreleme anahtarını (passphrase) tek bir ZIP'te birleştirir. */
+  /**
+   * Veritabanı dosyalarını ve şifreleme anahtarını tek bir ZIP'te birleştirir.
+   *
+   * Güvenlik: Passphrase plain-text yazılmaz;
+   * sabit bir sarmalama şifresinden PBKDF2 ile türetilen AES-GCM anahtarıyla şifrelenir.
+   */
   private fun createBackupZip(): java.io.File {
     val zipFile = java.io.File(context.cacheDir, "temp_backup.zip")
     ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).use { zos ->
@@ -186,31 +204,66 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
         zos.closeEntry()
       }
 
-      // Anahtar (Passphrase) dosyası
+      // Passphrase'ı BuildConfig'ten gelen sarmalama şifresinden türetilen AES-GCM anahtarıyla şifreliyoruz
       val passphrase = encryptionHelper.getDatabasePassphrase()
-      val passphraseB64 = Base64.encodeToString(passphrase, Base64.NO_WRAP)
+      val wrapSalt = ByteArray(KEY_WRAP_SALT_SIZE).apply { SecureRandom().nextBytes(this) }
+      val wrapSpec: KeySpec = PBEKeySpec(BuildConfig.DRIVE_BACKUP_WRAP_PASSWORD.toCharArray(), wrapSalt, ITERATION_COUNT, KEY_LENGTH)
+      val wrapFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+      val wrapKey = SecretKeySpec(wrapFactory.generateSecret(wrapSpec).encoded, "AES")
+      val wrapCipher = Cipher.getInstance("AES/GCM/NoPadding")
+      val wrapIv = ByteArray(12).apply { SecureRandom().nextBytes(this) }
+      wrapCipher.init(Cipher.ENCRYPT_MODE, wrapKey, GCMParameterSpec(128, wrapIv))
+      val encryptedPassphrase = wrapCipher.doFinal(passphrase)
+
+      // Format: salt(16) | iv(12) | encryptedPassphrase
+      val keyConfigPayload = wrapSalt + wrapIv + encryptedPassphrase
       zos.putNextEntry(ZipEntry("key.config"))
-      zos.write(passphraseB64.toByteArray())
+      zos.write(keyConfigPayload)
       zos.closeEntry()
     }
     return zipFile
   }
 
-  /** İndirilen ZIP dosyasını açar ve veritabanı ile anahtarı doğru yerlerine yerleştirir. */
+  /**
+   * İndirilen ZIP dosyasını açar, passphrase'ı çözer ve veritabanı + anahtarı doğru yerlerine yerleştirir.
+   * Güvenlik: ZIP Slip saldırılarına karşı entry adları dolayılaması denetlenir.
+   */
   private fun extractBackupZip(zipFile: java.io.File) {
     ZipInputStream(BufferedInputStream(FileInputStream(zipFile))).use { zis ->
       var entry = zis.nextEntry
       while (entry != null) {
-        if (entry.name == "key.config") {
-          // Anahtarı geri yükle
-          val keyB64 = zis.readBytes().toString(Charsets.UTF_8)
-          val passphrase = Base64.decode(keyB64, Base64.NO_WRAP)
+        // Güvenlik: ZIP Slip saldırısını önlemek için entry adını temizle
+        val safeEntryName = entry.name.replace("..", "").trimStart('/')
+
+        if (safeEntryName == "key.config") {
+          val keyPayload = zis.readBytes()
+          val passphrase = if (keyPayload.size > 28) {
+            // Yeni format: şifrelemiş payload'ı çöz
+            val wrapSalt = keyPayload.copyOfRange(0, KEY_WRAP_SALT_SIZE)
+            val wrapIv = keyPayload.copyOfRange(KEY_WRAP_SALT_SIZE, KEY_WRAP_SALT_SIZE + 12)
+            val encryptedPassphrase = keyPayload.copyOfRange(KEY_WRAP_SALT_SIZE + 12, keyPayload.size)
+
+            val wrapSpec: KeySpec = PBEKeySpec(BuildConfig.DRIVE_BACKUP_WRAP_PASSWORD.toCharArray(), wrapSalt, ITERATION_COUNT, KEY_LENGTH)
+            val wrapFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+            val wrapKey = SecretKeySpec(wrapFactory.generateSecret(wrapSpec).encoded, "AES")
+            val wrapCipher = Cipher.getInstance("AES/GCM/NoPadding")
+            wrapCipher.init(Cipher.DECRYPT_MODE, wrapKey, GCMParameterSpec(128, wrapIv))
+            wrapCipher.doFinal(encryptedPassphrase)
+          } else {
+            // Eski format uyumluluk: Base64 plain-text
+            android.util.Base64.decode(keyPayload.toString(Charsets.UTF_8), android.util.Base64.NO_WRAP)
+          }
           encryptionHelper.restoreDatabasePassphrase(passphrase)
-        } else if (entry.name.startsWith(DB_NAME)) {
-          // Veritabanı dosyalarını geri yükle
-          val dbFile = context.getDatabasePath(entry.name)
-          FileOutputStream(dbFile).use { fos ->
-            zis.copyTo(fos)
+        } else if (safeEntryName.startsWith(DB_NAME)) {
+          // Güvenli yol doğrulaması
+          val targetFile = context.getDatabasePath(safeEntryName)
+          val canonicalDb = context.getDatabasePath(DB_NAME).canonicalPath
+          if (targetFile.canonicalPath.startsWith(canonicalDb.removeSuffix(DB_NAME))) {
+            FileOutputStream(targetFile).use { fos ->
+              zis.copyTo(fos)
+            }
+          } else {
+            android.util.Log.w("DriveBackup", "Güvensiz ZIP entry'si atlandı: ${entry.name}")
           }
         }
         zis.closeEntry()

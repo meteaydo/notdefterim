@@ -18,6 +18,10 @@ class ReminderManager @Inject constructor(
 
   private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
+  companion object {
+    private const val TAG = "ReminderManager"
+  }
+
   fun scheduleReminder(note: Note) {
     if (note.reminderAt == null) return
 
@@ -52,11 +56,11 @@ class ReminderManager @Inject constructor(
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
       }
     } catch (e: SecurityException) {
-      e.printStackTrace()
+      android.util.Log.e(TAG, "Exact alarm için izin yok, normal alarm deneniyor", e)
       try {
           alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
       } catch (ex: Exception) {
-          ex.printStackTrace()
+          android.util.Log.e(TAG, "Alarm ayarlanamadı (fallback da başarısız)", ex)
       }
     }
   }

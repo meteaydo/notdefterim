@@ -36,15 +36,15 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ExitToApp
+import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.FormatListBulleted
+import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.NoteAdd
+import androidx.compose.material.icons.automirrored.rounded.NoteAdd
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
@@ -282,7 +282,7 @@ fun NoteListScreen(
                       if (cat.name.equals("Alışveriş", ignoreCase = true)) {
                           Icon(Icons.Rounded.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp))
                       } else if (cat.name.equals("Yapılacaklar", ignoreCase = true)) {
-                          Icon(Icons.Rounded.FormatListBulleted, contentDescription = null, modifier = Modifier.size(14.dp))
+                          Icon(Icons.AutoMirrored.Rounded.FormatListBulleted, contentDescription = null, modifier = Modifier.size(14.dp))
                       } else if (cat.name.equals("Fikirler", ignoreCase = true)) {
                           Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(14.dp))
                       }
@@ -700,7 +700,7 @@ private fun NoteGrid(
               )
               androidx.compose.material3.ListItem(
                 headlineContent = { Text("Yüzen Pencerede Aç") },
-                leadingContent = { Icon(Icons.Rounded.ExitToApp, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
+                leadingContent = { Icon(Icons.AutoMirrored.Rounded.ExitToApp, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
                 modifier = Modifier.clickable {
                   val displayContent = if (note.isChecklist) {
                       try {
@@ -755,7 +755,7 @@ private fun EmptyNotesContent(
     verticalArrangement = Arrangement.Center
   ) {
     Icon(
-      imageVector = Icons.Rounded.NoteAdd,
+      imageVector = Icons.AutoMirrored.Rounded.NoteAdd,
       contentDescription = null,
       modifier = Modifier.size(80.dp),
       tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)

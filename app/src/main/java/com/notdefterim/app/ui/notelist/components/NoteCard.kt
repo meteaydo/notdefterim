@@ -21,7 +21,7 @@ import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.ShoppingCart
-import androidx.compose.material.icons.rounded.FormatListBulleted
+import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.foundation.layout.offset
@@ -207,7 +207,7 @@ fun NoteCard(
       val catName = note.category.name
       val catIcon = when {
           catName.equals("Alışveriş", ignoreCase = true) -> Icons.Rounded.ShoppingCart
-          catName.equals("Yapılacaklar", ignoreCase = true) -> Icons.Rounded.FormatListBulleted
+          catName.equals("Yapılacaklar", ignoreCase = true) -> Icons.AutoMirrored.Rounded.FormatListBulleted
           catName.equals("Fikirler", ignoreCase = true) -> Icons.Outlined.Lightbulb
           else -> Icons.Rounded.Bookmark
       }

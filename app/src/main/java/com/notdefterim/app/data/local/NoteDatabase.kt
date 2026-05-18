@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import android.content.Context
+import com.notdefterim.app.BuildConfig
 import com.notdefterim.app.data.local.entity.CategoryEntity
 import com.notdefterim.app.data.local.entity.NoteEntity
 import com.notdefterim.app.data.local.entity.PasswordEntity
@@ -117,9 +118,9 @@ abstract class NoteDatabase : RoomDatabase() {
       )
         .openHelperFactory(factory)
         .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
-        // Migrasyon stratejisi: şimdilik yıkım-yeniden yapım
-        // Üretimde Migration sınıfları eklenmelidir
-        .fallbackToDestructiveMigration()
+        // Güvenli migrasyon stratejisi: yalnızca debug build'de yıkım-yeniden yapma izni
+        // Release'de migration eksikse crash edilir; kullanıcı verisi sessizce SİLİNMEZ
+        .apply { if (BuildConfig.DEBUG) fallbackToDestructiveMigration() }
         .addCallback(object : RoomDatabase.Callback() {
           override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
@@ -147,9 +148,9 @@ abstract class NoteDatabase : RoomDatabase() {
             val ideaContent = "Yapay zeka entegreli not alma uygulaması yapabilirim. Çevrimdışı ve güvenli olmalı."
             db.execSQL("INSERT INTO notes (title, content, colorIndex, isPinned, createdAt, updatedAt, repeatInterval, viewCount, isLocked, isChecklist, categoryId) VALUES ('(Örnek) Yeni Proje Fikirleri', '$ideaContent', 2, 0, $time, $time, 'NONE', 0, 0, 0, 3)")
 
-            // Parolalar
-            db.execSQL("INSERT INTO passwords (platformName, username, passwordValue, createdAt, updatedAt, usageCount, categoryId) VALUES ('(Örnek) E-posta Hesabı', 'ornek@gmail.com', 'S1fre!123', $time, $time, 0, 6)")
-            db.execSQL("INSERT INTO passwords (platformName, username, passwordValue, createdAt, updatedAt, usageCount, categoryId) VALUES ('(Örnek) E-Devlet', '12345678901', 'EdVlet!987', $time, $time, 0, 7)")
+            // Parolalar — gerçek görünümlü kimlik bilgisi kullanılmaz (KVKK / Play Store uyumu)
+            db.execSQL("INSERT INTO passwords (platformName, username, passwordValue, createdAt, updatedAt, usageCount, categoryId) VALUES ('(Örnek) E-posta', 'ornek.kullanici', '***', $time, $time, 0, 6)")
+            db.execSQL("INSERT INTO passwords (platformName, username, passwordValue, createdAt, updatedAt, usageCount, categoryId) VALUES ('(Örnek) Kamu Portalı', 'kullanici_adi', '***', $time, $time, 0, 7)")
           }
         })
         .build()

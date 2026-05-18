@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.android)
@@ -19,6 +21,17 @@ android {
     versionName = "1.0.0"
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     resourceConfigurations += listOf("tr", "en", "ru", "es", "de", "fr")
+
+    // local.properties'tan gizli değerleri oku
+    val localPropsFile = rootProject.file("local.properties")
+    val localProperties = Properties()
+    if (localPropsFile.exists()) {
+      localProperties.load(localPropsFile.inputStream())
+    }
+    val driveWrapPassword: String = localProperties.getProperty(
+      "DRIVE_BACKUP_WRAP_PASSWORD"
+    ) ?: System.getenv("DRIVE_BACKUP_WRAP_PASSWORD") ?: "__MISSING_SECRET__"
+    buildConfigField("String", "DRIVE_BACKUP_WRAP_PASSWORD", "\"$driveWrapPassword\"")
   }
 
   buildTypes {
@@ -34,6 +47,7 @@ android {
 
   buildFeatures {
     compose = true
+    buildConfig = true
   }
 
   compileOptions {
@@ -95,6 +109,8 @@ dependencies {
   // Lifecycle
   implementation(libs.lifecycle.runtime.compose)
   implementation(libs.lifecycle.viewmodel.compose)
+  // ProcessLifecycleOwner — BroadcastReceiver içinde lifecycle-aware coroutine scope için
+  implementation(libs.lifecycle.process)
 
   // Coroutines
   implementation(libs.coroutines.android)

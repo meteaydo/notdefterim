@@ -31,14 +31,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
-import androidx.compose.material.icons.rounded.OpenInNew
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SwipeLeft
 import androidx.compose.material.icons.rounded.SwipeRight
@@ -88,7 +88,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -142,7 +142,7 @@ fun PasswordListScreen(
           navigationIcon = {
             if (onNavigateBack != null) {
               IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.back_button_desc))
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back_button_desc))
               }
             }
           },
@@ -531,26 +531,16 @@ fun PasswordCard(
 ) {
   var passwordVisible by remember { mutableStateOf(false) }
   var showMenu by remember { mutableStateOf(false) }
-  val clipboardManager = LocalClipboardManager.current
+  val clipboardManager = LocalClipboard.current
   val context = LocalContext.current
 
   val isThisCardCopied = copiedState?.first == password.id
   val copiedField = if (isThisCardCopied) copiedState?.second else CopiedField.NONE
 
+  // SwipeToDismiss: onEdit/onDelete yerine callback'ler positionalThreshold üzerinden tetiklenir
+  // confirmValueChange deprecated oldu; anchor mantığı SwipeToDismissBox içinde kalıcı olarak Settled'a döndürüyoruz
   val dismissState = androidx.compose.material3.rememberSwipeToDismissBoxState(
-    confirmValueChange = { dismissValue ->
-      when (dismissValue) {
-        androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd -> {
-          onEdit()
-          false
-        }
-        androidx.compose.material3.SwipeToDismissBoxValue.EndToStart -> {
-          onDelete()
-          false
-        }
-        else -> false
-      }
-    }
+    positionalThreshold = { totalDistance -> totalDistance * 0.4f }
   )
 
   androidx.compose.material3.SwipeToDismissBox(
@@ -643,7 +633,7 @@ fun PasswordCard(
                 },
                 modifier = Modifier.size(28.dp)
               ) {
-                Icon(Icons.Rounded.OpenInNew, contentDescription = stringResource(R.string.float_window_desc), tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = stringResource(R.string.float_window_desc), tint = MaterialTheme.colorScheme.primary)
               }
             }
             
@@ -660,7 +650,8 @@ fun PasswordCard(
                   .weight(1f)
                   .combinedClickable(
                     onClick = {
-                      clipboardManager.setText(AnnotatedString(password.username))
+                       clipboardManager.nativeClipboard.setPrimaryClip(
+                          android.content.ClipData.newPlainText("", password.username))
                       onCopy(CopiedField.USERNAME)
                       Toast.makeText(context, context.getString(R.string.username_copied), Toast.LENGTH_SHORT).show()
                     },
@@ -703,7 +694,8 @@ fun PasswordCard(
                     .combinedClickable(
                       onClick = {
                         val performCopy = {
-                          clipboardManager.setText(AnnotatedString(password.passwordValue))
+                          clipboardManager.nativeClipboard.setPrimaryClip(
+                            android.content.ClipData.newPlainText("", password.passwordValue))
                           onCopy(CopiedField.PASSWORD)
                           Toast.makeText(context, context.getString(R.string.password_copied), Toast.LENGTH_SHORT).show()
                         }
@@ -912,7 +904,7 @@ fun AddPasswordDialog(
             onValueChange = { username = it },
             label = { Text(stringResource(R.string.username)) },
             singleLine = true,
-            modifier = Modifier.menuAnchor(),
+            modifier = Modifier.menuAnchor(androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true),
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = usernameExpanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
           )
@@ -949,7 +941,7 @@ fun AddPasswordDialog(
             onValueChange = { },
             readOnly = true,
             label = { Text("Kategori") },
-            modifier = Modifier.menuAnchor(),
+            modifier = Modifier.menuAnchor(androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true),
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
           )
@@ -1048,7 +1040,7 @@ fun EditPasswordDialog(
             onValueChange = { username = it },
             label = { Text(stringResource(R.string.username)) },
             singleLine = true,
-            modifier = Modifier.menuAnchor(),
+            modifier = Modifier.menuAnchor(androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true),
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = usernameExpanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
           )
@@ -1085,7 +1077,7 @@ fun EditPasswordDialog(
             onValueChange = { },
             readOnly = true,
             label = { Text("Kategori") },
-            modifier = Modifier.menuAnchor(),
+            modifier = Modifier.menuAnchor(androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true),
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
           )

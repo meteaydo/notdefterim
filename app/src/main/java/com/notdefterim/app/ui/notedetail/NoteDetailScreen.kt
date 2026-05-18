@@ -32,9 +32,9 @@ import androidx.compose.material3.InputChip
 import androidx.compose.material3.Button
 import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ExitToApp
+import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -47,7 +47,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.automirrored.rounded.KeyboardReturn
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.FormatListBulleted
+import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Notifications
@@ -320,7 +320,7 @@ fun NoteDetailScreen(
             )
           ) {
             Icon(
-              imageVector = Icons.Rounded.ArrowBack,
+              imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
               contentDescription = stringResource(R.string.back_button_desc),
               modifier = Modifier.size(28.dp)
             )
@@ -385,7 +385,7 @@ fun NoteDetailScreen(
             )
           ) {
             Icon(
-              imageVector = Icons.Rounded.FormatListBulleted,
+              imageVector = Icons.AutoMirrored.Rounded.FormatListBulleted,
               contentDescription = "Liste Modu"
             )
           }
@@ -401,7 +401,7 @@ fun NoteDetailScreen(
             // Optional: Close current activity/screen if requested, but better to keep it or let user decide
           }) {
             Icon(
-              imageVector = Icons.Rounded.ExitToApp,
+              imageVector = Icons.AutoMirrored.Rounded.ExitToApp,
               contentDescription = "Yüzen Pencerede Aç",
               tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -554,7 +554,7 @@ fun NoteDetailScreen(
                   if (cat.name.equals("Alışveriş", ignoreCase = true)) {
                       Icon(Icons.Rounded.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp))
                   } else if (cat.name.equals("Yapılacaklar", ignoreCase = true)) {
-                      Icon(Icons.Rounded.FormatListBulleted, contentDescription = null, modifier = Modifier.size(14.dp))
+                      Icon(Icons.AutoMirrored.Rounded.FormatListBulleted, contentDescription = null, modifier = Modifier.size(14.dp))
                   } else if (cat.name.equals("Fikirler", ignoreCase = true)) {
                       Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(14.dp))
                   }

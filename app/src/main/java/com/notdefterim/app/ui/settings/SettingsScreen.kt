@@ -15,12 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.CloudSync
-import androidx.compose.material.icons.rounded.ExitToApp
+import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -178,7 +178,7 @@ fun SettingsScreen(
         title = { Text(stringResource(R.string.settings_title)) },
         navigationIcon = {
           IconButton(onClick = onNavigateBack) {
-            Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.back_button_desc))
+            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back_button_desc))
           }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -210,7 +210,7 @@ fun SettingsScreen(
           colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
           headlineContent = { Text(stringResource(R.string.language_section)) },
           supportingContent = { Text(stringResource(R.string.language_description)) },
-          trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+          trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
         )
       }
 
@@ -233,7 +233,7 @@ fun SettingsScreen(
           colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
           headlineContent = { Text("Başlangıç Ekranı") },
           supportingContent = { Text(behaviorText) },
-          trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+          trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
         )
       }
 
@@ -252,7 +252,7 @@ fun SettingsScreen(
           colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
           headlineContent = { Text(stringResource(R.string.auto_lock_section)) },
           supportingContent = { Text(stringResource(currentTimeout.titleResId)) },
-          trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+          trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
         )
       }
 
@@ -271,7 +271,7 @@ fun SettingsScreen(
           colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
           headlineContent = { Text(stringResource(R.string.reminder_section)) },
           supportingContent = { Text(stringResource(currentReminder.titleResId)) },
-          trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+          trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
         )
       }
 
@@ -291,7 +291,7 @@ fun SettingsScreen(
           supportingContent = { 
             Text(stringResource(if (appPin == null) R.string.app_pin_not_set else R.string.app_pin_active)) 
           },
-          trailingContent = { Icon(Icons.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+          trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
         )
       }
 
@@ -326,7 +326,7 @@ fun SettingsScreen(
                   )
                 ) {
                   Icon(
-                    Icons.Rounded.ExitToApp,
+                    Icons.AutoMirrored.Rounded.ExitToApp,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
                   )

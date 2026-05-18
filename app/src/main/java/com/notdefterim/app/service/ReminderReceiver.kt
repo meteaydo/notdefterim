@@ -13,7 +13,8 @@ import com.notdefterim.app.R
 import com.notdefterim.app.domain.model.RepeatInterval
 import com.notdefterim.app.domain.repository.NoteRepository
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -45,7 +46,8 @@ class ReminderReceiver : BroadcastReceiver() {
         val previewLines = items.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
         displayContent = "$summary\n$previewLines"
       } catch (e: Exception) {
-        // Fallback to original raw content if parsing fails
+        // JSON parse ba\u015far\u0131s\u0131z \u2014 ham i\u00e7erik bildirimde g\u00f6sterilecek
+        android.util.Log.w("ReminderReceiver", "Checklist parse hatas\u0131, ham i\u00e7erik kullan\u0131l\u0131yor", e)
       }
     }
 
@@ -53,7 +55,9 @@ class ReminderReceiver : BroadcastReceiver() {
 
     if (noteId > 0) {
       val pendingResult = goAsync()
-      CoroutineScope(Dispatchers.IO).launch {
+      // ProcessLifecycleOwner: uygulama process'ı boyunca yaşayan lifecycle-aware scope.
+      // Bağımsız CoroutineScope(Dispatchers.IO) yerine kullanılır; orphan scope bırakmız.
+      ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
         try {
           val note = repository.getNoteById(noteId)
           if (note != null && note.repeatInterval != RepeatInterval.NONE) {

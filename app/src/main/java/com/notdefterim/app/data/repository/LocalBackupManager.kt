@@ -36,16 +36,20 @@ class LocalBackupManager @Inject constructor(
   companion object {
     private const val DB_NAME = "notdefterim_encrypted.db"
     private const val MAGIC_HEADER = "NOTDEF"
-    private const val VERSION = 1
+    /** v2: DB passphrase artık yedek şifresiyle ayrıca şifreleniyor */
+    private const val VERSION = 2
     private const val ITERATION_COUNT = 65536
     private const val KEY_LENGTH = 256
+    /** Passphrase sarmalama anahtarı için ayrı salt boyutu */
+    private const val KEY_WRAP_SALT_SIZE = 16
   }
 
   suspend fun exportToFile(password: String, hint: String): Result<File> = withContext(Dispatchers.IO) {
     try {
       noteDatabase.query(androidx.sqlite.db.SimpleSQLiteQuery("PRAGMA wal_checkpoint(FULL)"))
 
-      val zipFile = createBackupZip()
+      // Passphrase'ı yedek şifresiyle sar (wrap) — ZIP oluşturmadan önce
+      val zipFile = createBackupZip(password)
 
       val salt = ByteArray(16).apply { SecureRandom().nextBytes(this) }
       val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
@@ -170,11 +174,14 @@ class LocalBackupManager @Inject constructor(
           FileOutputStream(zipFile).use { fos ->
             fos.write(decryptedBytes)
           }
+
+          // v2 yedeklerinde passphrase ZIP içinde şifrelendi;
+          // v1 yedeklerinde ise passphrase ZIP içinde açıkça yer alıyordu.
+          extractBackupZip(zipFile, if (version >= 2) password else null)
         }
       } ?: throw Exception(context.getString(com.notdefterim.app.R.string.file_read_failed, ""))
 
       noteDatabase.close()
-      extractBackupZip(zipFile)
       zipFile.delete()
 
       val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
@@ -190,7 +197,14 @@ class LocalBackupManager @Inject constructor(
     }
   }
 
-  private fun createBackupZip(): File {
+  /**
+   * Veritabanı dosyalarını ve şifreleme anahtarını (passphrase) tek bir ZIP'te birleştirir.
+   *
+   * Güvenlik: Passphrase'i plain-text yazmak yerine kullanıcının yedek şifresiyle
+   * türetilmiş ayrı bir AES-GCM anahtarıyla şifreler.
+   * Format: [salt(16)] + [iv(12)] + [AES-GCM(passphrase)]
+   */
+  private fun createBackupZip(backupPassword: String): File {
     val zipFile = File(context.cacheDir, "local_backup.zip")
     ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).use { zos ->
       val dbFile = context.getDatabasePath(DB_NAME)
@@ -206,27 +220,69 @@ class LocalBackupManager @Inject constructor(
         zos.closeEntry()
       }
 
+      // Passphrase'ı yedek şifresiyle türetilen anahtar ile şifreliyoruz
       val passphrase = encryptionHelper.getDatabasePassphrase()
-      val passphraseB64 = Base64.encodeToString(passphrase, Base64.NO_WRAP)
+      val wrapSalt = ByteArray(KEY_WRAP_SALT_SIZE).apply { SecureRandom().nextBytes(this) }
+      val wrapSpec: KeySpec = PBEKeySpec(backupPassword.toCharArray(), wrapSalt, ITERATION_COUNT, KEY_LENGTH)
+      val wrapFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+      val wrapKey = SecretKeySpec(wrapFactory.generateSecret(wrapSpec).encoded, "AES")
+
+      val wrapCipher = Cipher.getInstance("AES/GCM/NoPadding")
+      val wrapIv = ByteArray(12).apply { SecureRandom().nextBytes(this) }
+      wrapCipher.init(Cipher.ENCRYPT_MODE, wrapKey, GCMParameterSpec(128, wrapIv))
+      val encryptedPassphrase = wrapCipher.doFinal(passphrase)
+
+      // Format: salt(16) | iv(12) | encryptedPassphrase
+      val keyConfigPayload = wrapSalt + wrapIv + encryptedPassphrase
       zos.putNextEntry(ZipEntry("key.config"))
-      zos.write(passphraseB64.toByteArray())
+      zos.write(keyConfigPayload)
       zos.closeEntry()
     }
     return zipFile
   }
 
-  private fun extractBackupZip(zipFile: File) {
+  /**
+   * ZIP içindeki passphrase'i çözer ve veritabanı dosyalarını geri yükler.
+   *
+   * @param backupPassword v2 yedekler için gerekli; null ise passphrase plain-text olarak okunur (v1 uyumluluğu).
+   */
+  private fun extractBackupZip(zipFile: File, backupPassword: String?) {
     ZipInputStream(BufferedInputStream(FileInputStream(zipFile))).use { zis ->
       var entry = zis.nextEntry
       while (entry != null) {
-        if (entry.name == "key.config") {
-          val keyB64 = zis.readBytes().toString(Charsets.UTF_8)
-          val passphrase = Base64.decode(keyB64, Base64.NO_WRAP)
+        // Güvenlik: ZIP Slip saldırısını önlemek için entry adını temizle
+        val safeEntryName = entry.name.replace("..", "").trimStart('/')
+
+        if (safeEntryName == "key.config") {
+          val keyPayload = zis.readBytes()
+          val passphrase = if (backupPassword != null && keyPayload.size > 28) {
+            // v2: şifrelemiş payload'ı çöz
+            val wrapSalt = keyPayload.copyOfRange(0, KEY_WRAP_SALT_SIZE)
+            val wrapIv = keyPayload.copyOfRange(KEY_WRAP_SALT_SIZE, KEY_WRAP_SALT_SIZE + 12)
+            val encryptedPassphrase = keyPayload.copyOfRange(KEY_WRAP_SALT_SIZE + 12, keyPayload.size)
+
+            val wrapSpec: KeySpec = PBEKeySpec(backupPassword.toCharArray(), wrapSalt, ITERATION_COUNT, KEY_LENGTH)
+            val wrapFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+            val wrapKey = SecretKeySpec(wrapFactory.generateSecret(wrapSpec).encoded, "AES")
+
+            val wrapCipher = Cipher.getInstance("AES/GCM/NoPadding")
+            wrapCipher.init(Cipher.DECRYPT_MODE, wrapKey, GCMParameterSpec(128, wrapIv))
+            wrapCipher.doFinal(encryptedPassphrase)
+          } else {
+            // v1 uyumluluk: Base64 plain-text
+            android.util.Base64.decode(keyPayload.toString(Charsets.UTF_8), android.util.Base64.NO_WRAP)
+          }
           encryptionHelper.restoreDatabasePassphrase(passphrase)
-        } else if (entry.name.startsWith(DB_NAME)) {
-          val dbFile = context.getDatabasePath(entry.name)
-          FileOutputStream(dbFile).use { fos ->
-            zis.copyTo(fos)
+        } else if (safeEntryName.startsWith(DB_NAME)) {
+          // Güvenli yol doğrulaması — getDatabasePath ile kanonik yol al
+          val targetFile = context.getDatabasePath(safeEntryName)
+          val canonicalDb = context.getDatabasePath(DB_NAME).canonicalPath
+          if (targetFile.canonicalPath.startsWith(canonicalDb.removeSuffix(DB_NAME))) {
+            FileOutputStream(targetFile).use { fos ->
+              zis.copyTo(fos)
+            }
+          } else {
+            android.util.Log.w("LocalBackupManager", "Güvensiz ZIP entry'si atlandı: ${entry.name}")
           }
         }
         zis.closeEntry()

@@ -43,6 +43,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SwipeLeft
 import androidx.compose.material.icons.rounded.SwipeRight
 import androidx.compose.material.icons.rounded.TouchApp
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -65,6 +66,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import com.notdefterim.app.ui.notelist.components.SmartFlowRow
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.BusinessCenter
@@ -75,6 +78,7 @@ import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
@@ -101,6 +105,7 @@ import com.notdefterim.app.domain.model.Password
 import com.notdefterim.app.service.FloatingPasswordService
 import com.notdefterim.app.ui.auth.AuthViewModel
 import com.notdefterim.app.ui.components.ActionPinDialog
+import com.notdefterim.app.ui.components.PasswordGeneratorCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -537,14 +542,26 @@ fun PasswordCard(
   val isThisCardCopied = copiedState?.first == password.id
   val copiedField = if (isThisCardCopied) copiedState?.second else CopiedField.NONE
 
-  // SwipeToDismiss: onEdit/onDelete yerine callback'ler positionalThreshold üzerinden tetiklenir
-  // confirmValueChange deprecated oldu; anchor mantığı SwipeToDismissBox içinde kalıcı olarak Settled'a döndürüyoruz
   val dismissState = androidx.compose.material3.rememberSwipeToDismissBoxState(
+    confirmValueChange = { dismissValue ->
+      when (dismissValue) {
+        androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd -> {
+          onEdit()
+          false
+        }
+        androidx.compose.material3.SwipeToDismissBoxValue.EndToStart -> {
+          onDelete()
+          false
+        }
+        else -> false
+      }
+    },
     positionalThreshold = { totalDistance -> totalDistance * 0.4f }
   )
 
   androidx.compose.material3.SwipeToDismissBox(
     state = dismissState,
+    modifier = Modifier.fillMaxWidth(),
     backgroundContent = {
       val direction = dismissState.dismissDirection
       val color = when (direction) {
@@ -669,8 +686,15 @@ fun PasswordCard(
                     Icon(
                       Icons.Rounded.CheckCircle,
                       contentDescription = stringResource(R.string.copied_desc),
-                      modifier = Modifier.size(14.dp).padding(start = 4.dp),
+                      modifier = Modifier.size(15.dp).padding(start = 4.dp),
                       tint = MaterialTheme.colorScheme.primary
+                    )
+                  } else {
+                    Icon(
+                      Icons.Rounded.ContentCopy,
+                      contentDescription = "Kullanıcı Adını Kopyala",
+                      modifier = Modifier.size(15.dp).padding(start = 4.dp),
+                      tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                     )
                   }
                 }
@@ -730,8 +754,15 @@ fun PasswordCard(
                       Icon(
                         Icons.Rounded.CheckCircle,
                         contentDescription = stringResource(R.string.copied_desc),
-                        modifier = Modifier.size(14.dp).padding(end = 4.dp),
+                        modifier = Modifier.size(15.dp).padding(end = 4.dp),
                         tint = MaterialTheme.colorScheme.primary
+                      )
+                    } else {
+                      Icon(
+                        Icons.Rounded.ContentCopy,
+                        contentDescription = "Parolayı Kopyala",
+                        modifier = Modifier.size(15.dp).padding(end = 4.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                       )
                     }
                     Text(
@@ -882,6 +913,7 @@ fun AddPasswordDialog(
   var selectedCategory by remember { mutableStateOf<com.notdefterim.app.domain.model.Category?>(null) }
   var usernameExpanded by remember { mutableStateOf(false) }
   var categoryExpanded by remember { mutableStateOf(false) }
+  var showGenerator by remember { mutableStateOf(false) }
   val context = LocalContext.current
 
   AlertDialog(
@@ -929,8 +961,40 @@ fun AddPasswordDialog(
           value = password,
           onValueChange = { password = it },
           label = { Text(stringResource(R.string.password)) },
-          singleLine = true
+          singleLine = true,
+          modifier = Modifier.fillMaxWidth()
         )
+        
+        TextButton(
+          onClick = { showGenerator = true },
+          modifier = Modifier.align(Alignment.End)
+        ) {
+          Icon(
+            imageVector = Icons.Rounded.AutoAwesome,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp)
+          )
+          Spacer(modifier = Modifier.width(4.dp))
+          Text(text = "Şifre Üret")
+        }
+
+        if (showGenerator) {
+          val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+          ModalBottomSheet(
+            onDismissRequest = { showGenerator = false },
+            sheetState = sheetState
+          ) {
+            PasswordGeneratorCard(
+              onPasswordGenerated = { generated ->
+                password = generated
+                showGenerator = false
+              },
+              modifier = Modifier
+                .navigationBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+            )
+          }
+        }
         
         ExposedDropdownMenuBox(
           expanded = categoryExpanded,
@@ -1018,6 +1082,7 @@ fun EditPasswordDialog(
   var selectedCategory by remember { mutableStateOf<com.notdefterim.app.domain.model.Category?>(password.category) }
   var usernameExpanded by remember { mutableStateOf(false) }
   var categoryExpanded by remember { mutableStateOf(false) }
+  var showGenerator by remember { mutableStateOf(false) }
   val context = LocalContext.current
 
   AlertDialog(
@@ -1065,8 +1130,40 @@ fun EditPasswordDialog(
           value = pass,
           onValueChange = { pass = it },
           label = { Text(stringResource(R.string.password)) },
-          singleLine = true
+          singleLine = true,
+          modifier = Modifier.fillMaxWidth()
         )
+        
+        TextButton(
+          onClick = { showGenerator = true },
+          modifier = Modifier.align(Alignment.End)
+        ) {
+          Icon(
+            imageVector = Icons.Rounded.AutoAwesome,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp)
+          )
+          Spacer(modifier = Modifier.width(4.dp))
+          Text(text = "Şifre Üret")
+        }
+
+        if (showGenerator) {
+          val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+          ModalBottomSheet(
+            onDismissRequest = { showGenerator = false },
+            sheetState = sheetState
+          ) {
+            PasswordGeneratorCard(
+              onPasswordGenerated = { generated ->
+                pass = generated
+                showGenerator = false
+              },
+              modifier = Modifier
+                .navigationBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+            )
+          }
+        }
         
         ExposedDropdownMenuBox(
           expanded = categoryExpanded,

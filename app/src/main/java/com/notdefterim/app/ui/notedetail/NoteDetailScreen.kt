@@ -59,6 +59,7 @@ import androidx.compose.foundation.layout.width
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.provider.Settings
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -171,6 +172,7 @@ fun NoteDetailScreen(
   val focusManager = LocalFocusManager.current
 
   var showDeleteDialog by remember { mutableStateOf(false) }
+  var showOverlayPermissionDialog by remember { mutableStateOf(false) }
 
   val scrollState = rememberScrollState()
   var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -392,13 +394,16 @@ fun NoteDetailScreen(
 
           // Yüzen Pencerede Aç
           IconButton(onClick = {
-            val displayContent = if (isChecklist) {
-                viewModel.checklistItems.value.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
+            if (!Settings.canDrawOverlays(context)) {
+              showOverlayPermissionDialog = true
             } else {
-                content
+              val displayContent = if (isChecklist) {
+                  viewModel.checklistItems.value.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
+              } else {
+                  content
+              }
+              com.notdefterim.app.service.FloatingNoteManager.show(context, title, displayContent)
             }
-            com.notdefterim.app.service.FloatingNoteManager.show(context, title, displayContent)
-            // Optional: Close current activity/screen if requested, but better to keep it or let user decide
           }) {
             Icon(
               imageVector = Icons.AutoMirrored.Rounded.ExitToApp,
@@ -948,6 +953,30 @@ fun NoteDetailScreen(
       onSave = { newPin, newHint, newScope -> 
         authViewModel.setAppPin(newPin, newHint) 
         authViewModel.setAppPinScope(newScope)
+      }
+    )
+  }
+
+  if (showOverlayPermissionDialog) {
+    AlertDialog(
+      onDismissRequest = { showOverlayPermissionDialog = false },
+      title = { Text("Diğer Uygulamaların Üzerinde Gösterme İzni") },
+      text = { Text("Yüzen not pencerelerini kullanabilmek için bu izni vermeniz gerekmektedir. İzin sayesinde notlarınızı diğer uygulamaların üzerindeyken de görebilirsiniz.") },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            showOverlayPermissionDialog = false
+            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+            context.startActivity(intent)
+          }
+        ) {
+          Text("Ayarlara Git")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showOverlayPermissionDialog = false }) {
+          Text("İptal")
+        }
       }
     )
   }

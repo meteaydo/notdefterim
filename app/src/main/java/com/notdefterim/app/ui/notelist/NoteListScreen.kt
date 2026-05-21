@@ -1,5 +1,7 @@
 package com.notdefterim.app.ui.notelist
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -640,6 +642,32 @@ private fun NoteGrid(
   modifier: Modifier = Modifier
 ) {
   val context = androidx.compose.ui.platform.LocalContext.current
+  var showOverlayPermissionDialog by remember { mutableStateOf(false) }
+
+  if (showOverlayPermissionDialog) {
+    AlertDialog(
+      onDismissRequest = { showOverlayPermissionDialog = false },
+      title = { Text("Diğer Uygulamaların Üzerinde Gösterme İzni") },
+      text = { Text("Yüzen not pencerelerini kullanabilmek için bu izni vermeniz gerekmektedir. İzin sayesinde notlarınızı diğer uygulamaların üzerindeyken de görebilirsiniz.") },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            showOverlayPermissionDialog = false
+            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+            context.startActivity(intent)
+          }
+        ) {
+          Text("Ayarlara Git")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showOverlayPermissionDialog = false }) {
+          Text("İptal")
+        }
+      }
+    )
+  }
+
   LazyVerticalStaggeredGrid(
     columns = StaggeredGridCells.Adaptive(minSize = 160.dp),
     verticalItemSpacing = 8.dp,
@@ -702,21 +730,25 @@ private fun NoteGrid(
                 headlineContent = { Text("Yüzen Pencerede Aç") },
                 leadingContent = { Icon(Icons.AutoMirrored.Rounded.ExitToApp, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
                 modifier = Modifier.clickable {
-                  val displayContent = if (note.isChecklist) {
-                      try {
-                          val items = kotlinx.serialization.json.Json.decodeFromString<List<com.notdefterim.app.domain.model.ChecklistItem>>(note.content)
-                          items.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
-                      } catch (e: Exception) {
-                          note.content
-                      }
+                  if (!Settings.canDrawOverlays(context)) {
+                    showOverlayPermissionDialog = true
                   } else {
-                      note.content
+                    val displayContent = if (note.isChecklist) {
+                        try {
+                            val items = kotlinx.serialization.json.Json.decodeFromString<List<com.notdefterim.app.domain.model.ChecklistItem>>(note.content)
+                            items.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
+                        } catch (e: Exception) {
+                            note.content
+                        }
+                    } else {
+                        note.content
+                    }
+                    com.notdefterim.app.service.FloatingNoteManager.show(
+                      context,
+                      note.title,
+                      displayContent
+                    )
                   }
-                  com.notdefterim.app.service.FloatingNoteManager.show(
-                    context,
-                    note.title,
-                    displayContent
-                  )
                   showMenu = false
                 }
               )

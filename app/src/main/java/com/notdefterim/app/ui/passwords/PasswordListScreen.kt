@@ -536,6 +536,7 @@ fun PasswordCard(
 ) {
   var passwordVisible by remember { mutableStateOf(false) }
   var showMenu by remember { mutableStateOf(false) }
+  var showOverlayPermissionDialog by remember { mutableStateOf(false) }
   val clipboardManager = LocalClipboard.current
   val context = LocalContext.current
 
@@ -636,9 +637,7 @@ fun PasswordCard(
               IconButton(
                 onClick = {
                   if (!Settings.canDrawOverlays(context)) {
-                    Toast.makeText(context, context.getString(R.string.overlay_permission_request), Toast.LENGTH_LONG).show()
-                    val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-                    context.startActivity(intent)
+                    showOverlayPermissionDialog = true
                   } else {
                     com.notdefterim.app.service.FloatingWidgetManager.show(
                       context = context,
@@ -894,6 +893,29 @@ fun PasswordCard(
         }
       }
       
+      if (showOverlayPermissionDialog) {
+        AlertDialog(
+          onDismissRequest = { showOverlayPermissionDialog = false },
+          title = { Text("Diğer Uygulamaların Üzerinde Gösterme İzni") },
+          text = { Text("Yüzen parola kartlarını kullanabilmek için bu izni vermeniz gerekmektedir. İzin sayesinde parolalarınızı diğer uygulamaların üzerindeyken de görebilir ve kolayca kopyalayabilirsiniz.") },
+          confirmButton = {
+            TextButton(
+              onClick = {
+                showOverlayPermissionDialog = false
+                val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+                context.startActivity(intent)
+              }
+            ) {
+              Text("Ayarlara Git")
+            }
+          },
+          dismissButton = {
+            TextButton(onClick = { showOverlayPermissionDialog = false }) {
+              Text("İptal")
+            }
+          }
+        )
+      }
     }
     }
   )

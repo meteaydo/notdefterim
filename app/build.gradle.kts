@@ -7,6 +7,7 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.ksp)
   alias(libs.plugins.hilt)
+  alias(libs.plugins.roborazzi)
 }
 
 android {
@@ -57,6 +58,16 @@ android {
 
   kotlinOptions {
     jvmTarget = "17"
+  }
+
+  testOptions {
+    unitTests {
+      // Robolectric'in gerçek kaynakları (string, tema, drawable) yükleyebilmesi için
+      isIncludeAndroidResources = true
+      all {
+        it.maxHeapSize = "1g"
+      }
+    }
   }
 
   packaging {
@@ -128,4 +139,18 @@ dependencies {
   // Test
   testImplementation(libs.junit)
   androidTestImplementation(libs.junit.ext)
+
+  // Ekran görüntüsü testleri: Robolectric + Roborazzi
+  testImplementation(composeBom)
+  testImplementation(libs.compose.ui.test.junit4)
+  debugImplementation(libs.compose.ui.test.manifest)
+  testImplementation(libs.robolectric)
+  testImplementation(libs.roborazzi)
+  testImplementation(libs.roborazzi.compose)
+  testImplementation(libs.roborazzi.junit.rule)
+}
+
+// Referans görüntüler git'e eklenir; verifyRoborazziDebug bunlarla karşılaştırır.
+roborazzi {
+  outputDir.set(file("src/test/screenshots"))
 }

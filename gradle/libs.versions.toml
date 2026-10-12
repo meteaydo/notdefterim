@@ -21,6 +21,9 @@ googleApiServicesDrive = "v3-rev20240521-2.0.0"
 googleHttpClientGson = "1.45.1"
 jUnit = "4.13.2"
 jUnitExt = "1.2.1"
+robolectric = "4.17"
+# 1.61+ Kotlin 2.3 ile derlendi; projenin Kotlin 2.1 derleyicisi okuyamıyor. Kotlin yükseltilince güncellenebilir.
+roborazzi = "1.60.0"
 
 [libraries]
 # Compose BOM
@@ -75,6 +78,14 @@ google-http-client-gson = { group = "com.google.http-client", name = "google-htt
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "jUnit" }
 junit-ext = { group = "androidx.test.ext", name = "junit", version.ref = "jUnitExt" }
+compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+
+# Ekran görüntüsü testleri (JVM üzerinde, emülatörsüz)
+roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
+roborazzi-junit-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -83,3 +94,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }

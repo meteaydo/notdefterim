@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -91,6 +93,10 @@ class NoteDetailViewModel @Inject constructor(
   val events = _events.asSharedFlow()
 
   private var currentNote: Note? = null
+
+  // Arka plan kaydı ile geri tuşu kaydı aynı anda çalışıp yeni notu iki kez eklemesin
+  private val saveMutex = Mutex()
+  private var savedInBackground = false
 
   init {
     if (noteId > 0L) {
@@ -228,94 +234,124 @@ class NoteDetailViewModel @Inject constructor(
 
   fun saveNote() {
     viewModelScope.launch {
-      val finalContent = if (_isChecklist.value) {
-          Json.encodeToString(_checklistItems.value)
-      } else {
-          _content.value.trim()
-      }
-
-      val isNoteEmpty = _title.value.isBlank() && finalContent.isBlank() && (!_isChecklist.value || _checklistItems.value.isEmpty())
-
-      if (isNoteEmpty) {
-        if (noteId > 0L) {
-            // Var olan bir not tamamen boşaltılmışsa onu sil
-            reminderManager.cancelReminder(noteId)
-            deleteNoteUseCase(noteId)
-        }
-        // Boş not — sessizce geri dön
-        _events.emit(NoteDetailEvent.NavigateBack(showSavedMessage = false))
-        return@launch
-      }
-
-      if (noteId > 0L && currentNote != null) {
-        // Düzenleme
-        val hasChanges = currentNote!!.title != _title.value.trim() ||
-            currentNote!!.content != finalContent ||
-            currentNote!!.color != _selectedColor.value ||
-            currentNote!!.category != _selectedCategory.value ||
-            currentNote!!.isPinned != _isPinned.value ||
-            currentNote!!.isLocked != _isLocked.value ||
-            currentNote!!.reminderAt != _reminderAt.value ||
-            currentNote!!.repeatInterval != _repeatInterval.value ||
-            currentNote!!.isChecklist != _isChecklist.value
-
-        if (!hasChanges) {
-            _events.emit(NoteDetailEvent.NavigateBack(showSavedMessage = false))
-            return@launch
-        }
-
-        val updatedNote = currentNote!!.copy(
-          title = _title.value.trim(),
-          content = finalContent,
-          color = _selectedColor.value,
-          category = _selectedCategory.value,
-          isPinned = _isPinned.value,
-          isLocked = _isLocked.value,
-          reminderAt = _reminderAt.value,
-          repeatInterval = _repeatInterval.value,
-          isChecklist = _isChecklist.value,
-          viewCount = currentNote!!.viewCount // viewCount'u koru
-        )
-        updateNoteUseCase(updatedNote)
-        if (updatedNote.reminderAt != null) {
-          reminderManager.scheduleReminder(updatedNote)
-        } else {
-          reminderManager.cancelReminder(updatedNote.id)
-        }
-      } else {
-        // Yeni not
-        val newNote = Note(
-          title = _title.value.trim(),
-          content = finalContent,
-          color = _selectedColor.value,
-          category = _selectedCategory.value,
-          isPinned = _isPinned.value,
-          isLocked = _isLocked.value,
-          reminderAt = _reminderAt.value,
-          repeatInterval = _repeatInterval.value,
-          isChecklist = _isChecklist.value
-        )
-        val result = addNoteUseCase(newNote)
-        result.onSuccess { generatedId ->
-          if (newNote.reminderAt != null) {
-            reminderManager.scheduleReminder(newNote.copy(id = generatedId))
-          }
-        }
-      }
-
-      _events.emit(NoteDetailEvent.NavigateBack(showSavedMessage = true))
+      val result = persistNote(deleteIfEmpty = true)
+      // Değişiklikler arka planda zaten kaydedildiyse de "kaydedildi" bildirimi gösterilir
+      val showSavedMessage = result == SaveResult.SAVED ||
+          (result == SaveResult.UNCHANGED && savedInBackground)
+      _events.emit(NoteDetailEvent.NavigateBack(showSavedMessage = showSavedMessage))
     }
+  }
+
+  /**
+   * Ekran arka plana geçerken (başka uygulama, ekran kapanması, otomatik kilit) çağrılır.
+   * Geri dönmeden kaydeder; boşaltılmış notu silmez, çünkü kullanıcı düzenlemenin ortasında olabilir.
+   */
+  fun saveInBackground() {
+    viewModelScope.launch {
+      if (persistNote(deleteIfEmpty = false) == SaveResult.SAVED) {
+        savedInBackground = true
+      }
+    }
+  }
+
+  private suspend fun persistNote(deleteIfEmpty: Boolean): SaveResult =
+    saveMutex.withLock { persistNoteLocked(deleteIfEmpty) }
+
+  private suspend fun persistNoteLocked(deleteIfEmpty: Boolean): SaveResult {
+    // Düzenlenen not henüz yüklenmediyse alanlar boştur; kaydetmek notu siler ya da kopyalardı
+    if (noteId > 0L && currentNote == null) return SaveResult.UNCHANGED
+
+    val finalContent = if (_isChecklist.value) {
+        Json.encodeToString(_checklistItems.value)
+    } else {
+        _content.value.trim()
+    }
+
+    val isNoteEmpty = _title.value.isBlank() && finalContent.isBlank() && (!_isChecklist.value || _checklistItems.value.isEmpty())
+
+    if (isNoteEmpty) {
+      val savedId = currentNote?.id ?: 0L
+      if (deleteIfEmpty && savedId > 0L) {
+          // Var olan bir not tamamen boşaltılmışsa onu sil
+          reminderManager.cancelReminder(savedId)
+          deleteNoteUseCase(savedId)
+      }
+      return SaveResult.EMPTY
+    }
+
+    val existingNote = currentNote
+    if (existingNote != null) {
+      // Düzenleme (ya da arka planda daha önce kaydedilmiş yeni not)
+      val hasChanges = existingNote.title != _title.value.trim() ||
+          existingNote.content != finalContent ||
+          existingNote.color != _selectedColor.value ||
+          existingNote.category != _selectedCategory.value ||
+          existingNote.isPinned != _isPinned.value ||
+          existingNote.isLocked != _isLocked.value ||
+          existingNote.reminderAt != _reminderAt.value ||
+          existingNote.repeatInterval != _repeatInterval.value ||
+          existingNote.isChecklist != _isChecklist.value
+
+      if (!hasChanges) return SaveResult.UNCHANGED
+
+      val updatedNote = existingNote.copy(
+        title = _title.value.trim(),
+        content = finalContent,
+        color = _selectedColor.value,
+        category = _selectedCategory.value,
+        isPinned = _isPinned.value,
+        isLocked = _isLocked.value,
+        reminderAt = _reminderAt.value,
+        repeatInterval = _repeatInterval.value,
+        isChecklist = _isChecklist.value,
+        viewCount = existingNote.viewCount // viewCount'u koru
+      )
+      updateNoteUseCase(updatedNote)
+      currentNote = updatedNote
+      if (updatedNote.reminderAt != null) {
+        reminderManager.scheduleReminder(updatedNote)
+      } else {
+        reminderManager.cancelReminder(updatedNote.id)
+      }
+    } else {
+      // Yeni not
+      val newNote = Note(
+        title = _title.value.trim(),
+        content = finalContent,
+        color = _selectedColor.value,
+        category = _selectedCategory.value,
+        isPinned = _isPinned.value,
+        isLocked = _isLocked.value,
+        reminderAt = _reminderAt.value,
+        repeatInterval = _repeatInterval.value,
+        isChecklist = _isChecklist.value
+      )
+      val result = addNoteUseCase(newNote)
+      result.onSuccess { generatedId ->
+        // Sonraki kayıtlar yeni kopya eklemek yerine bu notu güncellesin
+        currentNote = newNote.copy(id = generatedId)
+        if (newNote.reminderAt != null) {
+          reminderManager.scheduleReminder(newNote.copy(id = generatedId))
+        }
+      }
+    }
+
+    return SaveResult.SAVED
   }
 
   fun deleteNote() {
     viewModelScope.launch {
-      if (noteId > 0L) {
-        reminderManager.cancelReminder(noteId)
-        deleteNoteUseCase(noteId)
+      // Yeni not arka planda kaydedilmiş olabilir; onun id'si currentNote'ta
+      val savedId = currentNote?.id ?: noteId
+      if (savedId > 0L) {
+        reminderManager.cancelReminder(savedId)
+        deleteNoteUseCase(savedId)
       }
       _events.emit(NoteDetailEvent.NavigateBack(showSavedMessage = false))
     }
   }
+
+  private enum class SaveResult { SAVED, UNCHANGED, EMPTY }
 }
 
 sealed class NoteDetailEvent {

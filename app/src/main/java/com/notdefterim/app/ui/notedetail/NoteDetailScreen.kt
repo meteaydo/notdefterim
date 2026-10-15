@@ -64,6 +64,8 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
 import com.notdefterim.app.ui.components.ActionPinDialog
@@ -302,6 +304,11 @@ fun NoteDetailScreen(
 
   BackHandler {
     viewModel.saveNote()
+  }
+
+  // Geri tuşuna basmadan başka uygulamaya geçilirse ya da ekran kapanırsa yazılanlar kaybolmasın
+  LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+    viewModel.saveInBackground()
   }
 
   Scaffold(

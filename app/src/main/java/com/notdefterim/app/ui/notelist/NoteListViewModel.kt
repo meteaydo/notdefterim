@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.notdefterim.app.util.normalizeForSearch
+import com.notdefterim.app.util.matchesSearch
 
 @HiltViewModel
 class NoteListViewModel @Inject constructor(
@@ -70,10 +70,9 @@ class NoteListViewModel @Inject constructor(
       val filteredList = if (query.isBlank()) {
           noteList
       } else {
-          val normalizedQuery = query.normalizeForSearch()
-          noteList.filter { 
-              it.title.normalizeForSearch().contains(normalizedQuery) || 
-              it.content.normalizeForSearch().contains(normalizedQuery) 
+          noteList.filter {
+              it.title.matchesSearch(query) ||
+              it.content.matchesSearch(query)
           }
       }
 

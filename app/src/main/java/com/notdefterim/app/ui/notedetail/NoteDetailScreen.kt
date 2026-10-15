@@ -118,7 +118,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.text.input.ImeAction
@@ -131,7 +133,7 @@ import com.notdefterim.app.ui.notelist.components.AddCategoryDialog
 import com.notdefterim.app.ui.notedetail.components.ChecklistEditor
 import com.notdefterim.app.ui.components.SetupAppPinDialog
 import androidx.compose.ui.text.style.TextAlign
-import com.notdefterim.app.util.normalizeForSearch
+import com.notdefterim.app.util.searchMatchRanges
 
 /**
  * Not ekleme ve düzenleme ekranı.
@@ -182,6 +184,8 @@ fun NoteDetailScreen(
   var contentOffsetY by remember { mutableStateOf(0f) }
 
   var contentTextFieldValue by remember { mutableStateOf(TextFieldValue(content)) }
+  var isContentFocused by remember { mutableStateOf(false) }
+  val cursorMarginPx = with(LocalDensity.current) { 32.dp.toPx() }
 
   LaunchedEffect(content) {
       if (contentTextFieldValue.text != content) {
@@ -189,10 +193,30 @@ fun NoteDetailScreen(
       }
   }
 
+  // İmleci görünür alanda tut. BasicTextField bunu yalnızca odaklandığı anda yapıyor: o anda klavye
+  // henüz açılmamış ve imleç henüz dokunulan yere taşınmamış oluyor. Klavye açılıp görünür alan
+  // daraldığında (viewportHeight) ya da imleç yer değiştirdiğinde burada yeniden kaydırılır.
+  LaunchedEffect(isContentFocused, contentTextFieldValue.selection, viewportHeight, textLayoutResult) {
+    if (!isContentFocused || viewportHeight == 0) return@LaunchedEffect
+    val layout = textLayoutResult ?: return@LaunchedEffect
+    val cursorOffset = contentTextFieldValue.selection.end.coerceIn(0, layout.layoutInput.text.length)
+    val cursorRect = layout.getCursorRect(cursorOffset)
+    val cursorTop = contentOffsetY + cursorRect.top
+    val cursorBottom = contentOffsetY + cursorRect.bottom
+    val visibleTop = scrollState.value
+    val visibleBottom = scrollState.value + viewportHeight
+    val target = when {
+      cursorBottom + cursorMarginPx > visibleBottom -> cursorBottom + cursorMarginPx - viewportHeight
+      cursorTop - cursorMarginPx < visibleTop -> cursorTop - cursorMarginPx
+      else -> return@LaunchedEffect
+    }
+    scrollState.scrollTo(target.toInt().coerceAtLeast(0))
+  }
+
   // Arama sorgusu değiştiğinde ilk eşleşmeye scroll yap
   LaunchedEffect(searchQuery) {
     if (searchQuery.isNotBlank()) {
-      val index = content.normalizeForSearch().indexOf(searchQuery.normalizeForSearch())
+      val index = content.searchMatchRanges(searchQuery).firstOrNull()?.first ?: -1
       if (index >= 0) {
         textLayoutResult?.let { layout ->
           val line = layout.getLineForOffset(index)
@@ -221,22 +245,16 @@ fun NoteDetailScreen(
     else VisualTransformation { text ->
       val annotated = buildAnnotatedString {
         append(text)
-        val lowerText = text.toString().normalizeForSearch()
-        val lowerQuery = searchQuery.normalizeForSearch()
-        var startIndex = 0
-        while (startIndex < lowerText.length) {
-          val index = lowerText.indexOf(lowerQuery, startIndex)
-          if (index < 0) break
+        text.toString().searchMatchRanges(searchQuery).forEach { range ->
           addStyle(
             style = SpanStyle(
               background = primaryContainer,
               color = onPrimaryContainer,
               fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             ),
-            start = index,
-            end = index + lowerQuery.length
+            start = range.first,
+            end = range.last + 1
           )
-          startIndex = index + lowerQuery.length
         }
       }
       TransformedText(annotated, OffsetMapping.Identity)
@@ -828,7 +846,8 @@ fun NoteDetailScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .onGloballyPositioned { coordinates ->
                   contentOffsetY = coordinates.positionInParent().y
-                },
+                }
+                .onFocusChanged { isContentFocused = it.isFocused },
               textStyle = MaterialTheme.typography.bodyLarge.copy(
                 color = MaterialTheme.colorScheme.onBackground
               ),

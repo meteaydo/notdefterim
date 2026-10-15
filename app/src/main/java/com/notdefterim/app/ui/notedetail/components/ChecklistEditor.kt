@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
@@ -26,7 +27,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalDensity
-import com.notdefterim.app.util.normalizeForSearch
+import com.notdefterim.app.util.matchesSearch
+import com.notdefterim.app.util.searchMatchRanges
 import com.notdefterim.app.domain.model.ChecklistItem
 
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -77,9 +79,20 @@ private fun ChecklistItemRow(
         }
     }
     val density = LocalDensity.current
-    
+
+    // Klavye açılıp görünür alan daralınca odaklı madde klavyenin altında kalmasın
+    var isFocused by remember { mutableStateOf(false) }
+    val imeBottom = WindowInsets.ime.getBottom(density)
+    LaunchedEffect(isFocused, imeBottom) {
+        if (isFocused && imeBottom > 0) {
+            try {
+                bringIntoViewRequester.bringIntoView()
+            } catch (e: Exception) { }
+        }
+    }
+
     LaunchedEffect(searchQuery, item.text) {
-        if (searchQuery.isNotBlank() && item.text.normalizeForSearch().contains(searchQuery.normalizeForSearch())) {
+        if (searchQuery.isNotBlank() && item.text.matchesSearch(searchQuery)) {
             try {
                 // Yaklaşık 4-5 satır (200dp) yukarıdan pay bırakarak kaydır (Rect kullanarak)
                 val offset = with(density) { 200.dp.toPx() }
@@ -96,22 +109,16 @@ private fun ChecklistItemRow(
         else VisualTransformation { text ->
             val annotated = buildAnnotatedString {
                 append(text)
-                val lowerText = text.toString().normalizeForSearch()
-                val lowerQuery = searchQuery.normalizeForSearch()
-                var startIndex = 0
-                while (startIndex < lowerText.length) {
-                    val index = lowerText.indexOf(lowerQuery, startIndex)
-                    if (index < 0) break
+                text.toString().searchMatchRanges(searchQuery).forEach { range ->
                     addStyle(
                         style = SpanStyle(
                             background = primaryContainer,
                             color = onPrimaryContainer,
                             fontWeight = FontWeight.Bold
                         ),
-                        start = index,
-                        end = index + lowerQuery.length
+                        start = range.first,
+                        end = range.last + 1
                     )
-                    startIndex = index + lowerQuery.length
                 }
             }
             TransformedText(annotated, OffsetMapping.Identity)
@@ -154,6 +161,7 @@ private fun ChecklistItemRow(
                 modifier = Modifier
                     .weight(1f)
                     .focusRequester(focusRequester)
+                    .onFocusChanged { isFocused = it.isFocused }
                     .padding(horizontal = 8.dp),
                 decorationBox = { innerTextField ->
                     if (item.text.isEmpty()) {

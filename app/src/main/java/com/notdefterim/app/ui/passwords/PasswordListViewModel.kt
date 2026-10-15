@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.notdefterim.app.util.normalizeForSearch
+import com.notdefterim.app.util.matchesSearch
 
 import com.notdefterim.app.domain.usecase.category.GetCategoriesUseCase
 import com.notdefterim.app.domain.model.Category
@@ -57,10 +57,9 @@ class PasswordListViewModel @Inject constructor(
     
     // Filtreleme: Arama
     if (query.isNotBlank()) {
-      val normalizedQuery = query.normalizeForSearch()
       filteredList = filteredList.filter {
-        it.platformName.normalizeForSearch().contains(normalizedQuery) ||
-        it.username.normalizeForSearch().contains(normalizedQuery)
+        it.platformName.matchesSearch(query) ||
+        it.username.matchesSearch(query)
       }
     }
     filteredList

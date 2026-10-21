@@ -6,6 +6,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.api.services.drive.DriveScopes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,6 +68,18 @@ class GoogleAuthManager(private val context: Context) {
       val task = GoogleSignIn.getSignedInAccountFromIntent(data)
       val account = task.await()
       _authState.value = GoogleAuthState.SignedIn(account)
+    } catch (e: ApiException) {
+      _authState.value = when (e.statusCode) {
+        // Kullanıcı hesap seçmeden kapattı
+        GoogleSignInStatusCodes.SIGN_IN_CANCELLED -> GoogleAuthState.SignedOut
+        CommonStatusCodes.DEVELOPER_ERROR -> GoogleAuthState.Error(
+          "Giriş başarısız (kod 10): uygulamanın imzası Google Cloud'da kayıtlı değil. " +
+            "İmzanın SHA-1 değeri OAuth istemcisine eklenmeli."
+        )
+        else -> GoogleAuthState.Error(
+          "Giriş başarısız (kod ${e.statusCode}): ${GoogleSignInStatusCodes.getStatusCodeString(e.statusCode)}"
+        )
+      }
     } catch (e: Exception) {
       _authState.value = GoogleAuthState.Error("Giriş başarısız: ${e.localizedMessage}")
     }

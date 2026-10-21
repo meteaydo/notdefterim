@@ -106,7 +106,9 @@ fun SettingsScreen(
   val signInLauncher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.StartActivityForResult()
   ) { result ->
-    if (result.resultCode == Activity.RESULT_OK) {
+    // Google, hataları da (ör. imza kayıtlı değil) iptal sonucu olarak döndürür; sonucu taşıyan
+    // her yanıt işlenir ki hata sessiz kalmasın. Gerçek iptal GoogleAuthManager'da ayıklanır.
+    if (result.resultCode == Activity.RESULT_OK || result.data != null) {
       viewModel.onGoogleSignInResult(result.data)
     }
   }
@@ -363,6 +365,16 @@ fun SettingsScreen(
                   contentDescription = null,
                   tint = MaterialTheme.colorScheme.error
                 )
+              },
+              // Hatadan sonra uygulamayı yeniden açmadan tekrar denenebilsin
+              trailingContent = {
+                Button(
+                  onClick = {
+                    signInLauncher.launch(googleAuthManager.getSignInIntent())
+                  }
+                ) {
+                  Text(stringResource(R.string.login))
+                }
               }
             )
           }

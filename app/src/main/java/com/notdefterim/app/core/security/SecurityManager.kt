@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
 import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -27,10 +28,23 @@ class SecurityManager(private val context: Context) {
 
   var isSessionUnlocked: Boolean = false
 
+  companion object {
+    /**
+     * BIOMETRIC_STRONG | DEVICE_CREDENTIAL birleşimi Android 9–10'da (API 28–29) desteklenmiyor;
+     * PromptInfo.Builder.build() IllegalArgumentException fırlatıp uygulamayı çökertiyordu.
+     * Bu sürümlerde zayıf biyometri + cihaz kilidi kullanılır.
+     */
+    fun allowedAuthenticators(useDeviceCredential: Boolean, sdkInt: Int = Build.VERSION.SDK_INT): Int = when {
+      !useDeviceCredential -> BIOMETRIC_STRONG
+      sdkInt == Build.VERSION_CODES.P || sdkInt == Build.VERSION_CODES.Q -> BIOMETRIC_WEAK or DEVICE_CREDENTIAL
+      else -> BIOMETRIC_STRONG or DEVICE_CREDENTIAL
+    }
+  }
+
   /** Desteklenen kimlik doğrulama yöntemlerini kontrol eder. */
   fun checkBiometricSupport(useDeviceCredential: Boolean = true): BiometricSupport {
     val biometricManager = BiometricManager.from(context)
-    val authenticators = if (useDeviceCredential) BIOMETRIC_STRONG or DEVICE_CREDENTIAL else BIOMETRIC_STRONG
+    val authenticators = allowedAuthenticators(useDeviceCredential)
     return when (biometricManager.canAuthenticate(authenticators)) {
       BiometricManager.BIOMETRIC_SUCCESS -> BiometricSupport.Available
       BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> BiometricSupport.NoHardware
@@ -67,7 +81,7 @@ class SecurityManager(private val context: Context) {
 
     val biometricPrompt = BiometricPrompt(activity, executor, callback)
 
-    val authenticators = if (useDeviceCredential) BIOMETRIC_STRONG or DEVICE_CREDENTIAL else BIOMETRIC_STRONG
+    val authenticators = allowedAuthenticators(useDeviceCredential)
 
     val promptInfoBuilder = BiometricPrompt.PromptInfo.Builder()
       .setTitle("NotDefterim'e Giriş")
@@ -112,7 +126,7 @@ class SecurityManager(private val context: Context) {
       }
     }
     val biometricPrompt = BiometricPrompt(activity, executor, callback)
-    val authenticators = if (useDeviceCredential) BIOMETRIC_STRONG or DEVICE_CREDENTIAL else BIOMETRIC_STRONG
+    val authenticators = allowedAuthenticators(useDeviceCredential)
     val promptInfoBuilder = BiometricPrompt.PromptInfo.Builder()
       .setTitle(title)
       .setSubtitle(subtitle)

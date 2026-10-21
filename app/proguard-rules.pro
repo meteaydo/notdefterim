@@ -1,8 +1,8 @@
 # ProGuard / R8 Kuralları
 
 # ─── SQLCipher ───────────────────────────────────────────────────────────────
--keep class net.sqlcipher.** { *; }
--keep class net.sqlcipher.database.** { *; }
+-keep class net.zetetic.database.** { *; }
+-keep interface net.zetetic.database.** { *; }
 
 # ─── Room ────────────────────────────────────────────────────────────────────
 -keep class androidx.room.** { *; }

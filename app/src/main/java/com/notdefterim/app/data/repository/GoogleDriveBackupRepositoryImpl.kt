@@ -121,6 +121,10 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
 
       // ÖNCE Veritabanını tamamen kapat (Yoksa Room kapanırken bellekteki eski verileri dosyanın üzerine geri yazar)
       noteDatabase.close()
+      // Yedekte olmayan eski WAL dosyaları yeni veritabanına işlenmesin
+      val dbFile = context.getDatabasePath(DB_NAME)
+      java.io.File(dbFile.path + "-wal").delete()
+      java.io.File(dbFile.path + "-shm").delete()
 
       // 3. ZIP'i aç ve Kasa ile Anahtarı yerine koy
       extractBackupZip(downloadedZip)

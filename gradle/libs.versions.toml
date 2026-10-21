@@ -8,7 +8,8 @@ composeBom = "2026.04.01"
 activityCompose = "1.10.1"
 navigationCompose = "2.9.0"
 room = "2.8.4"
-sqlcipher = "4.5.4"
+# 16 KB sayfa boyutuna uyumlu; eski android-database-sqlcipher artık geliştirilmiyor
+sqlcipher = "4.19.1"
 biometric = "1.1.0"
 securityCrypto = "1.1.0-alpha07"
 workManager = "2.10.0"
@@ -40,7 +41,7 @@ navigation-compose = { group = "androidx.navigation", name = "navigation-compose
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
-sqlcipher = { group = "net.zetetic", name = "android-database-sqlcipher", version.ref = "sqlcipher" }
+sqlcipher = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "sqlcipher" }
 
 # Hilt DI
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }

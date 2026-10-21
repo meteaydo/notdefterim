@@ -8,8 +8,7 @@ import com.notdefterim.app.BuildConfig
 import com.notdefterim.app.data.local.entity.CategoryEntity
 import com.notdefterim.app.data.local.entity.NoteEntity
 import com.notdefterim.app.data.local.entity.PasswordEntity
-import net.sqlcipher.database.SQLiteDatabase
-import net.sqlcipher.database.SupportFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
@@ -101,15 +100,23 @@ abstract class NoteDatabase : RoomDatabase() {
     }
 
     /**
-     * SQLCipher SupportFactory ile şifrelenmiş Room veritabanı oluşturur.
+     * SQLCipher ile şifrelenmiş Room veritabanı oluşturur.
      *
-     * [passphrase] güvenlik katmanından gelen 256-bit anahtar.
-     * Veritabanı açıldıktan sonra passphrase byte dizisi bellekten silinmelidir.
+     * [passphrase] güvenlik katmanından gelen 256-bit anahtar. Room veritabanını ilk sorguda
+     * açtığı için fabrikaya bir kopya verilir; çağıran kendi dizisini hemen silebilir.
+     * (1.0.0'da dizinin kendisi verilip hemen silindiği için veritabanları sıfır anahtarla
+     * oluşmuştu, bkz. [DatabaseKeyMigration].)
+     *
+     * [beforeFirstOpen] Room veritabanını ilk kez açmadan hemen önce, arka plan iş parçacığında
+     * çalışır.
      */
-    fun create(context: Context, passphrase: ByteArray): NoteDatabase {
-      SQLiteDatabase.loadLibs(context)
+    fun create(context: Context, passphrase: ByteArray, beforeFirstOpen: () -> Unit = {}): NoteDatabase {
+      System.loadLibrary("sqlcipher")
 
-      val factory = SupportFactory(passphrase)
+      val factory = DatabaseKeyMigration.openHelperFactory(
+        SupportOpenHelperFactory(passphrase.copyOf()),
+        beforeFirstOpen
+      )
 
       return Room.databaseBuilder(
         context.applicationContext,

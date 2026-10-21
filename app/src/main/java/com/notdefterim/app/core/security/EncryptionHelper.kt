@@ -37,6 +37,7 @@ class EncryptionHelper(context: Context) {
 
   companion object {
     private const val KEY_DB_PASSPHRASE = "db_passphrase_b64"
+    private const val KEY_DB_KEY_VERIFIED = "db_key_verified"
     private const val PASSPHRASE_LENGTH_BYTES = 32 // 256 bit
   }
 
@@ -55,20 +56,32 @@ class EncryptionHelper(context: Context) {
       SecureRandom().nextBytes(it)
     }
 
+    // commit(): anahtar diske yazılmadan veritabanı bu anahtarla oluşursa veri açılamaz hale gelir
     securePreferences.edit()
       .putString(KEY_DB_PASSPHRASE, Base64.encodeToString(passphrase, Base64.NO_WRAP))
-      .apply()
+      .commit()
 
     return passphrase
   }
 
   /**
-   * Buluttan indirilen yedeğin anahtarını yerel cihaza kaydeder.
+   * Yedekten gelen anahtarı yerel cihaza kaydeder.
+   *
+   * Hemen ardından süreç yeniden başlatıldığı için commit() ile eşzamanlı yazılır. Yedekteki
+   * veritabanı 1.0.0'dan kalma (sıfır anahtarlı) olabileceği için doğrulama bayrağı sıfırlanır.
    */
   fun restoreDatabasePassphrase(passphrase: ByteArray) {
     securePreferences.edit()
       .putString(KEY_DB_PASSPHRASE, Base64.encodeToString(passphrase, Base64.NO_WRAP))
-      .apply()
+      .putBoolean(KEY_DB_KEY_VERIFIED, false)
+      .commit()
+  }
+
+  /** Veritabanının saklanan anahtarla açıldığı doğrulandı mı (bkz. DatabaseKeyMigration). */
+  fun isDatabaseKeyVerified(): Boolean = securePreferences.getBoolean(KEY_DB_KEY_VERIFIED, false)
+
+  fun markDatabaseKeyVerified() {
+    securePreferences.edit().putBoolean(KEY_DB_KEY_VERIFIED, true).commit()
   }
 
   /**

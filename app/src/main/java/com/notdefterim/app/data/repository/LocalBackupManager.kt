@@ -135,13 +135,15 @@ class LocalBackupManager @Inject constructor(
   suspend fun importFromUri(uri: Uri, password: String): Result<Unit> = withContext(Dispatchers.IO) {
     try {
       val zipFile = File(context.cacheDir, "decrypted_backup.zip")
+      var backupVersion = 0
 
       context.contentResolver.openInputStream(uri)?.use { inputStream ->
         DataInputStream(BufferedInputStream(inputStream)).use { dis ->
           val magic = dis.readUTF()
           if (magic != MAGIC_HEADER) throw Exception(context.getString(com.notdefterim.app.R.string.invalid_backup_file))
-          
+
           val version = dis.readInt()
+          backupVersion = version
           val hint = dis.readUTF()
 
           val saltSize = dis.readInt()
@@ -174,14 +176,17 @@ class LocalBackupManager @Inject constructor(
           FileOutputStream(zipFile).use { fos ->
             fos.write(decryptedBytes)
           }
-
-          // v2 yedeklerinde passphrase ZIP içinde şifrelendi;
-          // v1 yedeklerinde ise passphrase ZIP içinde açıkça yer alıyordu.
-          extractBackupZip(zipFile, if (version >= 2) password else null)
         }
       } ?: throw Exception(context.getString(com.notdefterim.app.R.string.file_read_failed, ""))
 
+      // Önce veritabanını kapat: açıkken dosyaların üzerine yazılırsa kapanışta eski WAL kayıtları
+      // yeni dosyaya işlenip veriyi bozabilir. Yedekte olmayan eski WAL dosyaları da kalmamalı.
       noteDatabase.close()
+      deleteWalFiles()
+
+      // v2 yedeklerinde passphrase ZIP içinde şifrelendi;
+      // v1 yedeklerinde ise passphrase ZIP içinde açıkça yer alıyordu.
+      extractBackupZip(zipFile, if (backupVersion >= 2) password else null)
       zipFile.delete()
 
       val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
@@ -195,6 +200,12 @@ class LocalBackupManager @Inject constructor(
     } catch (e: Exception) {
       Result.failure(e)
     }
+  }
+
+  private fun deleteWalFiles() {
+    val dbFile = context.getDatabasePath(DB_NAME)
+    File(dbFile.path + "-wal").delete()
+    File(dbFile.path + "-shm").delete()
   }
 
   /**

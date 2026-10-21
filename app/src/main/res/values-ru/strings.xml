@@ -113,4 +113,8 @@
     <string name="repeat_monthly">Каждый месяц</string>
     <string name="repeat_yearly">Каждый год</string>
     <string name="cancel_reminder">Отменить напоминание</string>
+    <string name="exact_alarm_title">Точные напоминания</string>
+    <string name="exact_alarm_desc">Чтобы напоминания приходили вовремя, разрешите \"Будильники и напоминания\". Без этого они могут приходить с опозданием на несколько минут.</string>
+    <string name="exact_alarm_allow">Разрешить</string>
+    <string name="exact_alarm_later">Не сейчас</string>
 </resources>

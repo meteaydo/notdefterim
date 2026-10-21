@@ -52,6 +52,7 @@ import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.rounded.NotificationsActive
+import android.app.AlarmManager
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.ui.platform.LocalContext
@@ -59,6 +60,7 @@ import androidx.compose.foundation.layout.width
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.provider.Settings
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -308,11 +310,28 @@ fun NoteDetailScreen(
     ).show()
   }
 
+  // Hatırlatıcının dakikasında gelmesi için "Alarmlar ve hatırlatıcılar" izni gerekir (Android 12+).
+  // İzin yoksa önce sorulur; kullanıcı vermezse hatırlatıcı yaklaşık zamanlı kurulur.
+  var showExactAlarmDialog by remember { mutableStateOf(false) }
+  val exactAlarmSettingsLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.StartActivityForResult()
+  ) {
+    showAlarmDialog()
+  }
+  val startReminderFlow = {
+    val alarmManager = context.getSystemService(AlarmManager::class.java)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+      showExactAlarmDialog = true
+    } else {
+      showAlarmDialog()
+    }
+  }
+
   val permissionLauncher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.RequestPermission()
   ) { isGranted ->
     if (isGranted) {
-      showAlarmDialog()
+      startReminderFlow()
     } else {
       coroutineScope.launch {
         snackbarHostState.showSnackbar("Bildirim izni verilmediği için hatırlatıcı kurulamadı.")
@@ -360,12 +379,12 @@ fun NoteDetailScreen(
             onCheckedChange = {
               if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                  showAlarmDialog()
+                  startReminderFlow()
                 } else {
                   permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
               } else {
-                showAlarmDialog()
+                startReminderFlow()
               }
             },
             colors = IconButtonDefaults.iconToggleButtonColors(
@@ -734,12 +753,12 @@ fun NoteDetailScreen(
                     showRepeatMenu = false
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                       if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                        showAlarmDialog()
+                        startReminderFlow()
                       } else {
                         permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                       }
                     } else {
-                      showAlarmDialog()
+                      startReminderFlow()
                     }
                   }
                 ) {
@@ -956,6 +975,39 @@ fun NoteDetailScreen(
       dismissButton = {
         TextButton(onClick = { showDeleteDialog = false }) {
           Text(stringResource(R.string.cancel))
+        }
+      }
+    )
+  }
+
+  if (showExactAlarmDialog) {
+    AlertDialog(
+      onDismissRequest = {
+        showExactAlarmDialog = false
+        showAlarmDialog()
+      },
+      title = { Text(stringResource(R.string.exact_alarm_title)) },
+      text = { Text(stringResource(R.string.exact_alarm_desc)) },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            showExactAlarmDialog = false
+            exactAlarmSettingsLauncher.launch(
+              Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))
+            )
+          }
+        ) {
+          Text(stringResource(R.string.exact_alarm_allow))
+        }
+      },
+      dismissButton = {
+        TextButton(
+          onClick = {
+            showExactAlarmDialog = false
+            showAlarmDialog()
+          }
+        ) {
+          Text(stringResource(R.string.exact_alarm_later))
         }
       }
     )

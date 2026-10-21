@@ -113,4 +113,8 @@
     <string name="repeat_monthly">Monatlich</string>
     <string name="repeat_yearly">Jährlich</string>
     <string name="cancel_reminder">Erinnerung abbrechen</string>
+    <string name="exact_alarm_title">Pünktliche Erinnerungen</string>
+    <string name="exact_alarm_desc">Damit Erinnerungen pünktlich kommen, erlauben Sie \"Wecker und Erinnerungen\". Ohne diese Berechtigung können sie einige Minuten zu spät kommen.</string>
+    <string name="exact_alarm_allow">Erlauben</string>
+    <string name="exact_alarm_later">Nicht jetzt</string>
 </resources>

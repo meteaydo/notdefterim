@@ -148,4 +148,8 @@
     <string name="shortcut_add_note_long">Yeni Not Ekle</string>
     <string name="shortcut_add_password_short">Parola Ekle</string>
     <string name="shortcut_add_password_long">Yeni Parola Ekle</string>
+    <string name="exact_alarm_title">Hatırlatıcılar zamanında gelsin</string>
+    <string name="exact_alarm_desc">Hatırlatıcının tam zamanında gelmesi için \"Alarmlar ve hatırlatıcılar\" iznini açın. İzin vermezseniz hatırlatıcı birkaç dakika gecikebilir.</string>
+    <string name="exact_alarm_allow">İzin ver</string>
+    <string name="exact_alarm_later">Şimdi değil</string>
 </resources>

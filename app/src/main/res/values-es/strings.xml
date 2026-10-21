@@ -113,4 +113,8 @@
     <string name="repeat_monthly">Mensualmente</string>
     <string name="repeat_yearly">Anualmente</string>
     <string name="cancel_reminder">Cancelar recordatorio</string>
+    <string name="exact_alarm_title">Recordatorios puntuales</string>
+    <string name="exact_alarm_desc">Para recibir los recordatorios a tiempo, permite \"Alarmas y recordatorios\". Sin este permiso, pueden llegar unos minutos tarde.</string>
+    <string name="exact_alarm_allow">Permitir</string>
+    <string name="exact_alarm_later">Ahora no</string>
 </resources>

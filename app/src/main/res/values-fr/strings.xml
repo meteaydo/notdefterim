@@ -113,4 +113,8 @@
     <string name="repeat_monthly">Tous les mois</string>
     <string name="repeat_yearly">Tous les ans</string>
     <string name="cancel_reminder">Annuler le rappel</string>
+    <string name="exact_alarm_title">Rappels à l\'heure</string>
+    <string name="exact_alarm_desc">Pour recevoir les rappels à l\'heure, autorisez \"Alarmes et rappels\". Sans cela, ils peuvent arriver avec quelques minutes de retard.</string>
+    <string name="exact_alarm_allow">Autoriser</string>
+    <string name="exact_alarm_later">Pas maintenant</string>
 </resources>

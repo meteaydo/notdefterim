@@ -113,4 +113,8 @@
     <string name="repeat_monthly">Monthly</string>
     <string name="repeat_yearly">Yearly</string>
     <string name="cancel_reminder">Cancel reminder</string>
+    <string name="exact_alarm_title">On-time reminders</string>
+    <string name="exact_alarm_desc">To get reminders exactly on time, allow \"Alarms &amp; reminders\". Without it, reminders may arrive a few minutes late.</string>
+    <string name="exact_alarm_allow">Allow</string>
+    <string name="exact_alarm_later">Not now</string>
 </resources>

@@ -10,9 +10,31 @@ plugins {
   alias(libs.plugins.roborazzi)
 }
 
+// local.properties'tan gizli değerleri oku (dosya depoya girmez)
+val localProperties = Properties().apply {
+  val localPropsFile = rootProject.file("local.properties")
+  if (localPropsFile.exists()) {
+    localPropsFile.inputStream().use { load(it) }
+  }
+}
+
 android {
   namespace = "com.notdefterim.app"
   compileSdk = 36
+
+  // Yayın imzası: yükleme anahtarı ve şifreleri local.properties'te. Tanımlı değilse release
+  // derlemesi imzasız çıkar (Play'e yüklenemez ama derleme bozulmaz).
+  val releaseStoreFile = localProperties.getProperty("RELEASE_STORE_FILE")
+  signingConfigs {
+    if (releaseStoreFile != null) {
+      create("release") {
+        storeFile = file(releaseStoreFile)
+        storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD")
+        keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS")
+        keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD")
+      }
+    }
+  }
 
   defaultConfig {
     applicationId = "com.notdefterim.app"
@@ -23,12 +45,6 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     resourceConfigurations += listOf("tr", "en", "ru", "es", "de", "fr")
 
-    // local.properties'tan gizli değerleri oku
-    val localPropsFile = rootProject.file("local.properties")
-    val localProperties = Properties()
-    if (localPropsFile.exists()) {
-      localProperties.load(localPropsFile.inputStream())
-    }
     val driveWrapPassword: String = localProperties.getProperty(
       "DRIVE_BACKUP_WRAP_PASSWORD"
     ) ?: System.getenv("DRIVE_BACKUP_WRAP_PASSWORD") ?: "__MISSING_SECRET__"
@@ -37,6 +53,7 @@ android {
 
   buildTypes {
     release {
+      signingConfig = signingConfigs.findByName("release")
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(

@@ -20,6 +20,10 @@
 -keep class com.google.api.services.drive.** { *; }
 -keep class com.google.api.services.drive.model.** { *; }
 -dontwarn com.google.api.client.**
+# google-http-client'ın getirdiği Apache HttpClient, Android'de olmayan JNDI/Kerberos
+# sınıflarına başvuruyor; bu kod yolları hiç çalışmıyor
+-dontwarn javax.naming.**
+-dontwarn org.ietf.jgss.**
 
 # ─── Google Sign-In ──────────────────────────────────────────────────────────
 -keep class com.google.android.gms.auth.** { *; }

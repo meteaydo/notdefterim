@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import com.notdefterim.app.R
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -80,7 +81,9 @@ fun AuthScreen(
         Brush.verticalGradient(
           colors = listOf(
             MaterialTheme.colorScheme.background,
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+            // Saydam bırakılmaz: ekran arkasındaki zemine bağlı kalmasın (karanlık temada okunurluk, K4)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+              .compositeOver(MaterialTheme.colorScheme.background),
             MaterialTheme.colorScheme.background
           )
         )

@@ -97,6 +97,20 @@ android {
   }
 }
 
+// Drive yedeğindeki anahtarı saran şifre tanımlanmadan yayın derlemesi yapılmasın.
+// Bu şifre bir kez belirlenip hiç değiştirilmemeli; değişirse eski Drive yedekleri açılamaz.
+val hasDriveWrapPassword = !(localProperties.getProperty("DRIVE_BACKUP_WRAP_PASSWORD")
+  ?: System.getenv("DRIVE_BACKUP_WRAP_PASSWORD")).isNullOrBlank()
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+  doFirst {
+    if (!hasDriveWrapPassword) {
+      throw GradleException(
+        "DRIVE_BACKUP_WRAP_PASSWORD is not set: add a permanent password to local.properties."
+      )
+    }
+  }
+}
+
 dependencies {
   // Compose BOM — tek versiyon yönetimi
   val composeBom = platform(libs.compose.bom)

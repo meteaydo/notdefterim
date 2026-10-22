@@ -65,8 +65,10 @@ class AuthViewModel @Inject constructor(
   private val _pinPromptState = kotlinx.coroutines.flow.MutableStateFlow<PinPromptState?>(null)
   val pinPromptState: StateFlow<PinPromptState?> = _pinPromptState.asStateFlow()
 
+  // Giriş penceresi her zaman cihaz kilidine de izin verir; kontrol de aynı yöntemle yapılmalı.
+  // Yoksa uygulama içi PIN kuruluyken parmak izi olmayan cihazda "PIN kurulu değil" yazıyordu.
   fun checkBiometricSupport(): BiometricSupport =
-    securityManager.checkBiometricSupport(useDeviceCredential = appPin.value == null)
+    securityManager.checkBiometricSupport(useDeviceCredential = true)
 
   /**
    * BiometricPrompt FragmentActivity gerektirir.

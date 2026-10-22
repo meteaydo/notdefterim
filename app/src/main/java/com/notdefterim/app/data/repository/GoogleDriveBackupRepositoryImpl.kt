@@ -50,6 +50,44 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
     private const val KEY_LENGTH = 256
     private const val KEY_WRAP_SALT_SIZE = 16
     // DRIVE_BACKUP_WRAP_PASSWORD artık BuildConfig üzerinden okunuyor (local.properties'tan gelir)
+    /** Şifre tanımlanmadan derlenmiş sürümlerin kullandığı yer tutucu; o sürümlerin yedekleri de açılabilsin */
+    internal const val LEGACY_WRAP_PASSWORD = "__MISSING_SECRET__"
+
+    /**
+     * Veritabanı anahtarını [wrapPassword]'dan PBKDF2 ile türetilen AES-GCM anahtarıyla sarar.
+     * Biçim: salt(16) | iv(12) | şifreli anahtar
+     */
+    internal fun wrapPassphrase(passphrase: ByteArray, wrapPassword: String): ByteArray {
+      val wrapSalt = ByteArray(KEY_WRAP_SALT_SIZE).apply { SecureRandom().nextBytes(this) }
+      val wrapSpec: KeySpec = PBEKeySpec(wrapPassword.toCharArray(), wrapSalt, ITERATION_COUNT, KEY_LENGTH)
+      val wrapFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+      val wrapKey = SecretKeySpec(wrapFactory.generateSecret(wrapSpec).encoded, "AES")
+      val wrapCipher = Cipher.getInstance("AES/GCM/NoPadding")
+      val wrapIv = ByteArray(12).apply { SecureRandom().nextBytes(this) }
+      wrapCipher.init(Cipher.ENCRYPT_MODE, wrapKey, GCMParameterSpec(128, wrapIv))
+      return wrapSalt + wrapIv + wrapCipher.doFinal(passphrase)
+    }
+
+    /** [wrapPassphrase] ile sarılmış anahtarı [wrapPasswords] sırasıyla dener; hiçbiri açamazsa null döner. */
+    internal fun unwrapPassphrase(keyPayload: ByteArray, wrapPasswords: List<String>): ByteArray? {
+      val wrapSalt = keyPayload.copyOfRange(0, KEY_WRAP_SALT_SIZE)
+      val wrapIv = keyPayload.copyOfRange(KEY_WRAP_SALT_SIZE, KEY_WRAP_SALT_SIZE + 12)
+      val encryptedPassphrase = keyPayload.copyOfRange(KEY_WRAP_SALT_SIZE + 12, keyPayload.size)
+
+      for (wrapPassword in wrapPasswords) {
+        try {
+          val wrapSpec: KeySpec = PBEKeySpec(wrapPassword.toCharArray(), wrapSalt, ITERATION_COUNT, KEY_LENGTH)
+          val wrapFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+          val wrapKey = SecretKeySpec(wrapFactory.generateSecret(wrapSpec).encoded, "AES")
+          val wrapCipher = Cipher.getInstance("AES/GCM/NoPadding")
+          wrapCipher.init(Cipher.DECRYPT_MODE, wrapKey, GCMParameterSpec(128, wrapIv))
+          return wrapCipher.doFinal(encryptedPassphrase)
+        } catch (e: javax.crypto.AEADBadTagException) {
+          // Bu şifreyle sarılmamış; sıradakini dene
+        }
+      }
+      return null
+    }
   }
 
   override suspend fun backupToCloud(): Result<Unit> = withContext(Dispatchers.IO) {
@@ -120,6 +158,13 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
         driveService.files().get(existingFile.id).executeMediaAndDownloadTo(outputStream)
       }
 
+      // Anahtarı veritabanına dokunmadan önce çöz: açılamayan bir yedek mevcut verileri bozmasın
+      val passphrase = readBackupPassphrase(downloadedZip)
+      if (passphrase == null) {
+        downloadedZip.delete()
+        return@withContext Result.failure(Exception(context.getString(R.string.drive_backup_key_unreadable)))
+      }
+
       // ÖNCE Veritabanını tamamen kapat (Yoksa Room kapanırken bellekteki eski verileri dosyanın üzerine geri yazar)
       noteDatabase.close()
       // Yedekte olmayan eski WAL dosyaları yeni veritabanına işlenmesin
@@ -127,9 +172,11 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
       java.io.File(dbFile.path + "-wal").delete()
       java.io.File(dbFile.path + "-shm").delete()
 
-      // 3. ZIP'i aç ve Kasa ile Anahtarı yerine koy
+      // 3. ZIP'teki veritabanı dosyalarını ve anahtarı yerine koy
       extractBackupZip(downloadedZip)
       downloadedZip.delete()
+      encryptionHelper.restoreDatabasePassphrase(passphrase)
+      passphrase.fill(0)
 
       // Uygulamayı yeniden başlat ki yeni veritabanını okusun
       val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
@@ -211,17 +258,7 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
 
       // Passphrase'ı BuildConfig'ten gelen sarmalama şifresinden türetilen AES-GCM anahtarıyla şifreliyoruz
       val passphrase = encryptionHelper.getDatabasePassphrase()
-      val wrapSalt = ByteArray(KEY_WRAP_SALT_SIZE).apply { SecureRandom().nextBytes(this) }
-      val wrapSpec: KeySpec = PBEKeySpec(BuildConfig.DRIVE_BACKUP_WRAP_PASSWORD.toCharArray(), wrapSalt, ITERATION_COUNT, KEY_LENGTH)
-      val wrapFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-      val wrapKey = SecretKeySpec(wrapFactory.generateSecret(wrapSpec).encoded, "AES")
-      val wrapCipher = Cipher.getInstance("AES/GCM/NoPadding")
-      val wrapIv = ByteArray(12).apply { SecureRandom().nextBytes(this) }
-      wrapCipher.init(Cipher.ENCRYPT_MODE, wrapKey, GCMParameterSpec(128, wrapIv))
-      val encryptedPassphrase = wrapCipher.doFinal(passphrase)
-
-      // Format: salt(16) | iv(12) | encryptedPassphrase
-      val keyConfigPayload = wrapSalt + wrapIv + encryptedPassphrase
+      val keyConfigPayload = wrapPassphrase(passphrase, BuildConfig.DRIVE_BACKUP_WRAP_PASSWORD)
       zos.putNextEntry(ZipEntry("key.config"))
       zos.write(keyConfigPayload)
       zos.closeEntry()
@@ -230,7 +267,29 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
   }
 
   /**
-   * İndirilen ZIP dosyasını açar, passphrase'ı çözer ve veritabanı + anahtarı doğru yerlerine yerleştirir.
+   * ZIP'teki key.config'ten veritabanı anahtarını çözer; açılamazsa null döner.
+   * Önce bu sürümün sarmalama şifresi, sonra şifre tanımlanmadan derlenmiş sürümlerin yer tutucusu denenir.
+   */
+  private fun readBackupPassphrase(zipFile: java.io.File): ByteArray? {
+    val keyPayload = ZipInputStream(BufferedInputStream(FileInputStream(zipFile))).use { zis ->
+      var entry = zis.nextEntry
+      while (entry != null && entry.name.replace("..", "").trimStart('/') != "key.config") {
+        entry = zis.nextEntry
+      }
+      entry?.let { zis.readBytes() }
+    } ?: return null
+
+    if (keyPayload.size <= 28) {
+      // Eski format uyumluluk: Base64 plain-text
+      return android.util.Base64.decode(keyPayload.toString(Charsets.UTF_8), android.util.Base64.NO_WRAP)
+    }
+
+    // Yeni format: şifrelemiş payload'ı çöz
+    return unwrapPassphrase(keyPayload, listOf(BuildConfig.DRIVE_BACKUP_WRAP_PASSWORD, LEGACY_WRAP_PASSWORD).distinct())
+  }
+
+  /**
+   * İndirilen ZIP'teki veritabanı dosyalarını yerine koyar (anahtar [readBackupPassphrase] ile ayrıca okunur).
    * Güvenlik: ZIP Slip saldırılarına karşı entry adları dolayılaması denetlenir.
    */
   private fun extractBackupZip(zipFile: java.io.File) {
@@ -240,26 +299,7 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
         // Güvenlik: ZIP Slip saldırısını önlemek için entry adını temizle
         val safeEntryName = entry.name.replace("..", "").trimStart('/')
 
-        if (safeEntryName == "key.config") {
-          val keyPayload = zis.readBytes()
-          val passphrase = if (keyPayload.size > 28) {
-            // Yeni format: şifrelemiş payload'ı çöz
-            val wrapSalt = keyPayload.copyOfRange(0, KEY_WRAP_SALT_SIZE)
-            val wrapIv = keyPayload.copyOfRange(KEY_WRAP_SALT_SIZE, KEY_WRAP_SALT_SIZE + 12)
-            val encryptedPassphrase = keyPayload.copyOfRange(KEY_WRAP_SALT_SIZE + 12, keyPayload.size)
-
-            val wrapSpec: KeySpec = PBEKeySpec(BuildConfig.DRIVE_BACKUP_WRAP_PASSWORD.toCharArray(), wrapSalt, ITERATION_COUNT, KEY_LENGTH)
-            val wrapFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-            val wrapKey = SecretKeySpec(wrapFactory.generateSecret(wrapSpec).encoded, "AES")
-            val wrapCipher = Cipher.getInstance("AES/GCM/NoPadding")
-            wrapCipher.init(Cipher.DECRYPT_MODE, wrapKey, GCMParameterSpec(128, wrapIv))
-            wrapCipher.doFinal(encryptedPassphrase)
-          } else {
-            // Eski format uyumluluk: Base64 plain-text
-            android.util.Base64.decode(keyPayload.toString(Charsets.UTF_8), android.util.Base64.NO_WRAP)
-          }
-          encryptionHelper.restoreDatabasePassphrase(passphrase)
-        } else if (safeEntryName.startsWith(DB_NAME)) {
+        if (safeEntryName.startsWith(DB_NAME)) {
           // Güvenli yol doğrulaması
           val targetFile = context.getDatabasePath(safeEntryName)
           val canonicalDb = context.getDatabasePath(DB_NAME).canonicalPath

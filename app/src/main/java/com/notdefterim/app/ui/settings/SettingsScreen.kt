@@ -455,6 +455,14 @@ fun SettingsScreen(
               color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
           }
+
+          // Drive yedeği ayrı bir şifreyle değil, Google hesabıyla korunur (kullanıcı kararı, G2)
+          Spacer(modifier = Modifier.height(8.dp))
+          Text(
+            text = stringResource(R.string.drive_backup_protection_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+          )
         }
       }
 

@@ -292,4 +292,6 @@
         <item quantity="one">%d day</item>
         <item quantity="other">%d days</item>
     </plurals>
+    <string name="drive_backup_protection_note">Drive backups are protected by your Google account. Unlike local backups, they do not use a separate password, so keep your Google account secure.</string>
+    <string name="drive_backup_key_unreadable">This backup could not be opened because it was created by a different build of the app. Your current data was not changed.</string>
 </resources>

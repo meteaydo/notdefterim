@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -25,6 +26,7 @@ import androidx.compose.material3.Checkbox
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.ui.auth.AuthViewModel
+import com.notdefterim.app.R
 
 @Composable
 fun ActionPinDialog(
@@ -49,17 +51,17 @@ fun ActionPinDialog(
         OutlinedTextField(
           value = inputPin,
           onValueChange = { inputPin = it; isError = false },
-          label = { Text("Uygulama PIN'i") },
+          label = { Text(stringResource(R.string.app_pin_label)) },
           keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
           visualTransformation = PasswordVisualTransformation(),
           singleLine = true,
           isError = isError
         )
         if (isError) {
-          Text("Hatalı PIN", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+          Text(stringResource(R.string.wrong_pin), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
           if (errorCount >= 1 && !pinHint.isNullOrBlank()) {
              Spacer(Modifier.height(4.dp))
-             Text("İpucu: $pinHint", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+             Text(stringResource(R.string.hint_format, pinHint.orEmpty()), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
           }
         }
         Spacer(Modifier.height(8.dp))
@@ -68,7 +70,7 @@ fun ActionPinDialog(
             checked = keepUnlocked,
             onCheckedChange = { keepUnlocked = it }
           )
-          Text("Oturum boyunca açık kalsın", style = MaterialTheme.typography.bodySmall)
+          Text(stringResource(R.string.keep_unlocked_session), style = MaterialTheme.typography.bodySmall)
         }
       }
     },
@@ -81,12 +83,12 @@ fun ActionPinDialog(
           inputPin = ""
         }
       }) {
-        Text("Kilidi Aç")
+        Text(stringResource(R.string.unlock))
       }
     },
     dismissButton = {
       TextButton(onClick = onDismiss) {
-        Text("İptal")
+        Text(stringResource(R.string.cancel))
       }
     }
   )

@@ -1,6 +1,7 @@
 package com.notdefterim.app.core.security
 
 import android.content.Context
+import com.notdefterim.app.R
 import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
@@ -91,12 +92,12 @@ class SecurityManager(private val context: Context) {
     val authenticators = allowedAuthenticators(useDeviceCredential)
 
     val promptInfoBuilder = BiometricPrompt.PromptInfo.Builder()
-      .setTitle("NotDefterim'e Giriş")
-      .setSubtitle("Notlarınıza erişmek için kimliğinizi doğrulayın")
+      .setTitle(activity.getString(R.string.auth_prompt_title))
+      .setSubtitle(activity.getString(R.string.auth_prompt_subtitle))
       .setAllowedAuthenticators(authenticators)
       
     if (!useDeviceCredential) {
-      promptInfoBuilder.setNegativeButtonText("İptal / PIN Gir")
+      promptInfoBuilder.setNegativeButtonText(activity.getString(R.string.auth_cancel_or_pin))
     }
 
     biometricPrompt.authenticate(promptInfoBuilder.build())
@@ -142,7 +143,7 @@ class SecurityManager(private val context: Context) {
       .setAllowedAuthenticators(authenticators)
       
     if (!useDeviceCredential) {
-      promptInfoBuilder.setNegativeButtonText("İptal / PIN Gir")
+      promptInfoBuilder.setNegativeButtonText(activity.getString(R.string.auth_cancel_or_pin))
     }
     
     biometricPrompt.authenticate(promptInfoBuilder.build())

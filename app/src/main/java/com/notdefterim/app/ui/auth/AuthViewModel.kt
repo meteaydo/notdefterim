@@ -1,12 +1,15 @@
 package com.notdefterim.app.ui.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notdefterim.app.core.security.AuthState
+import com.notdefterim.app.R
 import com.notdefterim.app.core.security.BiometricSupport
 import com.notdefterim.app.core.security.SecurityManager
 import com.notdefterim.app.data.local.AppPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
+  @ApplicationContext private val context: Context,
   private val securityManager: SecurityManager,
   private val appPreferences: AppPreferences
 ) : ViewModel() {
@@ -99,7 +103,7 @@ class AuthViewModel @Inject constructor(
   }
 
   fun dismissPinPrompt() {
-    _pinPromptState.value?.onError?.invoke("Kullanıcı iptal etti.")
+    _pinPromptState.value?.onError?.invoke(context.getString(R.string.user_cancelled))
     _pinPromptState.value = null
   }
 

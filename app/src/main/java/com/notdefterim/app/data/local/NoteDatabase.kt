@@ -5,12 +5,16 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import android.content.Context
 import com.notdefterim.app.BuildConfig
+import com.notdefterim.app.R
+import com.notdefterim.app.domain.model.ChecklistItem
 import com.notdefterim.app.data.local.entity.CategoryEntity
 import com.notdefterim.app.data.local.entity.NoteEntity
 import com.notdefterim.app.data.local.entity.PasswordEntity
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * SQLCipher ile şifrelenmiş Room veritabanı.
@@ -131,36 +135,73 @@ abstract class NoteDatabase : RoomDatabase() {
         .addCallback(object : RoomDatabase.Callback() {
           override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
-            val time = System.currentTimeMillis()
-            // Kategoriler
-            db.execSQL("INSERT INTO categories (name, colorHex, type, createdAt) VALUES ('Alışveriş', '#FFD5E5', 'NOTE', $time)")
-            db.execSQL("INSERT INTO categories (name, colorHex, type, createdAt) VALUES ('Yapılacaklar', '#FFF0D5', 'NOTE', $time)")
-            db.execSQL("INSERT INTO categories (name, colorHex, type, createdAt) VALUES ('Fikirler', '#E5FFD5', 'NOTE', $time)")
-            db.execSQL("INSERT INTO categories (name, colorHex, type, createdAt) VALUES ('İş', '#D5E5FF', 'NOTE', $time)")
-
-            // Parola Kategorileri
-            db.execSQL("INSERT INTO categories (name, colorHex, type, createdAt) VALUES ('Banka', '#D5E5FF', 'PASSWORD', $time)")
-            db.execSQL("INSERT INTO categories (name, colorHex, type, createdAt) VALUES ('Google', '#FFD5E5', 'PASSWORD', $time)")
-            db.execSQL("INSERT INTO categories (name, colorHex, type, createdAt) VALUES ('Resmi', '#E5FFD5', 'PASSWORD', $time)")
-            db.execSQL("INSERT INTO categories (name, colorHex, type, createdAt) VALUES ('S. Medya', '#FFF0D5', 'PASSWORD', $time)")
-            db.execSQL("INSERT INTO categories (name, colorHex, type, createdAt) VALUES ('Aile', '#E6E6FA', 'PASSWORD', $time)")
-
-            // Notlar
-            val shoppingContent = "[{\"id\":\"1\",\"text\":\"Süt\",\"isChecked\":true,\"hasCheckbox\":true},{\"id\":\"2\",\"text\":\"Ekmek\",\"isChecked\":false,\"hasCheckbox\":true},{\"id\":\"3\",\"text\":\"Yumurta\",\"isChecked\":false,\"hasCheckbox\":true}]"
-            db.execSQL("INSERT INTO notes (title, content, colorIndex, isPinned, createdAt, updatedAt, repeatInterval, viewCount, isLocked, isChecklist, categoryId) VALUES ('(Örnek) Market İhtiyaçları', '$shoppingContent', 1, 0, $time, $time, 'NONE', 0, 0, 1, 1)")
-            
-            val todoContent = "[{\"id\":\"4\",\"text\":\"Evi temizle\",\"isChecked\":false,\"hasCheckbox\":true},{\"id\":\"5\",\"text\":\"Arabayı yıka\",\"isChecked\":false,\"hasCheckbox\":true},{\"id\":\"6\",\"text\":\"Kitap oku\",\"isChecked\":false,\"hasCheckbox\":true}]"
-            db.execSQL("INSERT INTO notes (title, content, colorIndex, isPinned, createdAt, updatedAt, repeatInterval, viewCount, isLocked, isChecklist, categoryId) VALUES ('(Örnek) Hafta Sonu Planı', '$todoContent', 4, 0, $time, $time, 'NONE', 0, 0, 1, 2)")
-            
-            val ideaContent = "Yapay zeka entegreli not alma uygulaması yapabilirim. Çevrimdışı ve güvenli olmalı."
-            db.execSQL("INSERT INTO notes (title, content, colorIndex, isPinned, createdAt, updatedAt, repeatInterval, viewCount, isLocked, isChecklist, categoryId) VALUES ('(Örnek) Yeni Proje Fikirleri', '$ideaContent', 2, 0, $time, $time, 'NONE', 0, 0, 0, 3)")
-
-            // Parolalar — gerçek görünümlü kimlik bilgisi kullanılmaz (KVKK / Play Store uyumu)
-            db.execSQL("INSERT INTO passwords (platformName, username, passwordValue, createdAt, updatedAt, usageCount, categoryId) VALUES ('(Örnek) E-posta', 'ornek.kullanici', '***', $time, $time, 0, 6)")
-            db.execSQL("INSERT INTO passwords (platformName, username, passwordValue, createdAt, updatedAt, usageCount, categoryId) VALUES ('(Örnek) Kamu Portalı', 'kullanici_adi', '***', $time, $time, 0, 7)")
+            insertSampleData(context, db)
           }
         })
         .build()
+    }
+
+    /**
+     * İlk açılıştaki kategoriler, örnek notlar ve örnek parolalar. Metinler cihazın dilinde
+     * (Türkçe ya da İngilizce) oluşur; varsayılan kategori simgeleri iki dildeki adı da tanır.
+     */
+    private fun insertSampleData(context: Context, db: SupportSQLiteDatabase) {
+      val time = System.currentTimeMillis()
+
+      fun category(nameRes: Int, colorHex: String, type: String) = db.execSQL(
+        "INSERT INTO categories (name, colorHex, type, createdAt) VALUES (?, ?, ?, ?)",
+        arrayOf(context.getString(nameRes), colorHex, type, time)
+      )
+
+      fun note(titleRes: Int, content: String, colorIndex: Int, isChecklist: Boolean, categoryId: Int) = db.execSQL(
+        "INSERT INTO notes (title, content, colorIndex, isPinned, createdAt, updatedAt, repeatInterval, viewCount, isLocked, isChecklist, categoryId) " +
+          "VALUES (?, ?, ?, 0, ?, ?, 'NONE', 0, 0, ?, ?)",
+        arrayOf(context.getString(titleRes), content, colorIndex, time, time, if (isChecklist) 1 else 0, categoryId)
+      )
+
+      // Parolalar — gerçek görünümlü kimlik bilgisi kullanılmaz (KVKK / Play Store uyumu)
+      fun password(nameRes: Int, usernameRes: Int, categoryId: Int) = db.execSQL(
+        "INSERT INTO passwords (platformName, username, passwordValue, createdAt, updatedAt, usageCount, categoryId) " +
+          "VALUES (?, ?, '***', ?, ?, 0, ?)",
+        arrayOf(context.getString(nameRes), context.getString(usernameRes), time, time, categoryId)
+      )
+
+      // Kategoriler
+      category(R.string.default_category_shopping, "#FFD5E5", "NOTE")
+      category(R.string.default_category_todo, "#FFF0D5", "NOTE")
+      category(R.string.default_category_ideas, "#E5FFD5", "NOTE")
+      category(R.string.default_category_work, "#D5E5FF", "NOTE")
+
+      // Parola Kategorileri
+      category(R.string.default_category_bank, "#D5E5FF", "PASSWORD")
+      category(R.string.default_category_google, "#FFD5E5", "PASSWORD")
+      category(R.string.default_category_government, "#E5FFD5", "PASSWORD")
+      category(R.string.default_category_social_media, "#FFF0D5", "PASSWORD")
+      category(R.string.default_category_family, "#E6E6FA", "PASSWORD")
+
+      // Notlar
+      val shoppingContent = Json.encodeToString(
+        listOf(
+          ChecklistItem(id = "1", text = context.getString(R.string.sample_item_milk), isChecked = true),
+          ChecklistItem(id = "2", text = context.getString(R.string.sample_item_bread)),
+          ChecklistItem(id = "3", text = context.getString(R.string.sample_item_eggs))
+        )
+      )
+      note(R.string.sample_note_shopping_title, shoppingContent, colorIndex = 1, isChecklist = true, categoryId = 1)
+
+      val todoContent = Json.encodeToString(
+        listOf(
+          ChecklistItem(id = "4", text = context.getString(R.string.sample_item_clean_house)),
+          ChecklistItem(id = "5", text = context.getString(R.string.sample_item_wash_car)),
+          ChecklistItem(id = "6", text = context.getString(R.string.sample_item_read_book))
+        )
+      )
+      note(R.string.sample_note_weekend_title, todoContent, colorIndex = 4, isChecklist = true, categoryId = 2)
+
+      note(R.string.sample_note_ideas_title, context.getString(R.string.sample_note_ideas_content), colorIndex = 2, isChecklist = false, categoryId = 3)
+
+      password(R.string.sample_password_email, R.string.sample_username_email, categoryId = 6)
+      password(R.string.sample_password_government, R.string.sample_username_government, categoryId = 7)
     }
   }
 }

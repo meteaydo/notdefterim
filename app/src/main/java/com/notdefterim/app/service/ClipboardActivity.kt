@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
+import com.notdefterim.app.R
 import com.notdefterim.app.util.SensitiveClipboard
 
 class ClipboardActivity : Activity() {
@@ -25,10 +26,10 @@ class ClipboardActivity : Activity() {
                     clipboardManager.setPrimaryClip(clip)
                 }
 
-                val successMsg = if (label == "Username") "Kullanıcı adı kopyalandı" else "Parola kopyalandı"
+                val successMsg = getString(if (label == "Username") R.string.username_copied else R.string.password_copied)
                 Toast.makeText(applicationContext, successMsg, Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Toast.makeText(applicationContext, "Kopyalama başarısız oldu", Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, getString(R.string.copy_failed), Toast.LENGTH_SHORT).show()
             }
         }
         

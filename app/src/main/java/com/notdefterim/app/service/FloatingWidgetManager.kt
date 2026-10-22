@@ -134,7 +134,7 @@ object FloatingWidgetManager {
             Log.d("FloatingWidget", "View added successfully")
         } catch (e: Exception) {
             Log.e("FloatingWidget", "Error showing floating widget", e)
-            Toast.makeText(context, "Pencere açılamadı: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.window_open_failed, e.message), Toast.LENGTH_LONG).show()
         }
     }
 

@@ -86,7 +86,7 @@ class ReminderReceiver : BroadcastReceiver() {
         try {
           val items = kotlinx.serialization.json.Json.decodeFromString<List<com.notdefterim.app.domain.model.ChecklistItem>>(rawContent)
           val checkedCount = items.count { it.isChecked }
-          val summary = "[$checkedCount/${items.size} tamamlandı]"
+          val summary = context.getString(R.string.checklist_progress_format, checkedCount, items.size)
           val previewLines = items.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
           displayContent = "$summary\n$previewLines"
         } catch (e: Exception) {
@@ -112,10 +112,10 @@ class ReminderReceiver : BroadcastReceiver() {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val channel = NotificationChannel(
           channelId,
-          "Not Hatırlatıcıları",
+          context.getString(R.string.reminder_channel_name),
           NotificationManager.IMPORTANCE_HIGH
         ).apply {
-          description = "Notlarınız için belirlenen hatırlatıcı bildirimleri"
+          description = context.getString(R.string.reminder_channel_desc)
         }
         notificationManager.createNotificationChannel(channel)
       }

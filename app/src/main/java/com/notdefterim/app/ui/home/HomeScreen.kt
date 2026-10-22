@@ -99,7 +99,7 @@ fun HomeScreen(
                 ) {
                     Icon(
                         imageVector = if (isDark) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
-                        contentDescription = "Toggle Theme",
+                        contentDescription = stringResource(R.string.toggle_theme),
                         tint = MaterialTheme.colorScheme.onBackground
                     )
                 }

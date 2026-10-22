@@ -26,6 +26,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.notdefterim.app.R
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -166,7 +168,7 @@ fun AppNavigation(
               tint = Color.White,
               modifier = Modifier.size(24.dp)
             )
-            Text("Notunuz Kaydedildi", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.note_saved), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
           }
        }
        LaunchedEffect(showSavedNotification) {

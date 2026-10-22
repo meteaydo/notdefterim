@@ -219,7 +219,7 @@ fun SettingsScreen(
       Spacer(modifier = Modifier.height(24.dp))
 
       // ── Başlangıç Ekranı Bölümü ────────────────────────────────
-      SectionTitle("Başlangıç Ekranı")
+      SectionTitle(stringResource(R.string.startup_screen))
       Card(
         colors = CardDefaults.cardColors(
           containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -227,13 +227,13 @@ fun SettingsScreen(
         modifier = Modifier.fillMaxWidth().clickable { showStartupBehaviorDialog = true }
       ) {
         val behaviorText = when(startupBehavior) {
-          1 -> "Notlarım"
-          2 -> "Parolalarım"
-          else -> "En Son Açılan"
+          1 -> stringResource(R.string.my_notes)
+          2 -> stringResource(R.string.passwords_title)
+          else -> stringResource(R.string.startup_last_opened)
         }
         ListItem(
           colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-          headlineContent = { Text("Başlangıç Ekranı") },
+          headlineContent = { Text(stringResource(R.string.startup_screen)) },
           supportingContent = { Text(behaviorText) },
           trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
         )
@@ -399,7 +399,7 @@ fun SettingsScreen(
             val dateStr = SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault())
               .format(Date(lastBackupTime!!))
             Text(
-              text = "Son yedekleme: $dateStr",
+              text = stringResource(R.string.last_backup_format, dateStr),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -527,7 +527,7 @@ fun SettingsScreen(
           HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
           InfoRow(label = stringResource(R.string.key_storage), value = "Android Keystore")
           HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-          InfoRow(label = stringResource(R.string.drive_backup), value = "App Data Folder (gizli)")
+          InfoRow(label = stringResource(R.string.drive_backup), value = stringResource(R.string.drive_app_data_folder))
           HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
           InfoRow(label = stringResource(R.string.version), value = "1.0.0")
         }
@@ -568,11 +568,12 @@ fun SettingsScreen(
           modifier = Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+          val backupFilePrefix = stringResource(R.string.backup_file_prefix)
           OutlinedButton(
             onClick = {
               if (dialogPassword.isNotBlank()) {
                 val dateFormat = android.text.format.DateFormat.format("dd.MM.yyyy", java.util.Date())
-                createDocumentLauncher.launch("NotDefterim Yedek ($dateFormat).notdefterim")
+                createDocumentLauncher.launch("$backupFilePrefix ($dateFormat).notdefterim")
               }
             },
             enabled = dialogPassword.isNotBlank(),
@@ -650,7 +651,7 @@ fun SettingsScreen(
   }
 
   if (showLanguageDialog) {
-    val languages = listOf("tr" to "Türkçe", "en" to "English", "ru" to "Русский", "es" to "Español", "de" to "Deutsch", "fr" to "Français")
+    val languages = listOf("tr" to "Türkçe", "en" to "English")
     val currentLocale = AppCompatDelegate.getApplicationLocales()[0]?.language ?: java.util.Locale.getDefault().language
 
     AlertDialog(
@@ -730,17 +731,17 @@ fun SettingsScreen(
 
   if (showStartupBehaviorDialog) {
     val behaviors = listOf(
-      0 to "En Son Açılan",
-      1 to "Notlarım",
-      2 to "Parolalarım"
+      0 to stringResource(R.string.startup_last_opened),
+      1 to stringResource(R.string.my_notes),
+      2 to stringResource(R.string.passwords_title)
     )
 
     AlertDialog(
       onDismissRequest = { showStartupBehaviorDialog = false },
-      title = { Text("Başlangıç Ekranı") },
+      title = { Text(stringResource(R.string.startup_screen)) },
       text = {
         Column {
-          Text("Uygulama açıldığında hangi sayfanın gösterileceğini seçin.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+          Text(stringResource(R.string.startup_screen_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
           Spacer(modifier = Modifier.height(8.dp))
           behaviors.forEach { (value, title) ->
             TextButton(
@@ -837,7 +838,7 @@ fun SettingsScreen(
                     .format(Date(backup.createdTimeMillis))
                   val sizeKb = backup.sizeBytes / 1024
                   Text(text = dateStr, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-                  Text(text = "Boyut: $sizeKb KB", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                  Text(text = stringResource(R.string.backup_size_format, sizeKb), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
               }
             }

@@ -21,6 +21,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import com.notdefterim.app.BuildConfig
+import com.notdefterim.app.R
 import com.notdefterim.app.data.local.NoteDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.SecureRandom
@@ -53,7 +54,7 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
 
   override suspend fun backupToCloud(): Result<Unit> = withContext(Dispatchers.IO) {
     try {
-      val driveService = getDriveService() ?: return@withContext Result.failure(Exception("Google hesabı ile giriş yapılmamış."))
+      val driveService = getDriveService() ?: return@withContext Result.failure(Exception(context.getString(R.string.google_not_signed_in)))
 
       // Açık tüm SQLite işlemlerini (WAL) ana dosyaya yazmaya zorla (Checkpoint)
       noteDatabase.query(androidx.sqlite.db.SimpleSQLiteQuery("PRAGMA wal_checkpoint(FULL)"))
@@ -95,7 +96,7 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
 
   override suspend fun restoreFromCloud(backupId: String?): Result<Int> = withContext(Dispatchers.IO) {
     try {
-      val driveService = getDriveService() ?: return@withContext Result.failure(Exception("Google hesabı ile giriş yapılmamış."))
+      val driveService = getDriveService() ?: return@withContext Result.failure(Exception(context.getString(R.string.google_not_signed_in)))
 
       // 1. Drive'daki yedeği bul
       val existingFile = if (backupId != null) {
@@ -111,7 +112,7 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
           .execute()
         fileList.files.firstOrNull()
       }
-        ?: return@withContext Result.failure(Exception("Drive'da herhangi bir yedek bulunamadı."))
+        ?: return@withContext Result.failure(Exception(context.getString(R.string.drive_no_backup_found)))
 
       // 2. Yedeği indir
       val downloadedZip = java.io.File(context.cacheDir, "downloaded_backup.zip")
@@ -147,7 +148,7 @@ class GoogleDriveBackupRepositoryImpl @Inject constructor(
 
   override suspend fun listBackups(): Result<List<com.notdefterim.app.data.remote.BackupInfo>> = withContext(Dispatchers.IO) {
     try {
-      val driveService = getDriveService() ?: return@withContext Result.failure(Exception("Google hesabı ile giriş yapılmamış."))
+      val driveService = getDriveService() ?: return@withContext Result.failure(Exception(context.getString(R.string.google_not_signed_in)))
 
       val fileList = driveService.files().list()
         .setSpaces("appDataFolder")

@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -54,6 +55,7 @@ fun SetupAppPinDialog(
   var step by remember { mutableStateOf(if (appPin == null) 1 else 0) }
   var isNotesSelected by remember { mutableStateOf(if (appPin == null) targetScope == 0 || targetScope == 1 else appPinScope == 0 || appPinScope == 1) }
   var isPasswordsSelected by remember { mutableStateOf(if (appPin == null) targetScope == 0 || targetScope == 2 else appPinScope == 0 || appPinScope == 2) }
+  val context = LocalContext.current
 
   AlertDialog(
     onDismissRequest = onDismiss,
@@ -84,7 +86,7 @@ fun SetupAppPinDialog(
             Text(errorMessage!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             if (!appPinHint.isNullOrBlank()) {
               Spacer(modifier = Modifier.height(4.dp))
-              Text("İpucu: $appPinHint", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+              Text(stringResource(R.string.hint_format, appPinHint), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
             }
           }
         } else {
@@ -117,7 +119,7 @@ fun SetupAppPinDialog(
                 if (it.length <= 6) newPinConfirmInput = it
                 errorMessage = null 
               },
-              label = { Text("Yeni PIN (Tekrar)") },
+              label = { Text(stringResource(R.string.pin_new_repeat)) },
               keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
               visualTransformation = PasswordVisualTransformation(),
               singleLine = true,
@@ -131,19 +133,19 @@ fun SetupAppPinDialog(
               if (it.length <= 30) pinHintInput = it
               errorMessage = null
             },
-            label = { Text("PIN İpucu") },
+            label = { Text(stringResource(R.string.pin_hint_label)) },
             singleLine = true
           )
           
           Spacer(modifier = Modifier.height(16.dp))
-          Text("PIN Kullanım Alanı:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+          Text(stringResource(R.string.pin_scope_label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
           Spacer(modifier = Modifier.height(4.dp))
           Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = isNotesSelected, onCheckedChange = { 
               isNotesSelected = it
               errorMessage = null
             })
-            Text("Notlar", style = MaterialTheme.typography.bodySmall, modifier = Modifier.clickable { 
+            Text(stringResource(R.string.pin_scope_notes), style = MaterialTheme.typography.bodySmall, modifier = Modifier.clickable { 
               isNotesSelected = !isNotesSelected
               errorMessage = null
             })
@@ -152,7 +154,7 @@ fun SetupAppPinDialog(
               isPasswordsSelected = it
               errorMessage = null
             })
-            Text("Parolalar", style = MaterialTheme.typography.bodySmall, modifier = Modifier.clickable { 
+            Text(stringResource(R.string.pin_scope_passwords), style = MaterialTheme.typography.bodySmall, modifier = Modifier.clickable { 
               isPasswordsSelected = !isPasswordsSelected
               errorMessage = null
             })
@@ -165,7 +167,7 @@ fun SetupAppPinDialog(
 
           Spacer(modifier = Modifier.height(16.dp))
           Text(
-            "DİKKAT: PIN kodunuzu unutursanız, kilitli notlarınıza kesinlikle ulaşılamaz! Bu kod cihazınızda şifrelenerek saklanır ve hiçbir sunucuya gönderilmez.",
+            stringResource(R.string.pin_forget_warning),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error
           )
@@ -179,28 +181,28 @@ fun SetupAppPinDialog(
             if (currentPinInput == appPin) {
               step = 1
             } else {
-              errorMessage = "Girdiğiniz PIN hatalı"
+              errorMessage = context.getString(R.string.pin_entered_wrong)
             }
           } else {
             if (newPinInput.length >= 4) {
               if (!isNotesSelected && !isPasswordsSelected) {
-                errorMessage = "En az bir kullanım alanı seçmelisiniz."
+                errorMessage = context.getString(R.string.pin_scope_required)
               } else if (pinHintInput.isBlank()) {
-                errorMessage = "PIN İpucu girilmesi zorunludur."
+                errorMessage = context.getString(R.string.pin_hint_required)
               } else if (passwordVisible || newPinInput == newPinConfirmInput) {
                 val newScope = if (isNotesSelected && isPasswordsSelected) 0 else if (isNotesSelected) 1 else 2
                 onSave(newPinInput, pinHintInput, newScope)
                 onDismiss()
               } else {
-                errorMessage = "Girdiğiniz PIN'ler eşleşmiyor."
+                errorMessage = context.getString(R.string.pin_mismatch)
               }
             } else {
-              errorMessage = "PIN en az 4 haneli olmalıdır."
+              errorMessage = context.getString(R.string.pin_too_short)
             }
           }
         }
       ) {
-        Text(if (step == 0) "İleri" else stringResource(R.string.save))
+        Text(stringResource(if (step == 0) R.string.next else R.string.save))
       }
     },
     dismissButton = {
@@ -212,7 +214,7 @@ fun SetupAppPinDialog(
                 onSave(null, null, 0)
                 onDismiss()
               } else {
-                errorMessage = "Girdiğiniz PIN hatalı"
+                errorMessage = context.getString(R.string.pin_entered_wrong)
               }
             }
           ) {

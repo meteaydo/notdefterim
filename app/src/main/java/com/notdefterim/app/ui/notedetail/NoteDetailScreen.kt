@@ -94,6 +94,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.notdefterim.app.R
+import com.notdefterim.app.domain.model.DefaultNoteCategory
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -334,7 +335,7 @@ fun NoteDetailScreen(
       startReminderFlow()
     } else {
       coroutineScope.launch {
-        snackbarHostState.showSnackbar("Bildirim izni verilmediği için hatırlatıcı kurulamadı.")
+        snackbarHostState.showSnackbar(context.getString(R.string.reminder_notification_permission_denied))
       }
     }
   }
@@ -416,7 +417,7 @@ fun NoteDetailScreen(
           ) {
             Icon(
               imageVector = if (isLocked) Icons.Rounded.Lock else Icons.Rounded.LockOpen,
-              contentDescription = if (isLocked) "Kilidi Aç" else "Kilitle"
+              contentDescription = stringResource(if (isLocked) R.string.unlock else R.string.lock)
             )
           }
 
@@ -432,7 +433,7 @@ fun NoteDetailScreen(
           ) {
             Icon(
               imageVector = Icons.AutoMirrored.Rounded.FormatListBulleted,
-              contentDescription = "Liste Modu"
+              contentDescription = stringResource(R.string.checklist_mode)
             )
           }
 
@@ -451,7 +452,7 @@ fun NoteDetailScreen(
           }) {
             Icon(
               imageVector = Icons.AutoMirrored.Rounded.ExitToApp,
-              contentDescription = "Yüzen Pencerede Aç",
+              contentDescription = stringResource(R.string.open_in_floating_window),
               tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
           }
@@ -503,19 +504,19 @@ fun NoteDetailScreen(
             if (isPinApplicable) {
               Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
               Spacer(modifier = Modifier.height(16.dp))
-              Text("Bu not kilitli", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+              Text(stringResource(R.string.note_is_locked), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
               Spacer(modifier = Modifier.height(16.dp))
             } else {
               Icon(Icons.Rounded.Info, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
               Spacer(modifier = Modifier.height(16.dp))
               Text(
-                "Güvenlik Tavsiyesi",
+                stringResource(R.string.security_tip_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
               )
               Spacer(modifier = Modifier.height(8.dp))
               Text(
-                "Telefon kilidinizi açma yetkisi olan herkes bu notu görebilir. İsterseniz uygulama içi ekstra pini aktif edebilirsiniz.",
+                stringResource(R.string.locked_note_security_tip),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -523,7 +524,7 @@ fun NoteDetailScreen(
               )
               Spacer(modifier = Modifier.height(16.dp))
               Button(onClick = { showSetupPinDialog = true }) {
-                Text("PIN'i Belirle")
+                Text(stringResource(R.string.set_pin))
               }
               Spacer(modifier = Modifier.height(16.dp))
             }
@@ -534,7 +535,7 @@ fun NoteDetailScreen(
                 authViewModel.authenticateAction(
                   activity = activity,
                   title = context.getString(R.string.app_name),
-                  subtitle = "Uygulama içi pin korumasını açtınız. Notu görüntülemek için pini girmeniz gerekiyor.",
+                  subtitle = context.getString(R.string.pin_required_view_note),
                   targetScope = 1,
                   onSuccess = { isContentVisible = true },
                   onError = { err -> 
@@ -545,7 +546,7 @@ fun NoteDetailScreen(
                 isContentVisible = true
               }
             }) {
-              Text("İçeriği Göster")
+              Text(stringResource(R.string.show_content))
             }
           }
         }
@@ -554,7 +555,7 @@ fun NoteDetailScreen(
       OutlinedTextField(
         value = searchQuery,
         onValueChange = viewModel::onSearchQueryChange,
-        placeholder = { Text("Herhangi Birşey Ara") },
+        placeholder = { Text(stringResource(R.string.search_anything)) },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
           if (searchQuery.isNotEmpty()) {
@@ -600,12 +601,11 @@ fun NoteDetailScreen(
             },
             label = { 
                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                  if (cat.name.equals("Alışveriş", ignoreCase = true)) {
-                      Icon(Icons.Rounded.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp))
-                  } else if (cat.name.equals("Yapılacaklar", ignoreCase = true)) {
-                      Icon(Icons.AutoMirrored.Rounded.FormatListBulleted, contentDescription = null, modifier = Modifier.size(14.dp))
-                  } else if (cat.name.equals("Fikirler", ignoreCase = true)) {
-                      Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(14.dp))
+                  when (DefaultNoteCategory.of(cat.name)) {
+                      DefaultNoteCategory.SHOPPING -> Icon(Icons.Rounded.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp))
+                      DefaultNoteCategory.TODO -> Icon(Icons.AutoMirrored.Rounded.FormatListBulleted, contentDescription = null, modifier = Modifier.size(14.dp))
+                      DefaultNoteCategory.IDEAS -> Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(14.dp))
+                      null -> {}
                   }
                   Text(cat.name, style = MaterialTheme.typography.labelMedium)
                }
@@ -651,7 +651,7 @@ fun NoteDetailScreen(
           androidx.compose.material3.FilterChip(
             selected = false,
             onClick = { isCategoriesExpanded = false },
-            label = { Text("Gizle", style = MaterialTheme.typography.labelMedium) },
+            label = { Text(stringResource(R.string.hide_desc), style = MaterialTheme.typography.labelMedium) },
             modifier = Modifier.height(28.dp),
             colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
               labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
@@ -690,7 +690,11 @@ fun NoteDetailScreen(
               }
               
               Text(
-                text = "Hatırlatıcı Kuruldu: ${reminderAt!!.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yy HH:mm"))} ($repeatText)",
+                text = stringResource(
+                  R.string.reminder_set_format,
+                  reminderAt!!.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yy HH:mm")),
+                  repeatText
+                ),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary
               )
@@ -712,7 +716,7 @@ fun NoteDetailScreen(
           if (showRepeatMenu) {
             AlertDialog(
               onDismissRequest = { showRepeatMenu = false },
-              title = { Text("Tekrarlama Seçimi") },
+              title = { Text(stringResource(R.string.repeat_selection_title)) },
               text = {
                 Column {
                    RepeatInterval.values().forEach { interval ->
@@ -744,7 +748,7 @@ fun NoteDetailScreen(
               },
               confirmButton = {
                 TextButton(onClick = { showRepeatMenu = false }) {
-                  Text("Tamam")
+                  Text(stringResource(R.string.ok))
                 }
               },
               dismissButton = {
@@ -762,7 +766,7 @@ fun NoteDetailScreen(
                     }
                   }
                 ) {
-                  Text("Tarihi Değiştir")
+                  Text(stringResource(R.string.change_date))
                 }
               }
             )
@@ -1038,8 +1042,8 @@ fun NoteDetailScreen(
   if (showOverlayPermissionDialog) {
     AlertDialog(
       onDismissRequest = { showOverlayPermissionDialog = false },
-      title = { Text("Diğer Uygulamaların Üzerinde Gösterme İzni") },
-      text = { Text("Yüzen not pencerelerini kullanabilmek için bu izni vermeniz gerekmektedir. İzin sayesinde notlarınızı diğer uygulamaların üzerindeyken de görebilirsiniz.") },
+      title = { Text(stringResource(R.string.overlay_permission_title)) },
+      text = { Text(stringResource(R.string.overlay_permission_note_desc)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -1048,12 +1052,12 @@ fun NoteDetailScreen(
             context.startActivity(intent)
           }
         ) {
-          Text("Ayarlara Git")
+          Text(stringResource(R.string.go_to_settings))
         }
       },
       dismissButton = {
         TextButton(onClick = { showOverlayPermissionDialog = false }) {
-          Text("İptal")
+          Text(stringResource(R.string.cancel))
         }
       }
     )

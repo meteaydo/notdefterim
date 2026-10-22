@@ -2,6 +2,7 @@ package com.notdefterim.app.data.remote
 
 import android.content.Context
 import android.content.Intent
+import com.notdefterim.app.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -73,15 +74,18 @@ class GoogleAuthManager(private val context: Context) {
         // Kullanıcı hesap seçmeden kapattı
         GoogleSignInStatusCodes.SIGN_IN_CANCELLED -> GoogleAuthState.SignedOut
         CommonStatusCodes.DEVELOPER_ERROR -> GoogleAuthState.Error(
-          "Giriş başarısız (kod 10): uygulamanın imzası Google Cloud'da kayıtlı değil. " +
-            "İmzanın SHA-1 değeri OAuth istemcisine eklenmeli."
+          context.getString(R.string.google_sign_in_error_developer)
         )
         else -> GoogleAuthState.Error(
-          "Giriş başarısız (kod ${e.statusCode}): ${GoogleSignInStatusCodes.getStatusCodeString(e.statusCode)}"
+          context.getString(
+            R.string.google_sign_in_error_code,
+            e.statusCode,
+            GoogleSignInStatusCodes.getStatusCodeString(e.statusCode)
+          )
         )
       }
     } catch (e: Exception) {
-      _authState.value = GoogleAuthState.Error("Giriş başarısız: ${e.localizedMessage}")
+      _authState.value = GoogleAuthState.Error(context.getString(R.string.google_sign_in_error_generic, e.localizedMessage))
     }
   }
 
@@ -91,7 +95,7 @@ class GoogleAuthManager(private val context: Context) {
       signInClient.signOut().await()
       _authState.value = GoogleAuthState.SignedOut
     } catch (e: Exception) {
-      _authState.value = GoogleAuthState.Error("Çıkış yapılamadı: ${e.localizedMessage}")
+      _authState.value = GoogleAuthState.Error(context.getString(R.string.google_sign_out_error, e.localizedMessage))
     }
   }
 

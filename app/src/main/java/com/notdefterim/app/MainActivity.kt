@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
 import androidx.appcompat.app.AppCompatActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -155,14 +156,14 @@ class MainActivity : AppCompatActivity() {
                 OutlinedTextField(
                   value = inputPin,
                   onValueChange = { inputPin = it; isError = false },
-                  label = { Text("Uygulama PIN'i") },
+                  label = { Text(stringResource(R.string.app_pin_label)) },
                   keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                   visualTransformation = PasswordVisualTransformation(),
                   singleLine = true,
                   isError = isError
                 )
                 if (isError) {
-                  Text("Hatalı PIN", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                  Text(stringResource(R.string.wrong_pin), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
               }
             },
@@ -174,12 +175,12 @@ class MainActivity : AppCompatActivity() {
                   inputPin = ""
                 }
               }) {
-                Text("Kilidi Aç")
+                Text(stringResource(R.string.unlock))
               }
             },
             dismissButton = {
               TextButton(onClick = { authViewModel.dismissPinPrompt() }) {
-                Text("İptal")
+                Text(stringResource(R.string.cancel))
               }
             }
           )

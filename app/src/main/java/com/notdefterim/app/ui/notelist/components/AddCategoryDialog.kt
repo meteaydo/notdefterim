@@ -25,6 +25,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.notdefterim.app.R
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -42,7 +44,7 @@ fun AddCategoryDialog(
 
   AlertDialog(
     onDismissRequest = onDismiss,
-    title = { Text("Yeni Kategori Ekle") },
+    title = { Text(stringResource(R.string.add_category_title)) },
     text = {
       Column(
         modifier = Modifier.fillMaxWidth()
@@ -50,12 +52,12 @@ fun AddCategoryDialog(
         OutlinedTextField(
           value = name,
           onValueChange = { name = it },
-          label = { Text("Kategori Adı") },
+          label = { Text(stringResource(R.string.category_name)) },
           modifier = Modifier.fillMaxWidth(),
           singleLine = true
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Renk Seçimi", style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(R.string.color_selection), style = MaterialTheme.typography.labelLarge)
         Spacer(modifier = Modifier.height(8.dp))
         Row(
           modifier = Modifier.fillMaxWidth(),
@@ -91,12 +93,12 @@ fun AddCategoryDialog(
         },
         enabled = name.isNotBlank()
       ) {
-        Text("Ekle")
+        Text(stringResource(R.string.add))
       }
     },
     dismissButton = {
       TextButton(onClick = onDismiss) {
-        Text("İptal")
+        Text(stringResource(R.string.cancel))
       }
     }
   )

@@ -43,7 +43,7 @@ android {
     versionCode = 1
     versionName = "1.0.0"
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    resourceConfigurations += listOf("tr", "en", "ru", "es", "de", "fr")
+    resourceConfigurations += listOf("en", "tr")
 
     val driveWrapPassword: String = localProperties.getProperty(
       "DRIVE_BACKUP_WRAP_PASSWORD"

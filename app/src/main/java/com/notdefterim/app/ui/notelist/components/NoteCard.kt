@@ -47,7 +47,9 @@ import com.notdefterim.app.domain.model.Note
 import com.notdefterim.app.ui.theme.LocalNoteCardColors
 import java.time.format.DateTimeFormatter
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import com.notdefterim.app.R
+import com.notdefterim.app.domain.model.DefaultNoteCategory
 
 private val cardDateFormatter = DateTimeFormatter.ofPattern("d MMM")
 
@@ -114,16 +116,17 @@ fun NoteCard(
       if (note.content.isNotBlank()) {
         if (note.title.isNotBlank()) Spacer(modifier = Modifier.height(8.dp))
         
+        val context = LocalContext.current
         val displayContent = remember(note.content, note.isChecklist) {
             if (note.isChecklist) {
                 try {
                     val items = kotlinx.serialization.json.Json.decodeFromString<List<com.notdefterim.app.domain.model.ChecklistItem>>(note.content)
                     val checkedCount = items.count { it.isChecked }
-                    val summary = "[$checkedCount/${items.size} tamamlandı]"
+                    val summary = context.getString(R.string.checklist_progress_format, checkedCount, items.size)
                     val previewLines = items.take(3).joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
                     "$summary\n$previewLines"
                 } catch (e: Exception) {
-                    "[Liste İçeriği]"
+                    context.getString(R.string.checklist_content_placeholder)
                 }
             } else {
                 note.content
@@ -193,7 +196,7 @@ fun NoteCard(
     if (note.isLocked) {
       Icon(
         imageVector = Icons.Rounded.Lock,
-        contentDescription = "Kilitli",
+        contentDescription = stringResource(R.string.filter_locked),
         modifier = Modifier
           .size(48.dp)
           .align(Alignment.Center),
@@ -206,9 +209,9 @@ fun NoteCard(
     if (note.category != null) {
       val catName = note.category.name
       val catIcon = when {
-          catName.equals("Alışveriş", ignoreCase = true) -> Icons.Rounded.ShoppingCart
-          catName.equals("Yapılacaklar", ignoreCase = true) -> Icons.AutoMirrored.Rounded.FormatListBulleted
-          catName.equals("Fikirler", ignoreCase = true) -> Icons.Outlined.Lightbulb
+          DefaultNoteCategory.of(catName) == DefaultNoteCategory.SHOPPING -> Icons.Rounded.ShoppingCart
+          DefaultNoteCategory.of(catName) == DefaultNoteCategory.TODO -> Icons.AutoMirrored.Rounded.FormatListBulleted
+          DefaultNoteCategory.of(catName) == DefaultNoteCategory.IDEAS -> Icons.Outlined.Lightbulb
           else -> Icons.Rounded.Bookmark
       }
       

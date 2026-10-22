@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notdefterim.app.domain.model.Note
 import com.notdefterim.app.domain.model.Category
+import com.notdefterim.app.domain.model.DefaultNoteCategory
 import com.notdefterim.app.domain.repository.CategoryRepository
 import com.notdefterim.app.domain.usecase.category.GetCategoriesUseCase
 import com.notdefterim.app.domain.usecase.note.DeleteNoteUseCase
@@ -31,13 +32,6 @@ class NoteListViewModel @Inject constructor(
   private val getCategoriesUseCase: GetCategoriesUseCase,
   private val categoryRepository: CategoryRepository
 ) : ViewModel() {
-
-  /** Düzenleme ve silme yapılamayan korumalı kategori isimleri */
-  companion object {
-    val PROTECTED_CATEGORY_NAMES = setOf(
-      "fikirler", "yapılacaklar", "alışveriş"
-    )
-  }
 
   enum class FilterType { ALL, LOCKED, FREQUENT, CATEGORY }
   
@@ -138,7 +132,7 @@ class NoteListViewModel @Inject constructor(
 
   /** Kategorinin korumalı olup olmadığını kontrol eder */
   fun isCategoryProtected(category: Category): Boolean =
-    category.name.lowercase() in PROTECTED_CATEGORY_NAMES
+    DefaultNoteCategory.of(category.name) != null
 
   /** Kategori adını ve rengini günceller */
   fun updateCategory(category: Category) {

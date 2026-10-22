@@ -69,7 +69,7 @@ object FloatingNoteManager {
                 }
             }
 
-            tvNoteTitle?.text = if (title.isBlank()) "Not" else title
+            tvNoteTitle?.text = if (title.isBlank()) context.getString(R.string.note_default_title) else title
             tvNoteContent?.text = content
 
             btnClose?.setOnClickListener {
@@ -124,7 +124,7 @@ object FloatingNoteManager {
             Log.d("FloatingNote", "View added successfully")
         } catch (e: Exception) {
             Log.e("FloatingNote", "Error showing floating note", e)
-            Toast.makeText(context, "Pencere açılamadı: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.window_open_failed, e.message), Toast.LENGTH_LONG).show()
         }
     }
 

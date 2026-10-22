@@ -11,6 +11,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.notdefterim.app.R
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -166,7 +168,7 @@ private fun ChecklistItemRow(
                 decorationBox = { innerTextField ->
                     if (item.text.isEmpty()) {
                         Text(
-                            text = "Madde...",
+                            text = stringResource(R.string.checklist_item_placeholder),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         )
@@ -189,7 +191,7 @@ private fun ChecklistItemRow(
             ) {
                 Icon(
                     Icons.Rounded.Close,
-                    contentDescription = "Kaldır",
+                    contentDescription = stringResource(R.string.remove),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier.size(18.dp)
                 )
@@ -200,8 +202,8 @@ private fun ChecklistItemRow(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Satırı Sil") },
-            text = { Text("Bu satırı silmek istediğinize emin misiniz?") },
+            title = { Text(stringResource(R.string.delete_row_title)) },
+            text = { Text(stringResource(R.string.delete_row_desc)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -209,12 +211,12 @@ private fun ChecklistItemRow(
                         onRemove()
                     }
                 ) {
-                    Text("Sil", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("İptal")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

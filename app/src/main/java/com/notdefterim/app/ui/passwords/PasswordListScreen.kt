@@ -84,6 +84,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import com.notdefterim.app.R
+import com.notdefterim.app.domain.model.DefaultPasswordCategory
 import com.notdefterim.app.util.SensitiveClipboard
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -211,7 +212,7 @@ fun PasswordListScreen(
       OutlinedTextField(
         value = searchQuery,
         onValueChange = viewModel::onSearchQueryChange,
-        placeholder = { Text("Herhangi Birşey Ara") },
+        placeholder = { Text(stringResource(R.string.search_anything)) },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
           if (searchQuery.isNotEmpty()) {
@@ -249,7 +250,7 @@ fun PasswordListScreen(
         FilterChip(
           selected = selectedCategoryId == null,
           onClick = { viewModel.onCategorySelected(null) },
-          label = { Text("Tümü", style = MaterialTheme.typography.labelMedium) },
+          label = { Text(stringResource(R.string.filter_all), style = MaterialTheme.typography.labelMedium) },
           modifier = Modifier
             .height(28.dp)
             .alpha(if (selectedCategoryId == null) 1f else 0.4f),
@@ -327,7 +328,7 @@ fun PasswordListScreen(
           FilterChip(
             selected = false,
             onClick = { isCategoriesExpanded = false },
-            label = { Text("Gizle", style = MaterialTheme.typography.labelMedium) },
+            label = { Text(stringResource(R.string.hide_desc), style = MaterialTheme.typography.labelMedium) },
             modifier = Modifier.height(28.dp),
             colors = FilterChipDefaults.filterChipColors(
               labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
@@ -349,7 +350,7 @@ fun PasswordListScreen(
             newCategoryColor = defaultCategoryColors.first()
             showAddCategoryDialog = true
           },
-          label = { Text("+ Kategori Ekle", style = MaterialTheme.typography.labelMedium) },
+          label = { Text(stringResource(R.string.add_category_chip), style = MaterialTheme.typography.labelMedium) },
           modifier = Modifier.height(28.dp).alpha(0.4f)
         )
       }
@@ -474,17 +475,17 @@ fun PasswordListScreen(
   if (showAddCategoryDialog) {
     AlertDialog(
       onDismissRequest = { showAddCategoryDialog = false },
-      title = { Text("Yeni Kategori") },
+      title = { Text(stringResource(R.string.new_category_title)) },
       text = {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
           OutlinedTextField(
             value = newCategoryName,
             onValueChange = { newCategoryName = it },
-            label = { Text("Kategori Adı") },
+            label = { Text(stringResource(R.string.category_name)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
           )
-          Text("Renk Seçin", style = MaterialTheme.typography.labelMedium)
+          Text(stringResource(R.string.choose_color), style = MaterialTheme.typography.labelMedium)
           Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             defaultCategoryColors.forEach { colorHex ->
               val color = try { Color(android.graphics.Color.parseColor(colorHex)) } catch (e: Exception) { Color.Gray }
@@ -511,12 +512,12 @@ fun PasswordListScreen(
             showAddCategoryDialog = false
           }
         ) {
-          Text("Ekle")
+          Text(stringResource(R.string.add))
         }
       },
       dismissButton = {
         TextButton(onClick = { showAddCategoryDialog = false }) {
-          Text("İptal")
+          Text(stringResource(R.string.cancel))
         }
       }
     )
@@ -692,7 +693,7 @@ fun PasswordCard(
                   } else {
                     Icon(
                       Icons.Rounded.ContentCopy,
-                      contentDescription = "Kullanıcı Adını Kopyala",
+                      contentDescription = stringResource(R.string.copy_username),
                       modifier = Modifier.size(15.dp).padding(start = 4.dp),
                       tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                     )
@@ -731,7 +732,7 @@ fun PasswordCard(
                               authViewModel.authenticateAction(
                                   activity = activity,
                                   title = context.getString(R.string.app_name),
-                                  subtitle = "Uygulama içi pin korumasını açtınız. Parolayı kopyalamak için pini girmeniz gerekiyor.",
+                                  subtitle = context.getString(R.string.pin_required_copy_password),
                                   targetScope = 2,
                                   onSuccess = { 
                                       performCopy()
@@ -759,7 +760,7 @@ fun PasswordCard(
                     } else {
                       Icon(
                         Icons.Rounded.ContentCopy,
-                        contentDescription = "Parolayı Kopyala",
+                        contentDescription = stringResource(R.string.copy_password),
                         modifier = Modifier.size(15.dp).padding(end = 4.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                       )
@@ -790,7 +791,7 @@ fun PasswordCard(
                                 authViewModel.authenticateAction(
                                     activity = activity,
                                     title = context.getString(R.string.app_name),
-                                    subtitle = "Uygulama içi pin korumasını açtınız. Parolayı görüntülemek için pini girmeniz gerekiyor.",
+                                    subtitle = context.getString(R.string.pin_required_view_password),
                                     targetScope = 2,
                                     onSuccess = { 
                                         passwordVisible = true
@@ -820,11 +821,14 @@ fun PasswordCard(
             val isUpdated = password.updatedAt != null
             val displayDate = password.updatedAt ?: password.createdAt
             val dateString = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault()).format(java.util.Date(displayDate))
-            val prefix = if (isUpdated) "Değiştirildi:" else "Oluşturuldu:"
-            val timeAgo = getTimeAgoText(displayDate)
+            val timeAgo = getTimeAgoText(context, displayDate)
             
             Text(
-              text = "$prefix $dateString ($timeAgo)",
+              text = stringResource(
+                if (isUpdated) R.string.password_date_updated_format else R.string.password_date_created_format,
+                dateString,
+                timeAgo
+              ),
               style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
               fontWeight = FontWeight.Normal,
               color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
@@ -896,8 +900,8 @@ fun PasswordCard(
       if (showOverlayPermissionDialog) {
         AlertDialog(
           onDismissRequest = { showOverlayPermissionDialog = false },
-          title = { Text("Diğer Uygulamaların Üzerinde Gösterme İzni") },
-          text = { Text("Yüzen parola kartlarını kullanabilmek için bu izni vermeniz gerekmektedir. İzin sayesinde parolalarınızı diğer uygulamaların üzerindeyken de görebilir ve kolayca kopyalayabilirsiniz.") },
+          title = { Text(stringResource(R.string.overlay_permission_title)) },
+          text = { Text(stringResource(R.string.overlay_permission_password_desc)) },
           confirmButton = {
             TextButton(
               onClick = {
@@ -906,12 +910,12 @@ fun PasswordCard(
                 context.startActivity(intent)
               }
             ) {
-              Text("Ayarlara Git")
+              Text(stringResource(R.string.go_to_settings))
             }
           },
           dismissButton = {
             TextButton(onClick = { showOverlayPermissionDialog = false }) {
-              Text("İptal")
+              Text(stringResource(R.string.cancel))
             }
           }
         )
@@ -997,7 +1001,7 @@ fun AddPasswordDialog(
             modifier = Modifier.size(16.dp)
           )
           Spacer(modifier = Modifier.width(4.dp))
-          Text(text = "Şifre Üret")
+          Text(text = stringResource(R.string.generate_password))
         }
 
         if (showGenerator) {
@@ -1023,10 +1027,10 @@ fun AddPasswordDialog(
           onExpandedChange = { categoryExpanded = !categoryExpanded }
         ) {
           OutlinedTextField(
-            value = selectedCategory?.name ?: "Kategori Yok",
+            value = selectedCategory?.name ?: stringResource(R.string.no_category),
             onValueChange = { },
             readOnly = true,
-            label = { Text("Kategori") },
+            label = { Text(stringResource(R.string.category)) },
             modifier = Modifier.menuAnchor(androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true),
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -1036,7 +1040,7 @@ fun AddPasswordDialog(
             onDismissRequest = { categoryExpanded = false }
           ) {
             DropdownMenuItem(
-              text = { Text("Kategori Yok") },
+              text = { Text(stringResource(R.string.no_category)) },
               leadingIcon = {
                 Icon(
                   imageVector = Icons.Rounded.BookmarkBorder,
@@ -1166,7 +1170,7 @@ fun EditPasswordDialog(
             modifier = Modifier.size(16.dp)
           )
           Spacer(modifier = Modifier.width(4.dp))
-          Text(text = "Şifre Üret")
+          Text(text = stringResource(R.string.generate_password))
         }
 
         if (showGenerator) {
@@ -1192,10 +1196,10 @@ fun EditPasswordDialog(
           onExpandedChange = { categoryExpanded = !categoryExpanded }
         ) {
           OutlinedTextField(
-            value = selectedCategory?.name ?: "Kategori Yok",
+            value = selectedCategory?.name ?: stringResource(R.string.no_category),
             onValueChange = { },
             readOnly = true,
-            label = { Text("Kategori") },
+            label = { Text(stringResource(R.string.category)) },
             modifier = Modifier.menuAnchor(androidx.compose.material3.ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true),
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -1205,7 +1209,7 @@ fun EditPasswordDialog(
             onDismissRequest = { categoryExpanded = false }
           ) {
             DropdownMenuItem(
-              text = { Text("Kategori Yok") },
+              text = { Text(stringResource(R.string.no_category)) },
               leadingIcon = {
                 Icon(
                   imageVector = Icons.Rounded.BookmarkBorder,
@@ -1258,7 +1262,7 @@ fun EditPasswordDialog(
   )
 }
 
-fun getTimeAgoText(timestamp: Long): String {
+fun getTimeAgoText(context: android.content.Context, timestamp: Long): String {
   val date = java.time.Instant.ofEpochMilli(timestamp).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
   val now = java.time.LocalDate.now()
   val period = java.time.Period.between(date, now)
@@ -1268,26 +1272,27 @@ fun getTimeAgoText(timestamp: Long): String {
   val days = period.days
 
   if (years == 0 && months == 0 && days == 0) {
-    return "Bugün"
+    return context.getString(R.string.time_ago_today)
   }
 
   val parts = mutableListOf<String>()
-  if (years > 0) parts.add("$years yıl")
-  if (months > 0) parts.add("$months ay")
-  if (days > 0) parts.add("$days gün")
+  val resources = context.resources
+  if (years > 0) parts.add(resources.getQuantityString(R.plurals.time_years, years, years))
+  if (months > 0) parts.add(resources.getQuantityString(R.plurals.time_months, months, months))
+  if (days > 0) parts.add(resources.getQuantityString(R.plurals.time_days, days, days))
   
-  return parts.joinToString(" ") + " önce"
+  return context.getString(R.string.time_ago_format, parts.joinToString(" "))
 }
 
 @Composable
 fun CategoryIcon(categoryName: String, tint: Color, modifier: Modifier = Modifier) {
-  val catIcon = when {
-    categoryName.equals("Banka", ignoreCase = true) -> Icons.Rounded.AccountBalance
-    categoryName.equals("Google", ignoreCase = true) -> androidx.compose.ui.graphics.vector.ImageVector.vectorResource(id = R.drawable.ic_google)
-    categoryName.equals("S. Medya", ignoreCase = true) -> Icons.Rounded.Share
-    categoryName.equals("Resmi", ignoreCase = true) -> Icons.Rounded.Domain
-    categoryName.equals("Aile", ignoreCase = true) -> Icons.Rounded.Groups
-    else -> Icons.Rounded.Bookmark
+  val catIcon = when (DefaultPasswordCategory.of(categoryName)) {
+    DefaultPasswordCategory.BANK -> Icons.Rounded.AccountBalance
+    DefaultPasswordCategory.GOOGLE -> androidx.compose.ui.graphics.vector.ImageVector.vectorResource(id = R.drawable.ic_google)
+    DefaultPasswordCategory.SOCIAL_MEDIA -> Icons.Rounded.Share
+    DefaultPasswordCategory.GOVERNMENT -> Icons.Rounded.Domain
+    DefaultPasswordCategory.FAMILY -> Icons.Rounded.Groups
+    null -> Icons.Rounded.Bookmark
   }
   Icon(
     imageVector = catIcon,
@@ -1304,9 +1309,9 @@ private fun EmptyPasswordsContent(
   modifier: Modifier = Modifier
 ) {
   val emptyText = when {
-    hasSearchQuery -> "Eşleşen parola bulunamadı"
-    selectedCategoryId != null -> "Bu kategoride parola yok"
-    else -> "Henüz parola eklenmemiş"
+    hasSearchQuery -> stringResource(R.string.no_matching_passwords)
+    selectedCategoryId != null -> stringResource(R.string.no_passwords_in_category)
+    else -> stringResource(R.string.no_passwords_yet)
   }
   Column(
     modifier = modifier.fillMaxSize(),

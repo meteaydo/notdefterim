@@ -87,13 +87,13 @@ class FloatingPasswordService : Service() {
         btnCopyUsername.setOnClickListener {
             val clip = ClipData.newPlainText("Username", username)
             clipboardManager.setPrimaryClip(clip)
-            Toast.makeText(this, "Kullanıcı adı kopyalandı", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.username_copied), Toast.LENGTH_SHORT).show()
         }
 
         btnCopyPassword.setOnClickListener {
             val clip = ClipData.newPlainText("Password", passwordValue)
             clipboardManager.setPrimaryClip(clip)
-            Toast.makeText(this, "Parola kopyalandı", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.password_copied), Toast.LENGTH_SHORT).show()
         }
 
         // Sürükleme özelliği

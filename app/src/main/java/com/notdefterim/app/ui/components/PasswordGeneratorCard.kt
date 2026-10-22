@@ -40,6 +40,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.notdefterim.app.R
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -95,7 +97,7 @@ fun PasswordGeneratorCard(
       verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
       Text(
-        text = "Güvenli Şifre Üretici",
+        text = stringResource(R.string.password_generator_title),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary
@@ -112,7 +114,7 @@ fun PasswordGeneratorCard(
         verticalAlignment = Alignment.CenterVertically
       ) {
         Text(
-          text = generatedPassword.ifEmpty { "Seçim yapınız..." },
+          text = generatedPassword.ifEmpty { stringResource(R.string.password_generator_select) },
           style = MaterialTheme.typography.bodyLarge.copy(
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
@@ -137,7 +139,7 @@ fun PasswordGeneratorCard(
         ) {
           Icon(
             imageVector = Icons.Rounded.Refresh,
-            contentDescription = "Yeniden Üret",
+            contentDescription = stringResource(R.string.password_generator_regenerate),
             tint = MaterialTheme.colorScheme.primary
           )
         }
@@ -158,7 +160,7 @@ fun PasswordGeneratorCard(
           verticalAlignment = Alignment.CenterVertically
         ) {
           Text(
-            text = "Şifre Uzunluğu",
+            text = stringResource(R.string.password_generator_length),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -171,7 +173,7 @@ fun PasswordGeneratorCard(
               .padding(horizontal = 10.dp, vertical = 4.dp)
           ) {
             Text(
-              text = "${length.roundToInt()} Karakter",
+              text = stringResource(R.string.password_generator_chars_format, length.roundToInt()),
               style = MaterialTheme.typography.labelMedium,
               fontWeight = FontWeight.ExtraBold,
               color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -214,7 +216,7 @@ fun PasswordGeneratorCard(
       // Seçenekler / Kriterler
       Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-          text = "Kriterler",
+          text = stringResource(R.string.password_generator_criteria),
           style = MaterialTheme.typography.bodyMedium,
           fontWeight = FontWeight.Medium
         )
@@ -234,7 +236,7 @@ fun PasswordGeneratorCard(
               onCheckedChange = { includeUppercase = it },
               colors = defaultCheckboxColors
             )
-            Text(text = "Büyük Harf (A-Z)", style = MaterialTheme.typography.bodySmall)
+            Text(text = stringResource(R.string.password_generator_uppercase), style = MaterialTheme.typography.bodySmall)
           }
           Row(
             modifier = Modifier.weight(1f),
@@ -245,7 +247,7 @@ fun PasswordGeneratorCard(
               onCheckedChange = { includeLowercase = it },
               colors = defaultCheckboxColors
             )
-            Text(text = "Küçük Harf (a-z)", style = MaterialTheme.typography.bodySmall)
+            Text(text = stringResource(R.string.password_generator_lowercase), style = MaterialTheme.typography.bodySmall)
           }
         }
 
@@ -259,7 +261,7 @@ fun PasswordGeneratorCard(
               onCheckedChange = { includeNumbers = it },
               colors = defaultCheckboxColors
             )
-            Text(text = "Sayılar (0-9)", style = MaterialTheme.typography.bodySmall)
+            Text(text = stringResource(R.string.password_generator_numbers), style = MaterialTheme.typography.bodySmall)
           }
           Row(
             modifier = Modifier.weight(1f),
@@ -270,7 +272,7 @@ fun PasswordGeneratorCard(
               onCheckedChange = { includeSpecial = it },
               colors = defaultCheckboxColors
             )
-            Text(text = "Özel Karakter (!@#)", style = MaterialTheme.typography.bodySmall)
+            Text(text = stringResource(R.string.password_generator_special), style = MaterialTheme.typography.bodySmall)
           }
         }
       }
@@ -303,7 +305,7 @@ fun PasswordGeneratorCard(
           )
           Spacer(modifier = Modifier.width(8.dp))
           Text(
-            text = "Şifreyi Uygula",
+            text = stringResource(R.string.password_generator_apply),
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.bodyMedium
           )

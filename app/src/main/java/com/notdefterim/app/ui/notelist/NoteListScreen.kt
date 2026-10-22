@@ -69,6 +69,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.notdefterim.app.R
+import com.notdefterim.app.domain.model.DefaultNoteCategory
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -182,7 +183,7 @@ fun NoteListScreen(
       OutlinedTextField(
         value = searchQuery,
         onValueChange = viewModel::onSearchQueryChange,
-        placeholder = { Text("Herhangi Birşey Ara") },
+        placeholder = { Text(stringResource(R.string.search_anything)) },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
           if (searchQuery.isNotEmpty()) {
@@ -221,7 +222,7 @@ fun NoteListScreen(
           FilterChip(
             selected = selectedFilterType == NoteListViewModel.FilterType.ALL,
             onClick = { viewModel.setFilter(NoteListViewModel.FilterType.ALL) },
-            label = { Text("Tümü", style = MaterialTheme.typography.labelMedium) },
+            label = { Text(stringResource(R.string.filter_all), style = MaterialTheme.typography.labelMedium) },
             // leadingIcon = null,
             modifier = Modifier
               .height(28.dp)
@@ -247,7 +248,7 @@ fun NoteListScreen(
             label = { 
               Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(14.dp))
-                Text("Kilitli", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.filter_locked), style = MaterialTheme.typography.labelMedium)
               }
             },
             modifier = Modifier
@@ -281,12 +282,11 @@ fun NoteListScreen(
                 onClick = { },
                 label = { 
                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                      if (cat.name.equals("Alışveriş", ignoreCase = true)) {
-                          Icon(Icons.Rounded.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp))
-                      } else if (cat.name.equals("Yapılacaklar", ignoreCase = true)) {
-                          Icon(Icons.AutoMirrored.Rounded.FormatListBulleted, contentDescription = null, modifier = Modifier.size(14.dp))
-                      } else if (cat.name.equals("Fikirler", ignoreCase = true)) {
-                          Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(14.dp))
+                      when (DefaultNoteCategory.of(cat.name)) {
+                          DefaultNoteCategory.SHOPPING -> Icon(Icons.Rounded.ShoppingCart, contentDescription = null, modifier = Modifier.size(14.dp))
+                          DefaultNoteCategory.TODO -> Icon(Icons.AutoMirrored.Rounded.FormatListBulleted, contentDescription = null, modifier = Modifier.size(14.dp))
+                          DefaultNoteCategory.IDEAS -> Icon(Icons.Outlined.Lightbulb, contentDescription = null, modifier = Modifier.size(14.dp))
+                          null -> {}
                       }
                       Text(cat.name, style = MaterialTheme.typography.labelMedium)
                    }
@@ -335,7 +335,7 @@ fun NoteListScreen(
                 offset = DpOffset(0.dp, (-160).dp)
               ) {
                 DropdownMenuItem(
-                  text = { Text("Düzenle") },
+                  text = { Text(stringResource(R.string.edit)) },
                   onClick = {
                     showCatMenu = false
                     editingCategory = cat
@@ -346,7 +346,7 @@ fun NoteListScreen(
                   leadingIcon = { Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
                 )
                 DropdownMenuItem(
-                  text = { Text("Sil", color = MaterialTheme.colorScheme.error) },
+                  text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
                   onClick = {
                     showCatMenu = false
                     deletingCategory = cat
@@ -378,7 +378,7 @@ fun NoteListScreen(
             FilterChip(
               selected = false,
               onClick = { isCategoriesExpanded = false },
-              label = { Text("Gizle", style = MaterialTheme.typography.labelMedium) },
+              label = { Text(stringResource(R.string.hide_desc), style = MaterialTheme.typography.labelMedium) },
               modifier = Modifier.height(28.dp),
               colors = FilterChipDefaults.filterChipColors(
                 labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
@@ -400,7 +400,7 @@ fun NoteListScreen(
               newCategoryColor = defaultCategoryColors.first()
               showAddCategoryDialog = true
             },
-            label = { Text("+ Kategori Ekle", style = MaterialTheme.typography.labelMedium) },
+            label = { Text(stringResource(R.string.add_category_chip), style = MaterialTheme.typography.labelMedium) },
             modifier = Modifier.height(28.dp).alpha(0.4f)
           )
         }
@@ -461,7 +461,7 @@ fun NoteListScreen(
 
               if (showCategoryEmpty || showLockedEmpty) {
                 Text(
-                  text = if (showLockedEmpty) "Hiç kilitli notunuz yok" else "Bu kategoride not yok",
+                  text = stringResource(if (showLockedEmpty) R.string.no_locked_notes else R.string.no_notes_in_category),
                   style = MaterialTheme.typography.titleLarge,
                   color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                   textAlign = TextAlign.Center,
@@ -507,12 +507,12 @@ fun NoteListScreen(
           showEditCategoryDialog = false
           editingCategory = null
         },
-        title = { Text("Kategoriyi Düzenle") },
+        title = { Text(stringResource(R.string.edit_category_title)) },
         text = {
           OutlinedTextField(
             value = editCategoryName,
             onValueChange = { editCategoryName = it },
-            label = { Text("Kategori Adı") },
+            label = { Text(stringResource(R.string.category_name)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
           )
@@ -529,7 +529,7 @@ fun NoteListScreen(
               editingCategory = null
             }
           ) {
-            Text("Kaydet")
+            Text(stringResource(R.string.save))
           }
         },
         dismissButton = {
@@ -537,7 +537,7 @@ fun NoteListScreen(
             showEditCategoryDialog = false
             editingCategory = null
           }) {
-            Text("İptal")
+            Text(stringResource(R.string.cancel))
           }
         }
       )
@@ -550,8 +550,8 @@ fun NoteListScreen(
           showDeleteCategoryDialog = false
           deletingCategory = null
         },
-        title = { Text("Kategoriyi Sil") },
-        text = { Text("\"${deletingCategory?.name}\" kategorisini silmek istediğinize emin misiniz? Bu kategoriye atanmış notlar etkilenmez.") },
+        title = { Text(stringResource(R.string.delete_category_title)) },
+        text = { Text(stringResource(R.string.delete_category_desc, deletingCategory?.name.orEmpty())) },
         confirmButton = {
           TextButton(
             onClick = {
@@ -560,7 +560,7 @@ fun NoteListScreen(
               deletingCategory = null
             }
           ) {
-            Text("Sil", color = MaterialTheme.colorScheme.error)
+            Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
           }
         },
         dismissButton = {
@@ -568,7 +568,7 @@ fun NoteListScreen(
             showDeleteCategoryDialog = false
             deletingCategory = null
           }) {
-            Text("İptal")
+            Text(stringResource(R.string.cancel))
           }
         }
       )
@@ -578,17 +578,17 @@ fun NoteListScreen(
     if (showAddCategoryDialog) {
       AlertDialog(
         onDismissRequest = { showAddCategoryDialog = false },
-        title = { Text("Yeni Kategori") },
+        title = { Text(stringResource(R.string.new_category_title)) },
         text = {
           Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
               value = newCategoryName,
               onValueChange = { newCategoryName = it },
-              label = { Text("Kategori Adı") },
+              label = { Text(stringResource(R.string.category_name)) },
               singleLine = true,
               modifier = Modifier.fillMaxWidth()
             )
-            Text("Renk Seçin", style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.choose_color), style = MaterialTheme.typography.labelMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
               defaultCategoryColors.forEach { colorHex ->
                 val color = try { Color(android.graphics.Color.parseColor(colorHex)) } catch (e: Exception) { Color.Gray }
@@ -615,12 +615,12 @@ fun NoteListScreen(
               showAddCategoryDialog = false
             }
           ) {
-            Text("Ekle")
+            Text(stringResource(R.string.add))
           }
         },
         dismissButton = {
           TextButton(onClick = { showAddCategoryDialog = false }) {
-            Text("İptal")
+            Text(stringResource(R.string.cancel))
           }
         }
       )
@@ -647,8 +647,8 @@ private fun NoteGrid(
   if (showOverlayPermissionDialog) {
     AlertDialog(
       onDismissRequest = { showOverlayPermissionDialog = false },
-      title = { Text("Diğer Uygulamaların Üzerinde Gösterme İzni") },
-      text = { Text("Yüzen not pencerelerini kullanabilmek için bu izni vermeniz gerekmektedir. İzin sayesinde notlarınızı diğer uygulamaların üzerindeyken de görebilirsiniz.") },
+      title = { Text(stringResource(R.string.overlay_permission_title)) },
+      text = { Text(stringResource(R.string.overlay_permission_note_desc)) },
       confirmButton = {
         TextButton(
           onClick = {
@@ -657,12 +657,12 @@ private fun NoteGrid(
             context.startActivity(intent)
           }
         ) {
-          Text("Ayarlara Git")
+          Text(stringResource(R.string.go_to_settings))
         }
       },
       dismissButton = {
         TextButton(onClick = { showOverlayPermissionDialog = false }) {
-          Text("İptal")
+          Text(stringResource(R.string.cancel))
         }
       }
     )
@@ -713,7 +713,7 @@ private fun NoteGrid(
                 .padding(bottom = 32.dp, top = 8.dp)
             ) {
               Text(
-                text = "Not Seçenekleri",
+                text = stringResource(R.string.note_options),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 color = MaterialTheme.colorScheme.primary
@@ -727,7 +727,7 @@ private fun NoteGrid(
                 }
               )
               androidx.compose.material3.ListItem(
-                headlineContent = { Text("Yüzen Pencerede Aç") },
+                headlineContent = { Text(stringResource(R.string.open_in_floating_window)) },
                 leadingContent = { Icon(Icons.AutoMirrored.Rounded.ExitToApp, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
                 modifier = Modifier.clickable {
                   if (!Settings.canDrawOverlays(context)) {
@@ -777,8 +777,8 @@ private fun EmptyNotesContent(
   modifier: Modifier = Modifier
 ) {
   val emptyText = when (selectedFilterType) {
-    NoteListViewModel.FilterType.CATEGORY -> "Bu kategoride not yok"
-    NoteListViewModel.FilterType.LOCKED -> "Hiç kilitli notunuz yok"
+    NoteListViewModel.FilterType.CATEGORY -> stringResource(R.string.no_notes_in_category)
+    NoteListViewModel.FilterType.LOCKED -> stringResource(R.string.no_locked_notes)
     else -> stringResource(R.string.no_notes_yet)
   }
   Column(

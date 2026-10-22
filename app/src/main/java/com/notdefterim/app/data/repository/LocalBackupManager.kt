@@ -4,10 +4,13 @@ import android.content.Context
 import android.net.Uri
 import android.util.Base64
 import com.notdefterim.app.core.security.EncryptionHelper
+import com.notdefterim.app.data.local.AppPreferences
 import com.notdefterim.app.data.local.NoteDatabase
+import com.notdefterim.app.data.local.ThemePreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.DataInputStream
@@ -30,7 +33,9 @@ import javax.inject.Inject
 class LocalBackupManager @Inject constructor(
   @ApplicationContext private val context: Context,
   private val encryptionHelper: EncryptionHelper,
-  private val noteDatabase: NoteDatabase
+  private val noteDatabase: NoteDatabase,
+  private val appPreferences: AppPreferences,
+  private val themePreferences: ThemePreferences
 ) {
 
   companion object {
@@ -49,6 +54,8 @@ class LocalBackupManager @Inject constructor(
     private const val KEY_LENGTH = 256
     /** Passphrase sarmalama anahtarı için ayrı salt boyutu */
     private const val KEY_WRAP_SALT_SIZE = 16
+    /** Uygulama ayarları (K7); eski sürümler bu girdiyi yok sayar, eski yedeklerde yoktur */
+    private const val SETTINGS_ENTRY = "settings.json"
   }
 
   suspend fun exportToFile(password: String, hint: String): Result<File> = withContext(Dispatchers.IO) {
@@ -209,6 +216,17 @@ class LocalBackupManager @Inject constructor(
     }
   }
 
+  /** Yedekteki ayarları uygular; okunamazsa geri yüklemeyi bozmadan mevcut ayarlar kalır. */
+  private fun restoreSettings(bytes: ByteArray) {
+    try {
+      val settings = JSONObject(bytes.toString(Charsets.UTF_8))
+      settings.optJSONObject("app")?.let { appPreferences.restoreSettings(it) }
+      settings.optJSONObject("theme")?.let { themePreferences.restoreSettings(it) }
+    } catch (e: Exception) {
+      android.util.Log.w("LocalBackupManager", "Yedekteki ayarlar okunamadı; mevcut ayarlar korunuyor", e)
+    }
+  }
+
   private fun deleteWalFiles() {
     val dbFile = context.getDatabasePath(DB_NAME)
     File(dbFile.path + "-wal").delete()
@@ -255,6 +273,13 @@ class LocalBackupManager @Inject constructor(
       zos.putNextEntry(ZipEntry("key.config"))
       zos.write(keyConfigPayload)
       zos.closeEntry()
+
+      val settings = JSONObject()
+        .put("app", appPreferences.backupSettings())
+        .put("theme", themePreferences.backupSettings())
+      zos.putNextEntry(ZipEntry(SETTINGS_ENTRY))
+      zos.write(settings.toString().toByteArray(Charsets.UTF_8))
+      zos.closeEntry()
     }
     return zipFile
   }
@@ -292,6 +317,8 @@ class LocalBackupManager @Inject constructor(
             android.util.Base64.decode(keyPayload.toString(Charsets.UTF_8), android.util.Base64.NO_WRAP)
           }
           encryptionHelper.restoreDatabasePassphrase(passphrase)
+        } else if (safeEntryName == SETTINGS_ENTRY) {
+          restoreSettings(zis.readBytes())
         } else if (safeEntryName.startsWith(DB_NAME)) {
           // Güvenli yol doğrulaması — getDatabasePath ile kanonik yol al
           val targetFile = context.getDatabasePath(safeEntryName)

@@ -7,6 +7,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -158,4 +159,39 @@ class AppPreferences @Inject constructor(
     }
 
     private fun secondsUntil(time: Long, now: Long): Long = (time - now + 999) / 1000
+
+    /**
+     * Yerel yedeğe giren ayarlar (K7). PIN deneme sayacı ve son açık sekme gibi cihaza özgü
+     * durumlar girmez.
+     */
+    fun backupSettings(): JSONObject = JSONObject().apply {
+        put("auto_lock_timeout", _autoLockTimeout.value)
+        put("password_reminder_period", _passwordReminderPeriod.value)
+        put("startup_behavior", _startupBehavior.value)
+        put("app_pin_scope", _appPinScope.value)
+        _appPinHash.value?.let { put("app_pin_hash", it) }
+        _appPinHint.value?.let { put("app_pin_hint", it) }
+    }
+
+    /**
+     * Yedekten gelen ayarları yazar. Yedekteki PIN durumu esas alınır: yedekte PIN yoksa mevcut
+     * PIN de kalkar. Geri yüklemenin ardından süreç yeniden başlatıldığı için commit() ile yazılır;
+     * değerler yeni süreçte okunur.
+     */
+    fun restoreSettings(json: JSONObject) {
+        val editor = prefs.edit()
+            .putLong("auto_lock_timeout", json.optLong("auto_lock_timeout", _autoLockTimeout.value))
+            .putLong("password_reminder_period", json.optLong("password_reminder_period", _passwordReminderPeriod.value))
+            .putInt("startup_behavior", json.optInt("startup_behavior", _startupBehavior.value))
+            .putInt("app_pin_scope", json.optInt("app_pin_scope", _appPinScope.value))
+            .remove("pin_failed_attempts")
+            .remove("pin_locked_until")
+        if (json.has("app_pin_hash")) {
+            editor.putString("app_pin_hash", json.getString("app_pin_hash"))
+                .putString("app_pin_hint", if (json.has("app_pin_hint")) json.getString("app_pin_hint") else null)
+        } else {
+            editor.remove("app_pin_hash").remove("app_pin_hint")
+        }
+        editor.commit()
+    }
 }

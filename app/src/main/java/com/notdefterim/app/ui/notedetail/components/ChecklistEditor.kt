@@ -127,75 +127,72 @@ private fun ChecklistItemRow(
         }
     }
 
-    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .bringIntoViewRequester(bringIntoViewRequester),
-            verticalAlignment = Alignment.Top
-        ) {
-            if (item.hasCheckbox) {
-                Checkbox(
-                    checked = item.isChecked,
-                    onCheckedChange = { isChecked -> onItemChange(item.copy(isChecked = isChecked)) },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = MaterialTheme.colorScheme.primary,
-                        uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    ),
-                    modifier = Modifier.padding(end = 4.dp).size(24.dp)
+    // Onay kutusu ve kaldır düğmesi en az 48 dp dokunma alanı alır (erişilebilirlik, K5)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoViewRequester),
+        verticalAlignment = Alignment.Top
+    ) {
+        if (item.hasCheckbox) {
+            Checkbox(
+                checked = item.isChecked,
+                onCheckedChange = { isChecked -> onItemChange(item.copy(isChecked = isChecked)) },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.primary,
+                    uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
-            } else {
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-        
-            BasicTextField(
-                value = item.text,
-                onValueChange = { newText -> onItemChange(item.copy(text = newText)) },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = if (item.isChecked && item.hasCheckbox) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onBackground,
-                    textDecoration = if (item.isChecked && item.hasCheckbox) TextDecoration.LineThrough else null
-                ),
-                visualTransformation = visualTransformation,
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { onNext() }),
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(focusRequester)
-                    .onFocusChanged { isFocused = it.isFocused }
-                    .padding(horizontal = 8.dp),
-                decorationBox = { innerTextField ->
-                    if (item.text.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.checklist_item_placeholder),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                    }
-                    innerTextField()
-                }
             )
-        
-            IconButton(
-                onClick = {
-                    if (item.text.isBlank()) {
-                        onRemove()
-                    } else if (item.hasCheckbox) {
-                        onItemChange(item.copy(hasCheckbox = false, isChecked = false))
-                    } else {
-                        showDeleteDialog = true
-                    }
-                }, 
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    Icons.Rounded.Close,
-                    contentDescription = stringResource(R.string.remove),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.size(18.dp)
-                )
+        } else {
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+    
+        BasicTextField(
+            value = item.text,
+            onValueChange = { newText -> onItemChange(item.copy(text = newText)) },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = if (item.isChecked && item.hasCheckbox) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onBackground,
+                textDecoration = if (item.isChecked && item.hasCheckbox) TextDecoration.LineThrough else null
+            ),
+            visualTransformation = visualTransformation,
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { onNext() }),
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester)
+                .onFocusChanged { isFocused = it.isFocused }
+                // Tek satır metin 48 dp yüksekliğindeki onay kutusuyla aynı hizada dursun
+                .padding(end = 8.dp, top = 12.dp, bottom = 12.dp),
+            decorationBox = { innerTextField ->
+                if (item.text.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.checklist_item_placeholder),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                }
+                innerTextField()
             }
+        )
+    
+        IconButton(
+            onClick = {
+                if (item.text.isBlank()) {
+                    onRemove()
+                } else if (item.hasCheckbox) {
+                    onItemChange(item.copy(hasCheckbox = false, isChecked = false))
+                } else {
+                    showDeleteDialog = true
+                }
+            }
+        ) {
+            Icon(
+                Icons.Rounded.Close,
+                contentDescription = stringResource(R.string.remove),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 

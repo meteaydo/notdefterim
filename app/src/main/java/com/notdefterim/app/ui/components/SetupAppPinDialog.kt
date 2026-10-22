@@ -106,7 +106,7 @@ fun SetupAppPinDialog(
               IconButton(onClick = { passwordVisible = !passwordVisible }) {
                 Icon(
                   imageVector = if (passwordVisible) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
-                  contentDescription = null,
+                  contentDescription = stringResource(if (passwordVisible) R.string.hide_desc else R.string.show_desc),
                   tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
               }

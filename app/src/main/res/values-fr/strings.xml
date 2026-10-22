@@ -104,6 +104,7 @@
     <string name="settings">Paramètres</string>
     <string name="write_your_note">Rédigez votre note...</string>
     <string name="reminder_title">Rappel de note</string>
+    <string name="reminder_locked_note">Note verrouillée</string>
     <string name="add_reminder">Ajouter un rappel</string>
     <string name="remove_reminder">Supprimer le rappel</string>
     <string name="reminder_set_for">Rappel défini pour %s</string>

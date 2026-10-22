@@ -98,6 +98,8 @@ class SecurityManager(private val context: Context) {
   /** Manuel olarak kimlik doğrulamasını sıfırla (uygulama arka plana geçince). */
   fun resetAuthentication() {
     _authState.value = AuthState.Unauthenticated
+    // "Kilidi açık tut" yalnızca bu oturum için geçerli; yeniden girişte kilitli öğeler yine PIN sorsun
+    isSessionUnlocked = false
   }
 
   /** Uygulama içi PIN doğru girildiğinde AuthState'i doğrulanmış olarak işaretler. */

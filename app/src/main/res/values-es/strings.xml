@@ -104,6 +104,7 @@
     <string name="settings">Ajustes</string>
     <string name="write_your_note">Escribe tu nota...</string>
     <string name="reminder_title">Recordatorio de nota</string>
+    <string name="reminder_locked_note">Nota bloqueada</string>
     <string name="add_reminder">Añadir recordatorio</string>
     <string name="remove_reminder">Quitar recordatorio</string>
     <string name="reminder_set_for">Recordatorio establecido para %s</string>

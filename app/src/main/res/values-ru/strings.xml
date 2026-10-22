@@ -104,6 +104,7 @@
     <string name="settings">Настройки</string>
     <string name="write_your_note">Напишите вашу заметку...</string>
     <string name="reminder_title">Напоминание о заметке</string>
+    <string name="reminder_locked_note">Заблокированная заметка</string>
     <string name="add_reminder">Добавить напоминание</string>
     <string name="remove_reminder">Удалить напоминание</string>
     <string name="reminder_set_for">Напоминание установлено на %s</string>

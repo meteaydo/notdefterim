@@ -34,8 +34,10 @@ class ReminderManager @Inject constructor(
     val intent = Intent(context, ReminderReceiver::class.java).apply {
       putExtra("NOTE_ID", note.id)
       putExtra("NOTE_TITLE", note.title)
-      putExtra("NOTE_CONTENT", note.content)
+      // Kilitli notun içeriği alarm kaydına ve bildirime konmaz
+      putExtra("NOTE_CONTENT", if (note.isLocked) "" else note.content)
       putExtra("IS_CHECKLIST", note.isChecklist)
+      putExtra("IS_LOCKED", note.isLocked)
     }
 
     val pendingIntent = PendingIntent.getBroadcast(

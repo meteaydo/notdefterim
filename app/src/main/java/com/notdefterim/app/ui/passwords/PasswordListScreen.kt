@@ -84,6 +84,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import com.notdefterim.app.R
+import com.notdefterim.app.util.SensitiveClipboard
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -717,8 +718,7 @@ fun PasswordCard(
                     .combinedClickable(
                       onClick = {
                         val performCopy = {
-                          clipboardManager.nativeClipboard.setPrimaryClip(
-                            android.content.ClipData.newPlainText("", password.passwordValue))
+                          SensitiveClipboard.copy(context, "", password.passwordValue)
                           onCopy(CopiedField.PASSWORD)
                           Toast.makeText(context, context.getString(R.string.password_copied), Toast.LENGTH_SHORT).show()
                         }

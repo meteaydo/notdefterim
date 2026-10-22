@@ -104,6 +104,7 @@
     <string name="settings">Settings</string>
     <string name="write_your_note">Write your note...</string>
     <string name="reminder_title">Note Reminder</string>
+    <string name="reminder_locked_note">Locked note</string>
     <string name="add_reminder">Add reminder</string>
     <string name="remove_reminder">Remove reminder</string>
     <string name="reminder_set_for">Reminder set for %s</string>

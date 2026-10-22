@@ -109,6 +109,7 @@
     <string name="settings">Ayarlar</string>
     <string name="write_your_note">Notunuzu yazın...</string>
     <string name="reminder_title">Not Hatırlatması</string>
+    <string name="reminder_locked_note">Kilitli not</string>
     <string name="add_reminder">Hatırlatıcı ekle</string>
     <string name="remove_reminder">Hatırlatıcıyı kaldır</string>
     <string name="reminder_set_for">%s için hatırlatıcı kuruldu</string>

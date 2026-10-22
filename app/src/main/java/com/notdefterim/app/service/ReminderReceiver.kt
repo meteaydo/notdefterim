@@ -36,9 +36,12 @@ class ReminderReceiver : BroadcastReceiver() {
     val noteTitle = intent.getStringExtra("NOTE_TITLE") ?: context.getString(R.string.app_name)
     val rawContent = intent.getStringExtra("NOTE_CONTENT") ?: ""
     val isChecklist = intent.getBooleanExtra("IS_CHECKLIST", false)
-    
+    val isLocked = intent.getBooleanExtra("IS_LOCKED", false)
+
     var displayContent = rawContent
-    if (isChecklist || (rawContent.trim().startsWith("[") && rawContent.contains("\"text\""))) {
+    if (isLocked) {
+      displayContent = context.getString(R.string.reminder_locked_note)
+    } else if (isChecklist || (rawContent.trim().startsWith("[") && rawContent.contains("\"text\""))) {
       try {
         val items = kotlinx.serialization.json.Json.decodeFromString<List<com.notdefterim.app.domain.model.ChecklistItem>>(rawContent)
         val checkedCount = items.count { it.isChecked }
@@ -51,7 +54,7 @@ class ReminderReceiver : BroadcastReceiver() {
       }
     }
 
-    showNotification(context, noteId, noteTitle, displayContent)
+    showNotification(context, noteId, noteTitle, displayContent, isLocked)
 
     if (noteId > 0) {
       val pendingResult = goAsync()
@@ -79,7 +82,7 @@ class ReminderReceiver : BroadcastReceiver() {
     }
   }
 
-  private fun showNotification(context: Context, noteId: Long, title: String, content: String) {
+  private fun showNotification(context: Context, noteId: Long, title: String, content: String, isLocked: Boolean) {
     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     val channelId = "notdefterim_reminders"
 
@@ -106,7 +109,7 @@ class ReminderReceiver : BroadcastReceiver() {
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    val notification = NotificationCompat.Builder(context, channelId)
+    val builder = NotificationCompat.Builder(context, channelId)
       .setSmallIcon(R.drawable.ic_stat_notification_icon)
       .setContentTitle(title.ifBlank { context.getString(R.string.reminder_title) })
       .setContentText(content)
@@ -114,8 +117,18 @@ class ReminderReceiver : BroadcastReceiver() {
       .setPriority(NotificationCompat.PRIORITY_HIGH)
       .setAutoCancel(true)
       .setContentIntent(pendingIntent)
-      .build()
 
-    notificationManager.notify(noteId.toInt(), notification)
+    if (isLocked) {
+      // Kilit ekranı hassas içeriği gizleyecek şekilde ayarlıysa başlık yerine bu genel sürüm görünür
+      val publicVersion = NotificationCompat.Builder(context, channelId)
+        .setSmallIcon(R.drawable.ic_stat_notification_icon)
+        .setContentTitle(context.getString(R.string.reminder_title))
+        .setContentText(context.getString(R.string.reminder_locked_note))
+        .build()
+      builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+        .setPublicVersion(publicVersion)
+    }
+
+    notificationManager.notify(noteId.toInt(), builder.build())
   }
 }

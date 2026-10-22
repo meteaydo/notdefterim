@@ -3,6 +3,7 @@ package com.notdefterim.app
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.notdefterim.app.data.worker.BackupWorker
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -18,6 +19,11 @@ class NotDefterimApp : Application(), Configuration.Provider {
 
   @Inject
   lateinit var workerFactory: HiltWorkerFactory
+
+  override fun onCreate() {
+    super.onCreate()
+    BackupWorker.schedule(this)
+  }
 
   override val workManagerConfiguration: Configuration
     get() = Configuration.Builder()

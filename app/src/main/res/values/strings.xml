@@ -295,4 +295,10 @@
     <string name="drive_backup_protection_note">Drive backups are protected by your Google account. Unlike local backups, they do not use a separate password, so keep your Google account secure.</string>
     <string name="drive_backup_key_unreadable">This backup could not be opened because it was created by a different build of the app. Your current data was not changed.</string>
     <string name="pin_locked_out">Too many wrong attempts. Try again in %1$d seconds.</string>
+    <string name="key_error_title">Your notes cannot be opened</string>
+    <string name="key_error_desc">The encryption key that protects your notes on this device could not be read. This can happen after a system update or a security settings reset. Try again first. If it keeps happening, reset the app and restore your notes from a backup in Settings.</string>
+    <string name="key_error_retry">Try Again</string>
+    <string name="key_error_reset">Reset App</string>
+    <string name="key_error_reset_confirm_title">Reset the app?</string>
+    <string name="key_error_reset_confirm_desc">The notes and passwords on this device will be deleted because they cannot be opened without the key. Your backups are not affected; you can restore them in Settings.</string>
 </resources>

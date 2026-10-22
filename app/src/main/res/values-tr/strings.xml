@@ -297,4 +297,10 @@
     <string name="drive_backup_protection_note">Drive yedekleri Google hesabınızla korunur. Yerel yedekteki gibi ayrı bir şifre kullanılmaz; Google hesabınızın güvenliğine dikkat edin.</string>
     <string name="drive_backup_key_unreadable">Bu yedek, uygulamanın farklı bir derlemesiyle alındığı için açılamadı. Mevcut verileriniz değiştirilmedi.</string>
     <string name="pin_locked_out">Çok fazla hatalı deneme. %1$d saniye sonra tekrar deneyin.</string>
+    <string name="key_error_title">Notlarınız açılamıyor</string>
+    <string name="key_error_desc">Bu cihazdaki notlarınızı koruyan şifreleme anahtarı okunamadı. Bu, bir sistem güncellemesinden ya da güvenlik ayarlarının sıfırlanmasından sonra olabilir. Önce tekrar deneyin. Sorun sürerse uygulamayı sıfırlayıp notlarınızı Ayarlar\'dan yedekten geri yükleyin.</string>
+    <string name="key_error_retry">Tekrar Dene</string>
+    <string name="key_error_reset">Uygulamayı Sıfırla</string>
+    <string name="key_error_reset_confirm_title">Uygulama sıfırlansın mı?</string>
+    <string name="key_error_reset_confirm_desc">Bu cihazdaki notlar ve parolalar anahtar olmadan açılamadığı için silinecek. Yedekleriniz etkilenmez; onları Ayarlar\'dan geri yükleyebilirsiniz.</string>
 </resources>

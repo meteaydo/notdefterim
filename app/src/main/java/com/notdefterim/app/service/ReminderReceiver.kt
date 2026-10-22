@@ -37,6 +37,9 @@ class ReminderReceiver : BroadcastReceiver() {
         } else {
           onReminder(context, intent, reminderRestorer)
         }
+      } catch (e: Exception) {
+        // Ör. şifreleme anahtarı okunamıyor: arka planda çökme, uygulama açılınca açıklama gösterilir
+        android.util.Log.e("ReminderReceiver", "Hatırlatıcı işlenemedi", e)
       } finally {
         pendingResult.finish()
       }

@@ -43,6 +43,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import javax.inject.Inject
 import com.notdefterim.app.core.security.SecurityManager
 import com.notdefterim.app.core.security.PinCheck
+import com.notdefterim.app.core.security.EncryptionHelper
+import com.notdefterim.app.data.local.NoteDatabase
+import com.notdefterim.app.ui.auth.KeyErrorScreen
 import com.notdefterim.app.data.local.AppPreferences
 import com.notdefterim.app.service.ReminderRestorer
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -76,11 +79,24 @@ class MainActivity : AppCompatActivity() {
   @Inject
   lateinit var reminderRestorer: dagger.Lazy<ReminderRestorer>
 
+  @Inject
+  lateinit var encryptionHelper: EncryptionHelper
+
   private var backgroundTime: Long = 0L
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
+
+    // Anahtar okunamıyorsa veritabanına dokunmadan açıklama ekranı göster; yoksa her açılışta çöker (H5)
+    if (!encryptionHelper.isKeyUsable(databaseExists = getDatabasePath(NoteDatabase.DATABASE_NAME).exists())) {
+      setContent {
+        NotDefterimTheme {
+          KeyErrorScreen(onRetry = { recreate() }, onReset = { resetAfterKeyLoss() })
+        }
+      }
+      return
+    }
 
     if (savedInstanceState == null) {
       // Yeniden başlatma bildirimi gelmediyse (ör. otomatik başlatma izni yok) hatırlatıcıları burada kur
@@ -191,6 +207,22 @@ class MainActivity : AppCompatActivity() {
 
         } // Box End
       }
+    }
+  }
+
+  /**
+   * Anahtar kaybından sonra uygulamayı ilk kurulum haline getirir. Bu anahtar olmadan açılamayan
+   * veritabanı silinir; notlar Ayarlar'dan yedekten geri yüklenir.
+   */
+  private fun resetAfterKeyLoss() {
+    encryptionHelper.resetAfterKeyLoss()
+    deleteDatabase(NoteDatabase.DATABASE_NAME)
+    // Tekiller bozuk anahtarla kurulmuş olabilir; süreci baştan başlat
+    val intent = packageManager.getLaunchIntentForPackage(packageName)
+    if (intent != null) {
+      intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+      startActivity(intent)
+      Runtime.getRuntime().exit(0)
     }
   }
 

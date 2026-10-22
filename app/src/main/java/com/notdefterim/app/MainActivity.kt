@@ -42,6 +42,11 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import javax.inject.Inject
 import com.notdefterim.app.core.security.SecurityManager
 import com.notdefterim.app.data.local.AppPreferences
+import com.notdefterim.app.service.ReminderRestorer
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Tek Activity — Compose host.
@@ -66,11 +71,21 @@ class MainActivity : AppCompatActivity() {
   @Inject
   lateinit var securityManager: SecurityManager
 
+  @Inject
+  lateinit var reminderRestorer: dagger.Lazy<ReminderRestorer>
+
   private var backgroundTime: Long = 0L
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
+
+    if (savedInstanceState == null) {
+      // Yeniden başlatma bildirimi gelmediyse (ör. otomatik başlatma izni yok) hatırlatıcıları burada kur
+      ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        reminderRestorer.get().restore()
+      }
+    }
 
     setContent {
       val initialNoteId = remember { intent.getLongExtra("NOTE_ID", -1L).takeIf { it != -1L } }

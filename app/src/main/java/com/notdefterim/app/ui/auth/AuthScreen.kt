@@ -24,7 +24,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,6 +37,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.width
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.notdefterim.app.core.security.AuthState
 import com.notdefterim.app.core.security.BiometricSupport
 
@@ -64,9 +65,10 @@ fun AuthScreen(
     label = "pulse_scale"
   )
 
-  // Ekran açıldığında otomatik kimlik doğrulama başlat
-  LaunchedEffect(biometricSupport) {
-    if (biometricSupport is BiometricSupport.Available) {
+  // Ekran açıldığında ve uygulama öne geldiğinde otomatik kimlik doğrulama başlat.
+  // Ekran kapalıyken açılışta pencere başlayamazsa durum Unauthenticated'a döner; ekran açılınca yeniden denenir.
+  LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+    if (biometricSupport is BiometricSupport.Available && authState is AuthState.Unauthenticated) {
       onAuthenticate()
     }
   }
@@ -145,8 +147,8 @@ fun AuthScreen(
         textAlign = TextAlign.Center
       )
 
-      // Hata veya biyometrik donanım yoksa tekrar dene butonu göster
-      if (authState is AuthState.Error || authState is AuthState.Unauthenticated) {
+      // Hata, biyometrik donanım yoksa ya da doğrulama penceresi açılamadıysa tekrar dene butonu göster
+      if (authState !is AuthState.Authenticated) {
         Spacer(modifier = Modifier.height(40.dp))
 
         Button(

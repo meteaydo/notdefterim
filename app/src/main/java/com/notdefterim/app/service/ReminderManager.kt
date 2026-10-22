@@ -38,6 +38,8 @@ class ReminderManager @Inject constructor(
       putExtra("NOTE_CONTENT", if (note.isLocked) "" else note.content)
       putExtra("IS_CHECKLIST", note.isChecklist)
       putExtra("IS_LOCKED", note.isLocked)
+      // Alarm ile açılıştaki kontrol aynı hatırlatıcıyı iki kez göstermesin (bkz. ReminderRestorer)
+      putExtra("REMINDER_AT", timeInMillis)
     }
 
     val pendingIntent = PendingIntent.getBroadcast(

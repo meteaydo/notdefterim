@@ -59,6 +59,13 @@ class SecurityManager(private val context: Context) {
    * [activity] FragmentActivity gereklidir; BiometricPrompt lifecycle'a bağlıdır.
    */
   fun authenticate(activity: FragmentActivity, useDeviceCredential: Boolean = true) {
+    // Etkinlik durumunu kaydettikten sonra (ör. ekran kapalıyken açılış) BiometricPrompt hata vermeden
+    // başlamaz ve ekran "Kimlik doğrulanıyor…"da takılı kalır; düğmeye dön, ekran açılınca yeniden denenir.
+    if (activity.supportFragmentManager.isStateSaved) {
+      _authState.value = AuthState.Unauthenticated
+      return
+    }
+
     _authState.value = AuthState.Authenticating
 
     val executor = ContextCompat.getMainExecutor(activity)

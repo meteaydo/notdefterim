@@ -36,9 +36,16 @@ class LocalBackupManager @Inject constructor(
   companion object {
     private const val DB_NAME = "notdefterim_encrypted.db"
     private const val MAGIC_HEADER = "NOTDEF"
-    /** v2: DB passphrase artık yedek şifresiyle ayrıca şifreleniyor */
-    private const val VERSION = 2
-    private const val ITERATION_COUNT = 65536
+    /**
+     * v2: DB passphrase artık yedek şifresiyle ayrıca şifreleniyor
+     * v3: PBKDF2 tur sayısı OWASP önerisine (600.000) çıkarıldı
+     */
+    private const val VERSION = 3
+    private const val ITERATION_COUNT = 600_000
+    /** v1–v2 yedeklerin tur sayısı; eski yedekler açılmaya devam etsin */
+    private const val LEGACY_ITERATION_COUNT = 65536
+
+    private fun iterationsFor(version: Int) = if (version >= 3) ITERATION_COUNT else LEGACY_ITERATION_COUNT
     private const val KEY_LENGTH = 256
     /** Passphrase sarmalama anahtarı için ayrı salt boyutu */
     private const val KEY_WRAP_SALT_SIZE = 16
@@ -159,7 +166,7 @@ class LocalBackupManager @Inject constructor(
           dis.readFully(encryptedBytes)
 
           val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-          val spec: KeySpec = PBEKeySpec(password.toCharArray(), salt, ITERATION_COUNT, KEY_LENGTH)
+          val spec: KeySpec = PBEKeySpec(password.toCharArray(), salt, iterationsFor(version), KEY_LENGTH)
           val tmp = factory.generateSecret(spec)
           val secretKey = SecretKeySpec(tmp.encoded, "AES")
 
@@ -186,7 +193,7 @@ class LocalBackupManager @Inject constructor(
 
       // v2 yedeklerinde passphrase ZIP içinde şifrelendi;
       // v1 yedeklerinde ise passphrase ZIP içinde açıkça yer alıyordu.
-      extractBackupZip(zipFile, if (backupVersion >= 2) password else null)
+      extractBackupZip(zipFile, if (backupVersion >= 2) password else null, iterationsFor(backupVersion))
       zipFile.delete()
 
       val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
@@ -256,8 +263,9 @@ class LocalBackupManager @Inject constructor(
    * ZIP içindeki passphrase'i çözer ve veritabanı dosyalarını geri yükler.
    *
    * @param backupPassword v2 yedekler için gerekli; null ise passphrase plain-text olarak okunur (v1 uyumluluğu).
+   * @param iterations yedeğin sürümüne göre PBKDF2 tur sayısı
    */
-  private fun extractBackupZip(zipFile: File, backupPassword: String?) {
+  private fun extractBackupZip(zipFile: File, backupPassword: String?, iterations: Int) {
     ZipInputStream(BufferedInputStream(FileInputStream(zipFile))).use { zis ->
       var entry = zis.nextEntry
       while (entry != null) {
@@ -272,7 +280,7 @@ class LocalBackupManager @Inject constructor(
             val wrapIv = keyPayload.copyOfRange(KEY_WRAP_SALT_SIZE, KEY_WRAP_SALT_SIZE + 12)
             val encryptedPassphrase = keyPayload.copyOfRange(KEY_WRAP_SALT_SIZE + 12, keyPayload.size)
 
-            val wrapSpec: KeySpec = PBEKeySpec(backupPassword.toCharArray(), wrapSalt, ITERATION_COUNT, KEY_LENGTH)
+            val wrapSpec: KeySpec = PBEKeySpec(backupPassword.toCharArray(), wrapSalt, iterations, KEY_LENGTH)
             val wrapFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
             val wrapKey = SecretKeySpec(wrapFactory.generateSecret(wrapSpec).encoded, "AES")
 

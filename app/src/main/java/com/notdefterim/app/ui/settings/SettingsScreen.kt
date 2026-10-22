@@ -74,6 +74,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.notdefterim.app.R
+import com.notdefterim.app.BuildConfig
 import android.net.Uri
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -537,7 +538,7 @@ fun SettingsScreen(
           HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
           InfoRow(label = stringResource(R.string.drive_backup), value = stringResource(R.string.drive_app_data_folder))
           HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-          InfoRow(label = stringResource(R.string.version), value = "1.0.0")
+          InfoRow(label = stringResource(R.string.version), value = BuildConfig.VERSION_NAME)
         }
       }
 

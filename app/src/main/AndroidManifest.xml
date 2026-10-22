@@ -65,11 +65,6 @@
             android:resource="@xml/file_paths" />
     </provider>
 
-    <!-- Floating widget servisi: Uygulamayı terketmeden parola kopyalamak için -->
-    <service
-      android:name=".service.FloatingPasswordService"
-      android:exported="false" />
-
     <!-- WorkManager NotDefterimApp (Configuration.Provider) ile HiltWorkerFactory kullanarak
          başlatılır; varsayılan başlatıcı kalırsa BackupWorker oluşturulamaz -->
     <provider

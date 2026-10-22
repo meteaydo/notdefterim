@@ -104,7 +104,6 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.domain.model.Password
-import com.notdefterim.app.service.FloatingPasswordService
 import com.notdefterim.app.ui.auth.AuthViewModel
 import com.notdefterim.app.ui.components.ActionPinDialog
 import com.notdefterim.app.ui.components.PasswordGeneratorCard

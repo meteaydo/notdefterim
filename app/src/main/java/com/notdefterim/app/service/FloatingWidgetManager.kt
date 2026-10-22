@@ -5,6 +5,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -19,6 +21,16 @@ import android.util.Log
 object FloatingWidgetManager {
     private var floatingView: View? = null
     private var windowManager: WindowManager? = null
+
+    /** Parola kartı ekranda unutulmasın: son dokunuştan bu kadar sonra kendiliğinden kapanır (G11) */
+    private const val AUTO_CLOSE_MS = 2 * 60 * 1000L
+    private val handler = Handler(Looper.getMainLooper())
+    private val autoClose = Runnable { close() }
+
+    private fun restartAutoCloseTimer() {
+        handler.removeCallbacks(autoClose)
+        handler.postDelayed(autoClose, AUTO_CLOSE_MS)
+    }
 
     fun show(context: Context, platform: String, username: String, passwordValue: String) {
         try {
@@ -95,6 +107,7 @@ object FloatingWidgetManager {
             val dragAndClickListener = View.OnTouchListener { view, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
+                        restartAutoCloseTimer()
                         initialX = params.x
                         initialY = params.y
                         initialTouchX = event.rawX
@@ -131,6 +144,7 @@ object FloatingWidgetManager {
             btnCopyPassword?.setOnTouchListener(dragAndClickListener)
 
             windowManager?.addView(floatingView, params)
+            restartAutoCloseTimer()
             Log.d("FloatingWidget", "View added successfully")
         } catch (e: Exception) {
             Log.e("FloatingWidget", "Error showing floating widget", e)
@@ -139,6 +153,7 @@ object FloatingWidgetManager {
     }
 
     fun close() {
+        handler.removeCallbacks(autoClose)
         try {
             if (floatingView != null && floatingView?.isAttachedToWindow == true) {
                 windowManager?.removeView(floatingView)

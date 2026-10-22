@@ -43,6 +43,8 @@ fun SetupAppPinDialog(
   appPinHint: String?,
   appPinScope: Int,
   targetScope: Int = 0,
+  // Kayıtlı PIN yalnızca hash olarak tutulur; girilen PIN bununla doğrulanır
+  verifyCurrentPin: (String) -> Boolean,
   onDismiss: () -> Unit,
   onSave: (String?, String?, Int) -> Unit
 ) {
@@ -178,7 +180,7 @@ fun SetupAppPinDialog(
       Button(
         onClick = {
           if (step == 0) {
-            if (currentPinInput == appPin) {
+            if (verifyCurrentPin(currentPinInput)) {
               step = 1
             } else {
               errorMessage = context.getString(R.string.pin_entered_wrong)
@@ -210,7 +212,7 @@ fun SetupAppPinDialog(
         if (step == 0 && appPin != null) {
           TextButton(
             onClick = {
-              if (currentPinInput == appPin) {
+              if (verifyCurrentPin(currentPinInput)) {
                 onSave(null, null, 0)
                 onDismiss()
               } else {

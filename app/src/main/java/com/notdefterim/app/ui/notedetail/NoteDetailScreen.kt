@@ -1031,6 +1031,7 @@ fun NoteDetailScreen(
       appPinHint = appPinHint,
       appPinScope = appPinScope,
       targetScope = 1,
+      verifyCurrentPin = authViewModel::verifyPin,
       onDismiss = { showSetupPinDialog = false },
       onSave = { newPin, newHint, newScope -> 
         authViewModel.setAppPin(newPin, newHint) 

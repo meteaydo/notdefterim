@@ -64,6 +64,7 @@ class DialogScreenshotTest {
       appPin = null,
       appPinHint = null,
       appPinScope = PinScope.ALL.value,
+      verifyCurrentPin = { false },
       onDismiss = {},
       onSave = { _, _, _ -> }
     )
@@ -75,6 +76,7 @@ class DialogScreenshotTest {
       appPin = "hash",
       appPinHint = "Doğum yılı",
       appPinScope = PinScope.PASSWORDS_ONLY.value,
+      verifyCurrentPin = { false },
       onDismiss = {},
       onSave = { _, _, _ -> }
     )

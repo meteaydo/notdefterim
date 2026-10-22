@@ -105,6 +105,9 @@ class SettingsViewModel @Inject constructor(
     appPreferences.setAppPinScope(scope)
   }
 
+  /** Girilen PIN'i kayıtlı hash ile doğrular. */
+  fun verifyPin(pin: String): Boolean = appPreferences.verifyPin(pin)
+
   fun setStartupBehavior(behavior: Int) {
     appPreferences.setStartupBehavior(behavior)
   }

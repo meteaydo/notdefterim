@@ -880,6 +880,7 @@ fun SettingsScreen(
       appPin = appPin,
       appPinHint = appPinHint,
       appPinScope = appPinScope,
+      verifyCurrentPin = viewModel::verifyPin,
       onDismiss = { showAppPinDialog = false },
       onSave = { newPin, newHint, newScope -> 
         viewModel.setAppPin(newPin, newHint) 

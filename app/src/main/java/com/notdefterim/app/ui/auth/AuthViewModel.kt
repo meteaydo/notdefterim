@@ -42,6 +42,9 @@ class AuthViewModel @Inject constructor(
     appPreferences.setAppPinScope(scope)
   }
 
+  /** Girilen PIN'i kayıtlı hash ile doğrular. */
+  fun verifyPin(pin: String): Boolean = appPreferences.verifyPin(pin)
+
   var isSessionUnlocked: Boolean
     get() = securityManager.isSessionUnlocked
     private set(value) {

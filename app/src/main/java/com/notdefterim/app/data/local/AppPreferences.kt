@@ -2,6 +2,7 @@ package com.notdefterim.app.data.local
 
 import android.content.Context
 import com.notdefterim.app.core.security.PinHasher
+import com.notdefterim.app.core.security.PinCheck
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +15,13 @@ class AppPreferences @Inject constructor(
     @ApplicationContext context: Context
 ) {
     private val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
+    companion object {
+        /** Bu kadar hatalı denemeden sonra bekleme süresi başlar */
+        private const val PIN_FREE_ATTEMPTS = 5
+        private const val PIN_FIRST_LOCK_MS = 30_000L
+        private const val PIN_MAX_LOCK_MS = 30 * 60_000L
+    }
 
     private val _autoLockTimeout = MutableStateFlow(
         prefs.getLong("auto_lock_timeout", 300_000L) // Default is 5 Min (300,000 ms)
@@ -90,13 +98,15 @@ class AppPreferences @Inject constructor(
     /**
      * PIN'i kaydeder. Ham PIN disk'e hiç yazılmaz;
      * PBKDF2-HMAC-SHA256 hash'i + salt saklanır.
-     * Doğrulama için [verifyPin] kullanılmalıdır.
+     * Doğrulama için [checkPin] kullanılmalıdır.
      */
     fun setAppPin(pin: String?, hint: String? = null) {
         if (pin == null) {
             prefs.edit()
                 .remove("app_pin_hash")
                 .remove("app_pin_hint")
+                .remove("pin_failed_attempts")
+                .remove("pin_locked_until")
                 // Eski düz metin alanını da temizle (migration)
                 .remove("app_pin")
                 .apply()
@@ -107,6 +117,8 @@ class AppPreferences @Inject constructor(
             prefs.edit()
                 .putString("app_pin_hash", hash)
                 .putString("app_pin_hint", hint)
+                .remove("pin_failed_attempts")
+                .remove("pin_locked_until")
                 // Eski düz metin alanını temizle (migration)
                 .remove("app_pin")
                 .apply()
@@ -117,10 +129,33 @@ class AppPreferences @Inject constructor(
 
     /**
      * Kullanıcının girdiği PIN'i saklanan hash ile karşılaştırır.
-     * @return PIN doğruysa true
+     *
+     * Deneme sınırı: [PIN_FREE_ATTEMPTS] hatalı denemeden sonra bekleme süresi başlar (30 sn, sonraki
+     * her hatada iki katı, en çok 30 dk). Süre dolmadan yapılan deneme kontrol edilmeden reddedilir.
+     * Sayaç uygulama kapansa da korunur; doğru PIN ve yeni PIN onu sıfırlar.
      */
-    fun verifyPin(pin: String): Boolean {
-        val storedHash = _appPinHash.value ?: return false
-        return PinHasher.verify(pin, storedHash)
+    fun checkPin(pin: String): PinCheck {
+        val now = System.currentTimeMillis()
+        val lockedUntil = prefs.getLong("pin_locked_until", 0L)
+        if (now < lockedUntil) return PinCheck.LockedOut(secondsUntil(lockedUntil, now))
+
+        val storedHash = _appPinHash.value ?: return PinCheck.Wrong
+        if (PinHasher.verify(pin, storedHash)) {
+            prefs.edit().remove("pin_failed_attempts").remove("pin_locked_until").apply()
+            return PinCheck.Correct
+        }
+
+        val failures = prefs.getInt("pin_failed_attempts", 0) + 1
+        val editor = prefs.edit().putInt("pin_failed_attempts", failures)
+        if (failures < PIN_FREE_ATTEMPTS) {
+            editor.apply()
+            return PinCheck.Wrong
+        }
+        val doublings = minOf(failures - PIN_FREE_ATTEMPTS, 10)
+        val lockMs = minOf(PIN_FIRST_LOCK_MS shl doublings, PIN_MAX_LOCK_MS)
+        editor.putLong("pin_locked_until", now + lockMs).apply()
+        return PinCheck.LockedOut(lockMs / 1000)
     }
+
+    private fun secondsUntil(time: Long, now: Long): Long = (time - now + 999) / 1000
 }

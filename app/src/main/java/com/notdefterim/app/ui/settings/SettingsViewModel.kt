@@ -3,6 +3,7 @@ package com.notdefterim.app.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notdefterim.app.data.remote.GoogleAuthManager
+import com.notdefterim.app.core.security.PinCheck
 import com.notdefterim.app.data.remote.GoogleAuthState
 import com.notdefterim.app.data.remote.BackupInfo
 import com.notdefterim.app.domain.usecase.backup.BackupToCloudUseCase
@@ -105,8 +106,8 @@ class SettingsViewModel @Inject constructor(
     appPreferences.setAppPinScope(scope)
   }
 
-  /** Girilen PIN'i kayıtlı hash ile doğrular. */
-  fun verifyPin(pin: String): Boolean = appPreferences.verifyPin(pin)
+  /** Girilen PIN'i kayıtlı hash ile doğrular (deneme sınırı dahil, bkz. [AppPreferences.checkPin]). */
+  fun checkPin(pin: String): PinCheck = appPreferences.checkPin(pin)
 
   fun setStartupBehavior(behavior: Int) {
     appPreferences.setStartupBehavior(behavior)

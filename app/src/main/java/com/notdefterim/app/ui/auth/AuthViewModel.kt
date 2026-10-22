@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.notdefterim.app.core.security.AuthState
 import com.notdefterim.app.R
 import com.notdefterim.app.core.security.BiometricSupport
+import com.notdefterim.app.core.security.PinCheck
 import com.notdefterim.app.core.security.SecurityManager
 import com.notdefterim.app.data.local.AppPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,8 +43,8 @@ class AuthViewModel @Inject constructor(
     appPreferences.setAppPinScope(scope)
   }
 
-  /** Girilen PIN'i kayıtlı hash ile doğrular. */
-  fun verifyPin(pin: String): Boolean = appPreferences.verifyPin(pin)
+  /** Girilen PIN'i kayıtlı hash ile doğrular (deneme sınırı dahil, bkz. [AppPreferences.checkPin]). */
+  fun checkPin(pin: String): PinCheck = appPreferences.checkPin(pin)
 
   var isSessionUnlocked: Boolean
     get() = securityManager.isSessionUnlocked
@@ -112,17 +113,17 @@ class AuthViewModel @Inject constructor(
     _pinPromptState.value = null
   }
 
-  fun verifyActionPin(pin: String, keepUnlocked: Boolean = false): Boolean {
-    val prompt = _pinPromptState.value ?: return false
+  fun verifyActionPin(pin: String, keepUnlocked: Boolean = false): PinCheck {
+    val prompt = _pinPromptState.value ?: return PinCheck.Wrong
     // Ham PIN ile karşılaştırma YAPILMAZ; PBKDF2 hash doğrulaması kullanılır
-    if (appPreferences.verifyPin(pin)) {
+    val result = appPreferences.checkPin(pin)
+    if (result == PinCheck.Correct) {
       if (keepUnlocked) {
         isSessionUnlocked = true
       }
       prompt.onSuccess()
       _pinPromptState.value = null
-      return true
     }
-    return false
+    return result
   }
 }

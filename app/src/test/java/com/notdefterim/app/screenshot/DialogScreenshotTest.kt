@@ -11,6 +11,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.notdefterim.app.domain.model.PinScope
 import com.notdefterim.app.ui.components.SetupAppPinDialog
+import com.notdefterim.app.core.security.PinCheck
 import com.notdefterim.app.ui.notelist.components.AddCategoryDialog
 import com.notdefterim.app.ui.passwords.AddPasswordDialog
 import com.notdefterim.app.ui.theme.NotDefterimTheme
@@ -64,7 +65,7 @@ class DialogScreenshotTest {
       appPin = null,
       appPinHint = null,
       appPinScope = PinScope.ALL.value,
-      verifyCurrentPin = { false },
+      checkCurrentPin = { PinCheck.Wrong },
       onDismiss = {},
       onSave = { _, _, _ -> }
     )
@@ -76,7 +77,7 @@ class DialogScreenshotTest {
       appPin = "hash",
       appPinHint = "Doğum yılı",
       appPinScope = PinScope.PASSWORDS_ONLY.value,
-      verifyCurrentPin = { false },
+      checkCurrentPin = { PinCheck.Wrong },
       onDismiss = {},
       onSave = { _, _, _ -> }
     )

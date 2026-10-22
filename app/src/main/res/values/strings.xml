@@ -294,4 +294,5 @@
     </plurals>
     <string name="drive_backup_protection_note">Drive backups are protected by your Google account. Unlike local backups, they do not use a separate password, so keep your Google account secure.</string>
     <string name="drive_backup_key_unreadable">This backup could not be opened because it was created by a different build of the app. Your current data was not changed.</string>
+    <string name="pin_locked_out">Too many wrong attempts. Try again in %1$d seconds.</string>
 </resources>

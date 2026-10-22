@@ -27,16 +27,18 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.ui.auth.AuthViewModel
 import com.notdefterim.app.R
+import com.notdefterim.app.core.security.PinCheck
 
 @Composable
 fun ActionPinDialog(
   pinPromptState: AuthViewModel.PinPromptState,
   onDismiss: () -> Unit,
-  onVerify: (String, Boolean) -> Boolean,
+  onVerify: (String, Boolean) -> PinCheck,
   authViewModel: AuthViewModel = hiltViewModel()
 ) {
   var inputPin by remember { mutableStateOf("") }
   var isError by remember { mutableStateOf(false) }
+  var lockoutSeconds by remember { mutableStateOf(0L) }
   var errorCount by remember { mutableStateOf(0) }
   var keepUnlocked by remember { mutableStateOf(false) }
   val pinHint by authViewModel.appPinHint.collectAsStateWithLifecycle()
@@ -58,7 +60,7 @@ fun ActionPinDialog(
           isError = isError
         )
         if (isError) {
-          Text(stringResource(R.string.wrong_pin), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+          Text(if (lockoutSeconds > 0) stringResource(R.string.pin_locked_out, lockoutSeconds) else stringResource(R.string.wrong_pin), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
           if (errorCount >= 1 && !pinHint.isNullOrBlank()) {
              Spacer(Modifier.height(4.dp))
              Text(stringResource(R.string.hint_format, pinHint.orEmpty()), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
@@ -76,9 +78,10 @@ fun ActionPinDialog(
     },
     confirmButton = {
       Button(onClick = {
-        val success = onVerify(inputPin, keepUnlocked)
-        if (!success) {
+        val result = onVerify(inputPin, keepUnlocked)
+        if (result != PinCheck.Correct) {
           isError = true
+          lockoutSeconds = (result as? PinCheck.LockedOut)?.seconds ?: 0L
           errorCount++
           inputPin = ""
         }

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
 import com.notdefterim.app.R
+import com.notdefterim.app.core.security.PinCheck
 
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,8 +44,8 @@ fun SetupAppPinDialog(
   appPinHint: String?,
   appPinScope: Int,
   targetScope: Int = 0,
-  // Kayıtlı PIN yalnızca hash olarak tutulur; girilen PIN bununla doğrulanır
-  verifyCurrentPin: (String) -> Boolean,
+  // Kayıtlı PIN yalnızca hash olarak tutulur; girilen PIN bununla doğrulanır (deneme sınırı dahil)
+  checkCurrentPin: (String) -> PinCheck,
   onDismiss: () -> Unit,
   onSave: (String?, String?, Int) -> Unit
 ) {
@@ -180,10 +181,10 @@ fun SetupAppPinDialog(
       Button(
         onClick = {
           if (step == 0) {
-            if (verifyCurrentPin(currentPinInput)) {
-              step = 1
-            } else {
-              errorMessage = context.getString(R.string.pin_entered_wrong)
+            when (val result = checkCurrentPin(currentPinInput)) {
+              PinCheck.Correct -> step = 1
+              PinCheck.Wrong -> errorMessage = context.getString(R.string.pin_entered_wrong)
+              is PinCheck.LockedOut -> errorMessage = context.getString(R.string.pin_locked_out, result.seconds)
             }
           } else {
             if (newPinInput.length >= 4) {
@@ -212,11 +213,13 @@ fun SetupAppPinDialog(
         if (step == 0 && appPin != null) {
           TextButton(
             onClick = {
-              if (verifyCurrentPin(currentPinInput)) {
-                onSave(null, null, 0)
-                onDismiss()
-              } else {
-                errorMessage = context.getString(R.string.pin_entered_wrong)
+              when (val result = checkCurrentPin(currentPinInput)) {
+                PinCheck.Correct -> {
+                  onSave(null, null, 0)
+                  onDismiss()
+                }
+                PinCheck.Wrong -> errorMessage = context.getString(R.string.pin_entered_wrong)
+                is PinCheck.LockedOut -> errorMessage = context.getString(R.string.pin_locked_out, result.seconds)
               }
             }
           ) {

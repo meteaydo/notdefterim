@@ -1,6 +1,7 @@
 package com.notdefterim.app.core.security
 
 import android.util.Base64
+import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
@@ -46,9 +47,8 @@ object PinHasher {
       val salt = Base64.decode(parts[0], Base64.NO_WRAP)
       val expectedHash = Base64.decode(parts[1], Base64.NO_WRAP)
       val actualHash = deriveKey(pin, salt)
-      // Timing-safe karşılaştırma — uzunluk sızıntısını önler
-      actualHash.size == expectedHash.size &&
-        actualHash.zip(expectedHash).all { (a, b) -> a == b }
+      // Timing-safe karşılaştırma: ilk farklı baytta durmaz
+      MessageDigest.isEqual(actualHash, expectedHash)
     } catch (e: Exception) {
       android.util.Log.e("PinHasher", "PIN doğrulama sırasında hata", e)
       false

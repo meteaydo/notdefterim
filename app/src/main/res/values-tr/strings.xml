@@ -296,4 +296,5 @@
     </plurals>
     <string name="drive_backup_protection_note">Drive yedekleri Google hesabınızla korunur. Yerel yedekteki gibi ayrı bir şifre kullanılmaz; Google hesabınızın güvenliğine dikkat edin.</string>
     <string name="drive_backup_key_unreadable">Bu yedek, uygulamanın farklı bir derlemesiyle alındığı için açılamadı. Mevcut verileriniz değiştirilmedi.</string>
+    <string name="pin_locked_out">Çok fazla hatalı deneme. %1$d saniye sonra tekrar deneyin.</string>
 </resources>

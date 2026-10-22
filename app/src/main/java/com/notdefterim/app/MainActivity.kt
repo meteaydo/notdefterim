@@ -42,6 +42,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.foundation.isSystemInDarkTheme
 import javax.inject.Inject
 import com.notdefterim.app.core.security.SecurityManager
+import com.notdefterim.app.core.security.PinCheck
 import com.notdefterim.app.data.local.AppPreferences
 import com.notdefterim.app.service.ReminderRestorer
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -145,6 +146,7 @@ class MainActivity : AppCompatActivity() {
         if (pinPromptState != null) {
           var inputPin by remember { mutableStateOf("") }
           var isError by remember { mutableStateOf(false) }
+          var lockoutSeconds by remember { mutableStateOf(0L) }
 
           AlertDialog(
             onDismissRequest = { authViewModel.dismissPinPrompt() },
@@ -163,15 +165,16 @@ class MainActivity : AppCompatActivity() {
                   isError = isError
                 )
                 if (isError) {
-                  Text(stringResource(R.string.wrong_pin), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                  Text(if (lockoutSeconds > 0) stringResource(R.string.pin_locked_out, lockoutSeconds) else stringResource(R.string.wrong_pin), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
               }
             },
             confirmButton = {
               Button(onClick = {
-                val success = authViewModel.verifyActionPin(inputPin)
-                if (!success) {
+                val result = authViewModel.verifyActionPin(inputPin)
+                if (result != PinCheck.Correct) {
                   isError = true
+                  lockoutSeconds = (result as? PinCheck.LockedOut)?.seconds ?: 0L
                   inputPin = ""
                 }
               }) {

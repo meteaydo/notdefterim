@@ -113,7 +113,6 @@
     <string name="add_reminder">Add reminder</string>
     <string name="remove_reminder">Remove reminder</string>
     <string name="reminder_set_for">Reminder set for %s</string>
-    <string name="repeat_none">Do not repeat</string>
     <string name="repeat_once">Once</string>
     <string name="repeat_daily">Daily</string>
     <string name="repeat_weekly">Weekly</string>
@@ -213,10 +212,7 @@
     <string name="pin_required_view_note">You turned on in-app PIN protection. Enter your PIN to view the note.</string>
     <string name="show_content">Show Content</string>
     <string name="search_anything">Search anything</string>
-    <string name="reminder_set_format">Reminder set: %1$s (%2$s)</string>
-    <string name="repeat_selection_title">Repeat</string>
     <string name="ok">OK</string>
-    <string name="change_date">Change Date</string>
     <string name="overlay_permission_title">Display Over Other Apps</string>
     <string name="overlay_permission_note_desc">To use floating note windows, you need to grant this permission. It lets you see your notes on top of other apps.</string>
     <string name="go_to_settings">Go to Settings</string>
@@ -301,4 +297,25 @@
     <string name="key_error_reset">Reset App</string>
     <string name="key_error_reset_confirm_title">Reset the app?</string>
     <string name="key_error_reset_confirm_desc">The notes and passwords on this device will be deleted because they cannot be opened without the key. Your backups are not affected; you can restore them in Settings.</string>
+    <string name="reminder_sheet_title">Reminder</string>
+    <string name="reminder_in_one_hour">In 1 hour</string>
+    <string name="reminder_today_format">Today %s</string>
+    <string name="reminder_tomorrow_format">Tomorrow %s</string>
+    <string name="reminder_yesterday_format">Yesterday %s</string>
+    <string name="reminder_repeat_label">Repeat</string>
+    <string name="repeat_weekdays">Weekdays</string>
+    <string name="repeat_custom_days">Specific Days</string>
+    <string name="reminder_first_at">First reminder: %s</string>
+    <string name="reminder_time_passed">This time has passed. Pick a later time.</string>
+    <string name="reminder_pick_day">Pick at least one day.</string>
+    <string name="reminder_snooze_10_min">Snooze 10 min</string>
+    <string name="reminder_snooze_1_hour">Snooze 1 hour</string>
+    <string name="reminder_done">Done</string>
+    <string name="filter_reminders">Reminders</string>
+    <string name="no_reminder_notes">You have no notes with reminders</string>
+    <string name="reminders_settings_section">Reminders</string>
+    <string name="exact_alarm_on">On</string>
+    <string name="exact_alarm_off">Off; reminders may arrive a few minutes late</string>
+    <string name="xiaomi_autostart_title">Autostart (Xiaomi)</string>
+    <string name="xiaomi_autostart_desc">Allow NotDefterim to autostart so that reminders are set again after the phone restarts.</string>
 </resources>

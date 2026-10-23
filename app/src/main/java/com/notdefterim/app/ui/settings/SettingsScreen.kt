@@ -1,7 +1,13 @@
 package com.notdefterim.app.ui.settings
 
 import android.app.Activity
+import android.app.AlarmManager
+import android.content.ComponentName
+import android.content.Context
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -260,6 +266,9 @@ fun SettingsScreen(
       }
 
       Spacer(modifier = Modifier.height(24.dp))
+
+      // ── Hatırlatıcılar ────────────────────────────────
+      ReminderSettingsSection()
 
       // ── Parola Değiştirme Tavsiyesi ────────────────────────────────
       SectionTitle(stringResource(R.string.reminder_section))
@@ -895,6 +904,77 @@ fun SettingsScreen(
         viewModel.setAppPin(newPin, newHint) 
         viewModel.setAppPinScope(newScope)
       }
+    )
+  }
+}
+
+/**
+ * Hatırlatıcıların zamanında ve yeniden başlatmadan sonra da gelmesi için gereken izinler.
+ * Kesin alarm izni Android 12 ve sonrasında, otomatik başlatma yalnız Xiaomi cihazlarda gösterilir.
+ */
+@Composable
+private fun ReminderSettingsSection() {
+  val context = LocalContext.current
+  val showExactAlarm = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+  val isXiaomi = Build.MANUFACTURER.equals("Xiaomi", ignoreCase = true)
+  if (!showExactAlarm && !isXiaomi) return
+
+  // Ayarlardan dönünce izin durumu yenilensin
+  var canExactAlarm by remember { mutableStateOf(canScheduleExactAlarms(context)) }
+  LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { canExactAlarm = canScheduleExactAlarms(context) }
+
+  SectionTitle(stringResource(R.string.reminders_settings_section))
+  Card(
+    colors = CardDefaults.cardColors(
+      containerColor = MaterialTheme.colorScheme.surfaceVariant
+    ),
+    modifier = Modifier.fillMaxWidth()
+  ) {
+    if (showExactAlarm) {
+      ListItem(
+        modifier = Modifier.clickable {
+          context.startActivity(
+            Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))
+          )
+        },
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        headlineContent = { Text(stringResource(R.string.exact_alarm_title)) },
+        supportingContent = { Text(stringResource(if (canExactAlarm) R.string.exact_alarm_on else R.string.exact_alarm_off)) },
+        trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+      )
+    }
+    if (showExactAlarm && isXiaomi) {
+      HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+    }
+    if (isXiaomi) {
+      ListItem(
+        modifier = Modifier.clickable { openXiaomiAutostart(context) },
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        headlineContent = { Text(stringResource(R.string.xiaomi_autostart_title)) },
+        supportingContent = { Text(stringResource(R.string.xiaomi_autostart_desc)) },
+        trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
+      )
+    }
+  }
+
+  Spacer(modifier = Modifier.height(24.dp))
+}
+
+private fun canScheduleExactAlarms(context: Context): Boolean =
+  Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+    context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+
+/** MIUI/HyperOS'un otomatik başlatma ekranı; bulunamazsa uygulama bilgileri açılır. */
+private fun openXiaomiAutostart(context: Context) {
+  val autostart = Intent().setComponent(
+    ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")
+  )
+  try {
+    context.startActivity(autostart)
+  } catch (e: Exception) {
+    // Ekran yoksa (ActivityNotFound) ya da açılmasına izin verilmiyorsa (SecurityException)
+    context.startActivity(
+      Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))
     )
   }
 }

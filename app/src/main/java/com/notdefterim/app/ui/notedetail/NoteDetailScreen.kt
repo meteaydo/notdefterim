@@ -53,8 +53,6 @@ import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.rounded.NotificationsActive
 import android.app.AlarmManager
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.width
 import android.Manifest
@@ -134,6 +132,9 @@ import com.notdefterim.app.domain.model.RepeatInterval
 import com.notdefterim.app.ui.theme.LocalNoteCardColors
 import com.notdefterim.app.ui.notelist.components.AddCategoryDialog
 import com.notdefterim.app.ui.notedetail.components.ChecklistEditor
+import com.notdefterim.app.ui.notedetail.components.ReminderSheet
+import com.notdefterim.app.ui.components.reminderTimeText
+import com.notdefterim.app.ui.components.repeatText
 import com.notdefterim.app.ui.components.SetupAppPinDialog
 import androidx.compose.ui.text.style.TextAlign
 import com.notdefterim.app.util.searchMatchRanges
@@ -168,6 +169,7 @@ fun NoteDetailScreen(
   var isCategoriesExpanded by remember { mutableStateOf(false) }
   val reminderAt by viewModel.reminderAt.collectAsStateWithLifecycle()
   val repeatInterval by viewModel.repeatInterval.collectAsStateWithLifecycle()
+  val repeatDays by viewModel.repeatDays.collectAsStateWithLifecycle()
   val isLocked by viewModel.isLocked.collectAsStateWithLifecycle()
   var isContentVisible by remember(isLocked) { mutableStateOf(!isLocked) }
   
@@ -288,28 +290,8 @@ fun NoteDetailScreen(
 
   // context moved above
 
-  val showAlarmDialog = {
-    val calendar = java.util.Calendar.getInstance()
-    DatePickerDialog(
-      context,
-      { _, year, month, dayOfMonth ->
-        calendar.set(year, month, dayOfMonth)
-        TimePickerDialog(
-          context,
-          { _, hour, minute ->
-            val reminder = java.time.LocalDateTime.of(year, month + 1, dayOfMonth, hour, minute)
-            viewModel.onReminderSelect(reminder)
-          },
-          calendar.get(java.util.Calendar.HOUR_OF_DAY),
-          calendar.get(java.util.Calendar.MINUTE),
-          true
-        ).show()
-      },
-      calendar.get(java.util.Calendar.YEAR),
-      calendar.get(java.util.Calendar.MONTH),
-      calendar.get(java.util.Calendar.DAY_OF_MONTH)
-    ).show()
-  }
+  // Tarih, saat ve tekrar tek pencerede seçilir
+  var showReminderSheet by remember { mutableStateOf(false) }
 
   // Hatırlatıcının dakikasında gelmesi için "Alarmlar ve hatırlatıcılar" izni gerekir (Android 12+).
   // İzin yoksa önce sorulur; kullanıcı vermezse hatırlatıcı yaklaşık zamanlı kurulur.
@@ -317,14 +299,14 @@ fun NoteDetailScreen(
   val exactAlarmSettingsLauncher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.StartActivityForResult()
   ) {
-    showAlarmDialog()
+    showReminderSheet = true
   }
   val startReminderFlow = {
     val alarmManager = context.getSystemService(AlarmManager::class.java)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
       showExactAlarmDialog = true
     } else {
-      showAlarmDialog()
+      showReminderSheet = true
     }
   }
 
@@ -337,6 +319,17 @@ fun NoteDetailScreen(
       coroutineScope.launch {
         snackbarHostState.showSnackbar(context.getString(R.string.reminder_notification_permission_denied))
       }
+    }
+  }
+
+  // Önce bildirim izni (Android 13+), sonra kesin alarm izni, sonra hatırlatıcı penceresi
+  val openReminder = {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+      ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+    ) {
+      permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    } else {
+      startReminderFlow()
     }
   }
 
@@ -377,17 +370,7 @@ fun NoteDetailScreen(
           // Alarm
           IconToggleButton(
             checked = reminderAt != null,
-            onCheckedChange = {
-              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                  startReminderFlow()
-                } else {
-                  permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
-              } else {
-                startReminderFlow()
-              }
-            },
+            onCheckedChange = { openReminder() },
             colors = IconButtonDefaults.iconToggleButtonColors(
               checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
               checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -667,8 +650,10 @@ fun NoteDetailScreen(
       }
 
 
-        if (reminderAt != null) {
-          var showRepeatMenu by remember { mutableStateOf(false) }
+        reminderAt?.let { at ->
+          // Dokununca hatırlatıcı penceresi açılır; vakti geçmişse kırmızı
+          val reminderColor = if (at > java.time.LocalDateTime.now()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+          val reminderLabel = listOfNotNull(reminderTimeText(at), repeatText(repeatInterval, repeatDays)).joinToString(" · ")
 
           Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -676,100 +661,23 @@ fun NoteDetailScreen(
           ) {
             Row(
               verticalAlignment = Alignment.CenterVertically,
-              modifier = Modifier.clickable { showRepeatMenu = true }
+              modifier = Modifier
+                .weight(1f)
+                .clickable { openReminder() }
+                .padding(vertical = 4.dp)
             ) {
-              Icon(Icons.Rounded.NotificationsActive, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+              Icon(Icons.Rounded.NotificationsActive, contentDescription = null, tint = reminderColor, modifier = Modifier.size(16.dp))
               Spacer(modifier = Modifier.width(4.dp))
-              
-              val repeatText = when(repeatInterval) {
-                RepeatInterval.DAILY -> stringResource(R.string.repeat_daily)
-                RepeatInterval.WEEKLY -> stringResource(R.string.repeat_weekly)
-                RepeatInterval.MONTHLY -> stringResource(R.string.repeat_monthly)
-                RepeatInterval.YEARLY -> stringResource(R.string.repeat_yearly)
-                else -> stringResource(R.string.repeat_once)
-              }
-              
               Text(
-                text = stringResource(
-                  R.string.reminder_set_format,
-                  reminderAt!!.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yy HH:mm")),
-                  repeatText
-                ),
+                text = reminderLabel,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = reminderColor
               )
             }
-            
-            Spacer(modifier = Modifier.weight(1f))
-            
-            IconButton(
-              onClick = { 
-                viewModel.onReminderSelect(null)
-                viewModel.onRepeatIntervalSelect(RepeatInterval.NONE)
-              },
-              modifier = Modifier.size(24.dp)
-            ) {
+
+            IconButton(onClick = { viewModel.clearReminder() }) {
               Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.cancel_reminder), tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
             }
-          }
-
-          if (showRepeatMenu) {
-            AlertDialog(
-              onDismissRequest = { showRepeatMenu = false },
-              title = { Text(stringResource(R.string.repeat_selection_title)) },
-              text = {
-                Column {
-                   RepeatInterval.values().forEach { interval ->
-                      val text = when(interval) {
-                         RepeatInterval.DAILY -> stringResource(R.string.repeat_daily)
-                         RepeatInterval.WEEKLY -> stringResource(R.string.repeat_weekly)
-                         RepeatInterval.MONTHLY -> stringResource(R.string.repeat_monthly)
-                         RepeatInterval.YEARLY -> stringResource(R.string.repeat_yearly)
-                         else -> stringResource(R.string.repeat_none)
-                      }
-                      Row(
-                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { 
-                               viewModel.onRepeatIntervalSelect(interval)
-                               showRepeatMenu = false 
-                            }
-                            .padding(16.dp),
-                         verticalAlignment = Alignment.CenterVertically
-                      ) {
-                         Text(text)
-                         if (repeatInterval == interval) {
-                            Spacer(modifier = Modifier.weight(1f))
-                            Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                         }
-                      }
-                   }
-                }
-              },
-              confirmButton = {
-                TextButton(onClick = { showRepeatMenu = false }) {
-                  Text(stringResource(R.string.ok))
-                }
-              },
-              dismissButton = {
-                TextButton(
-                  onClick = {
-                    showRepeatMenu = false
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                      if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                        startReminderFlow()
-                      } else {
-                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                      }
-                    } else {
-                      startReminderFlow()
-                    }
-                  }
-                ) {
-                  Text(stringResource(R.string.change_date))
-                }
-              }
-            )
           }
         }
 
@@ -984,11 +892,30 @@ fun NoteDetailScreen(
     )
   }
 
+  if (showReminderSheet) {
+    ReminderSheet(
+      initialAt = reminderAt,
+      initialInterval = repeatInterval,
+      initialDays = repeatDays,
+      onSave = { selection ->
+        viewModel.setReminder(selection)
+        showReminderSheet = false
+      },
+      onRemove = if (reminderAt == null) null else {
+        {
+          viewModel.clearReminder()
+          showReminderSheet = false
+        }
+      },
+      onDismiss = { showReminderSheet = false }
+    )
+  }
+
   if (showExactAlarmDialog) {
     AlertDialog(
       onDismissRequest = {
         showExactAlarmDialog = false
-        showAlarmDialog()
+        showReminderSheet = true
       },
       title = { Text(stringResource(R.string.exact_alarm_title)) },
       text = { Text(stringResource(R.string.exact_alarm_desc)) },
@@ -1008,7 +935,7 @@ fun NoteDetailScreen(
         TextButton(
           onClick = {
             showExactAlarmDialog = false
-            showAlarmDialog()
+            showReminderSheet = true
           }
         ) {
           Text(stringResource(R.string.exact_alarm_later))

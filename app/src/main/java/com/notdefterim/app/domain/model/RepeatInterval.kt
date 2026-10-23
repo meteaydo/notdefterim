@@ -5,5 +5,7 @@ enum class RepeatInterval {
     DAILY,
     WEEKLY,
     MONTHLY,
-    YEARLY
+    YEARLY,
+    /** Haftanın seçili günlerinde (Note.repeatDays) */
+    DAYS_OF_WEEK
 }

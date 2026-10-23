@@ -3,11 +3,13 @@ package com.notdefterim.app.service
 import android.content.Context
 import android.util.Log
 import com.notdefterim.app.domain.model.Note
+import com.notdefterim.app.domain.model.ReminderSchedule
 import com.notdefterim.app.domain.model.RepeatInterval
 import com.notdefterim.app.domain.repository.NoteRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import javax.inject.Inject
@@ -89,23 +91,53 @@ class ReminderRestorer @Inject constructor(
     }
   }
 
+  /** Not silinmediyse ve hatırlatıcısı kaldırılmadıysa notu döndürür; alarm bildirimi bunu sorar. */
+  suspend fun noteWithReminder(noteId: Long): Note? =
+    repository.getNoteById(noteId)?.takeIf { it.reminderAt != null }
+
+  /**
+   * Bildirimdeki "Ertele". Tek seferlik hatırlatıcının zamanı ileri alınır (kartta da yeni zaman görünür);
+   * tekrarlayanın sıradaki zamanı değişmez, araya ayrı bir alarm kurulur.
+   */
+  suspend fun snooze(noteId: Long, minutes: Long) {
+    mutex.withLock {
+      val note = repository.getNoteById(noteId) ?: return@withLock
+      if (note.reminderAt == null) return@withLock
+      val at = LocalDateTime.now().plusMinutes(minutes)
+      if (note.repeatInterval == RepeatInterval.NONE) {
+        val updatedNote = note.copy(reminderAt = at)
+        repository.updateNote(updatedNote)
+        reminderManager.scheduleReminder(updatedNote)
+      } else {
+        reminderManager.scheduleSnooze(note, at)
+      }
+    }
+  }
+
+  /** Bildirimdeki "Tamam". Tek seferlik hatırlatıcı nottan kaldırılır; tekrarlayan sıradaki zamanında yine gelir. */
+  suspend fun complete(noteId: Long) {
+    mutex.withLock {
+      reminderManager.cancelSnooze(noteId)
+      val note = repository.getNoteById(noteId) ?: return@withLock
+      if (note.repeatInterval == RepeatInterval.NONE && note.reminderAt != null) {
+        repository.updateNote(note.copy(reminderAt = null))
+        reminderManager.cancelReminder(noteId)
+      }
+    }
+  }
+
   /**
    * Vakti geçmiş tekrarlayan hatırlatıcıyı şimdiden sonraki ilk tekrara ilerletir.
    * Telefon kapalıyken birkaç tekrar kaçtıysa hepsi atlanır; zaten ilerletildiyse dokunmaz.
    */
   private suspend fun advance(note: Note, now: Long) {
-    var next = note.reminderAt ?: return
-    if (note.repeatInterval == RepeatInterval.NONE || next.toEpochMillis() > now) return
+    val current = note.reminderAt ?: return
+    if (note.repeatInterval == RepeatInterval.NONE || current.toEpochMillis() > now) return
 
-    while (next.toEpochMillis() <= now) {
-      next = when (note.repeatInterval) {
-        RepeatInterval.DAILY -> next.plusDays(1)
-        RepeatInterval.WEEKLY -> next.plusWeeks(1)
-        RepeatInterval.MONTHLY -> next.plusMonths(1)
-        RepeatInterval.YEARLY -> next.plusYears(1)
-        RepeatInterval.NONE -> return
-      }
-    }
+    val nowTime = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).toLocalDateTime()
+    val next = ReminderSchedule.nextAfter(
+      current, note.repeatInterval, note.repeatDays, note.repeatDayOfMonth, after = nowTime
+    ) ?: return
 
     val updatedNote = note.copy(reminderAt = next)
     repository.updateNote(updatedNote)

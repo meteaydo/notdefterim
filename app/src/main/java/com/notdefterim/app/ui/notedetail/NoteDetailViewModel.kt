@@ -17,6 +17,7 @@ import com.notdefterim.app.domain.usecase.note.DeleteNoteUseCase
 import com.notdefterim.app.domain.usecase.note.GetNoteByIdUseCase
 import com.notdefterim.app.domain.usecase.note.UpdateNoteUseCase
 import com.notdefterim.app.service.ReminderManager
+import com.notdefterim.app.ui.notedetail.components.ReminderSelection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.time.DayOfWeek
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -82,6 +84,12 @@ class NoteDetailViewModel @Inject constructor(
   private val _repeatInterval = MutableStateFlow(RepeatInterval.NONE)
   val repeatInterval: StateFlow<RepeatInterval> = _repeatInterval.asStateFlow()
 
+  private val _repeatDays = MutableStateFlow<Set<DayOfWeek>>(emptySet())
+  val repeatDays: StateFlow<Set<DayOfWeek>> = _repeatDays.asStateFlow()
+
+  // Aylık/yıllık tekrarın asıl günü; ekranda görünmez (bkz. ReminderSchedule)
+  private var repeatDayOfMonth = 0
+
   private val _searchQuery = MutableStateFlow("")
   val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -125,6 +133,8 @@ class NoteDetailViewModel @Inject constructor(
         _isLocked.value = note.isLocked
         _reminderAt.value = note.reminderAt
         _repeatInterval.value = note.repeatInterval
+        _repeatDays.value = note.repeatDays
+        repeatDayOfMonth = note.repeatDayOfMonth
         _isChecklist.value = note.isChecklist
 
         if (note.isChecklist) {
@@ -213,12 +223,18 @@ class NoteDetailViewModel @Inject constructor(
       _checklistItems.value = _checklistItems.value.filter { it.id != id }
   }
 
-  fun onReminderSelect(time: LocalDateTime?) {
-    _reminderAt.value = time
+  fun setReminder(selection: ReminderSelection) {
+    _reminderAt.value = selection.at
+    _repeatInterval.value = selection.interval
+    _repeatDays.value = selection.days
+    repeatDayOfMonth = selection.dayOfMonth
   }
 
-  fun onRepeatIntervalSelect(interval: RepeatInterval) {
-    _repeatInterval.value = interval
+  fun clearReminder() {
+    _reminderAt.value = null
+    _repeatInterval.value = RepeatInterval.NONE
+    _repeatDays.value = emptySet()
+    repeatDayOfMonth = 0
   }
 
   fun onSearchQueryChange(newQuery: String) {
@@ -290,6 +306,8 @@ class NoteDetailViewModel @Inject constructor(
           existingNote.isLocked != _isLocked.value ||
           existingNote.reminderAt != _reminderAt.value ||
           existingNote.repeatInterval != _repeatInterval.value ||
+          existingNote.repeatDays != _repeatDays.value ||
+          existingNote.repeatDayOfMonth != repeatDayOfMonth ||
           existingNote.isChecklist != _isChecklist.value
 
       if (!hasChanges) return SaveResult.UNCHANGED
@@ -303,6 +321,8 @@ class NoteDetailViewModel @Inject constructor(
         isLocked = _isLocked.value,
         reminderAt = _reminderAt.value,
         repeatInterval = _repeatInterval.value,
+        repeatDays = _repeatDays.value,
+        repeatDayOfMonth = repeatDayOfMonth,
         isChecklist = _isChecklist.value,
         viewCount = existingNote.viewCount // viewCount'u koru
       )
@@ -324,6 +344,8 @@ class NoteDetailViewModel @Inject constructor(
         isLocked = _isLocked.value,
         reminderAt = _reminderAt.value,
         repeatInterval = _repeatInterval.value,
+        repeatDays = _repeatDays.value,
+        repeatDayOfMonth = repeatDayOfMonth,
         isChecklist = _isChecklist.value
       )
       val result = addNoteUseCase(newNote)

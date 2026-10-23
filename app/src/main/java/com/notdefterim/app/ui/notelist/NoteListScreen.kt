@@ -47,6 +47,7 @@ import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.automirrored.rounded.NoteAdd
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
@@ -267,7 +268,34 @@ fun NoteListScreen(
               selectedBorderWidth = 1.dp
             )
           )
-          
+
+          // Hatırlatıcılar
+          FilterChip(
+            selected = selectedFilterType == NoteListViewModel.FilterType.REMINDER,
+            onClick = { viewModel.setFilter(NoteListViewModel.FilterType.REMINDER) },
+            label = {
+              Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(Icons.Rounded.NotificationsActive, contentDescription = null, modifier = Modifier.size(14.dp))
+                Text(stringResource(R.string.filter_reminders), style = MaterialTheme.typography.labelMedium)
+              }
+            },
+            modifier = Modifier
+              .height(28.dp)
+              .alpha(if (selectedFilterType == NoteListViewModel.FilterType.REMINDER) 1f else 0.4f),
+            colors = FilterChipDefaults.filterChipColors(
+              labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+              selectedLabelColor = MaterialTheme.colorScheme.onSurface
+            ),
+            border = FilterChipDefaults.filterChipBorder(
+              enabled = true,
+              selected = selectedFilterType == NoteListViewModel.FilterType.REMINDER,
+              borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+              selectedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+              borderWidth = 1.dp,
+              selectedBorderWidth = 1.dp
+            )
+          )
+
           // Kategoriler
           visibleCategories.forEach { cat ->
             val isSelected = selectedFilterType == NoteListViewModel.FilterType.CATEGORY && selectedCategoryId == cat.id
@@ -458,10 +486,17 @@ fun NoteListScreen(
 
               val showCategoryEmpty = selectedFilterType == NoteListViewModel.FilterType.CATEGORY && selectedCategoryId != null && notes.none { it.category?.id == selectedCategoryId }
               val showLockedEmpty = selectedFilterType == NoteListViewModel.FilterType.LOCKED && notes.none { it.isLocked }
+              val showReminderEmpty = selectedFilterType == NoteListViewModel.FilterType.REMINDER && notes.none { it.reminderAt != null }
 
-              if (showCategoryEmpty || showLockedEmpty) {
+              if (showCategoryEmpty || showLockedEmpty || showReminderEmpty) {
                 Text(
-                  text = stringResource(if (showLockedEmpty) R.string.no_locked_notes else R.string.no_notes_in_category),
+                  text = stringResource(
+                    when {
+                      showLockedEmpty -> R.string.no_locked_notes
+                      showReminderEmpty -> R.string.no_reminder_notes
+                      else -> R.string.no_notes_in_category
+                    }
+                  ),
                   style = MaterialTheme.typography.titleLarge,
                   color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                   textAlign = TextAlign.Center,
@@ -678,16 +713,19 @@ private fun NoteGrid(
     items(notes, key = { it.id }) { note ->
       val isCategoryMode = selectedFilterType == NoteListViewModel.FilterType.CATEGORY && selectedCategoryId != null
       val isLockedMode = selectedFilterType == NoteListViewModel.FilterType.LOCKED
+      val isReminderMode = selectedFilterType == NoteListViewModel.FilterType.REMINDER
 
       val isHighlighted = when {
         isCategoryMode -> note.category?.id == selectedCategoryId
         isLockedMode -> note.isLocked
+        isReminderMode -> note.reminderAt != null
         else -> false
       }
 
       val isDisabled = when {
         isCategoryMode -> note.category?.id != selectedCategoryId
         isLockedMode -> !note.isLocked
+        isReminderMode -> note.reminderAt == null
         else -> false
       }
 
@@ -779,6 +817,7 @@ private fun EmptyNotesContent(
   val emptyText = when (selectedFilterType) {
     NoteListViewModel.FilterType.CATEGORY -> stringResource(R.string.no_notes_in_category)
     NoteListViewModel.FilterType.LOCKED -> stringResource(R.string.no_locked_notes)
+    NoteListViewModel.FilterType.REMINDER -> stringResource(R.string.no_reminder_notes)
     else -> stringResource(R.string.no_notes_yet)
   }
   Column(

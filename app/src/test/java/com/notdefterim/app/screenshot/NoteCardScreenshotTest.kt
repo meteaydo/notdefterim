@@ -48,7 +48,7 @@ class NoteCardScreenshotTest : ScreenshotTest() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
           ) {
             columnNotes.forEach { note ->
-              NoteCard(note = note, onClick = {}, onLongClick = {}, onTogglePin = {})
+              NoteCard(note = note, onClick = {}, onLongClick = {}, onTogglePin = {}, now = SampleData.date)
             }
           }
         }

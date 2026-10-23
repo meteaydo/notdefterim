@@ -1,5 +1,6 @@
 package com.notdefterim.app.domain.model
 
+import java.time.DayOfWeek
 import java.time.LocalDateTime
 
 /**
@@ -16,6 +17,10 @@ data class Note(
   val color: NoteColor = NoteColor.DEFAULT,
   val reminderAt: LocalDateTime? = null,
   val repeatInterval: RepeatInterval = RepeatInterval.NONE,
+  /** [RepeatInterval.DAYS_OF_WEEK] tekrarının günleri */
+  val repeatDays: Set<DayOfWeek> = emptySet(),
+  /** Aylık/yıllık tekrarın asıl günü; 0 ise hatırlatıcı zamanının günü (bkz. [ReminderSchedule]) */
+  val repeatDayOfMonth: Int = 0,
   val category: Category? = null,
   val viewCount: Int = 0,
   val isLocked: Boolean = false,

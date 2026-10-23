@@ -14,7 +14,8 @@ import java.time.LocalDateTime
  */
 object SampleData {
 
-  private val date = LocalDateTime.of(2026, 10, 12, 9, 30)
+  /** Testlerin "şimdi"si; kartlardaki hatırlatıcı zamanı buna göre "Bugün/Yarın" diye yazılır */
+  val date: LocalDateTime = LocalDateTime.of(2026, 10, 12, 9, 30)
 
   val shopping = Category(id = 1, name = "Alışveriş", colorHex = "#FFF0D5")
   val todo = Category(id = 2, name = "Yapılacaklar", colorHex = "#D5E5FF")

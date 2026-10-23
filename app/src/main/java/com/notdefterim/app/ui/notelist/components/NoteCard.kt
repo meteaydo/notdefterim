@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.PushPin
+import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
@@ -44,7 +45,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.notdefterim.app.domain.model.Note
+import com.notdefterim.app.ui.components.reminderTimeText
+import com.notdefterim.app.ui.components.repeatText
 import com.notdefterim.app.ui.theme.LocalNoteCardColors
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
@@ -58,6 +62,7 @@ private val cardDateFormatter = DateTimeFormatter.ofPattern("d MMM")
  *
  * [onClick] — not düzenleme için
  * [onLongClick] — silme/sabit sabitleme menüsü için
+ * [now] — hatırlatıcı zamanının "Bugün/Yarın" diye yazılması için; ekran görüntüsü testleri sabit verir
  */
 @Composable
 fun NoteCard(
@@ -67,7 +72,8 @@ fun NoteCard(
   onClick: () -> Unit,
   onLongClick: () -> Unit,
   onTogglePin: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  now: LocalDateTime = LocalDateTime.now()
 ) {
   val animatedCardColor = MaterialTheme.colorScheme.surface
 
@@ -148,32 +154,46 @@ fun NoteCard(
 
       Spacer(modifier = Modifier.height(12.dp))
 
-      // Alt kısım: Tarih ve Alarm ikonu
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Text(
-          text = note.updatedAt.format(cardDateFormatter),
-          style = MaterialTheme.typography.labelSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
+      // Hatırlatıcı zamanı; vakti geçmişse kırmızı
+      if (note.reminderAt != null) {
+        val reminderColor = if (note.reminderAt > now) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+        val repeatLabel = repeatText(note.repeatInterval, note.repeatDays)
         Row(
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
-          verticalAlignment = Alignment.CenterVertically
+          horizontalArrangement = Arrangement.spacedBy(4.dp),
+          verticalAlignment = Alignment.CenterVertically,
+          modifier = Modifier.padding(bottom = 6.dp)
         ) {
-
-          if (note.reminderAt != null) {
+          Icon(
+            imageVector = Icons.Rounded.NotificationsActive,
+            contentDescription = stringResource(R.string.reminder_title),
+            modifier = Modifier.size(14.dp),
+            tint = reminderColor
+          )
+          Text(
+            text = reminderTimeText(note.reminderAt, now),
+            style = MaterialTheme.typography.labelSmall,
+            color = reminderColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false)
+          )
+          if (repeatLabel != null) {
             Icon(
-              imageVector = Icons.Rounded.NotificationsActive,
-              contentDescription = stringResource(R.string.reminder_title),
-              modifier = Modifier.size(16.dp),
-              tint = MaterialTheme.colorScheme.primary
+              imageVector = Icons.Rounded.Repeat,
+              contentDescription = repeatLabel,
+              modifier = Modifier.size(12.dp),
+              tint = reminderColor
             )
           }
         }
       }
+
+      // Alt kısım: Tarih
+      Text(
+        text = note.updatedAt.format(cardDateFormatter),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+      )
     }
 
     IconButton(

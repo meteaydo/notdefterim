@@ -1,5 +1,6 @@
 package com.notdefterim.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -30,6 +31,12 @@ data class NoteEntity(
   val reminderAt: Long? = null,
   /** Tekrarlama periyodu */
   val repeatInterval: String = "NONE",
+  /** DAYS_OF_WEEK tekrarının günleri: bit 0 Pazartesi … bit 6 Pazar */
+  @ColumnInfo(defaultValue = "0")
+  val repeatDays: Int = 0,
+  /** Aylık/yıllık tekrarın asıl günü (0: hatırlatıcı zamanının günü) */
+  @ColumnInfo(defaultValue = "0")
+  val repeatDayOfMonth: Int = 0,
   /** Kategori ID'si (varsa) */
   val categoryId: Long? = null,
   /** Notun görüntülenme sayısı (En Sık sekmesi için) */

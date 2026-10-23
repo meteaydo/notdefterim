@@ -10,6 +10,7 @@ import com.notdefterim.app.domain.usecase.category.GetCategoriesUseCase
 import com.notdefterim.app.domain.usecase.note.DeleteNoteUseCase
 import com.notdefterim.app.domain.usecase.note.GetNotesUseCase
 import com.notdefterim.app.domain.usecase.note.UpdateNoteUseCase
+import com.notdefterim.app.service.ReminderManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import javax.inject.Inject
 import com.notdefterim.app.util.matchesSearch
 
@@ -30,10 +32,11 @@ class NoteListViewModel @Inject constructor(
   private val deleteNoteUseCase: DeleteNoteUseCase,
   private val updateNoteUseCase: UpdateNoteUseCase,
   private val getCategoriesUseCase: GetCategoriesUseCase,
-  private val categoryRepository: CategoryRepository
+  private val categoryRepository: CategoryRepository,
+  private val reminderManager: ReminderManager
 ) : ViewModel() {
 
-  enum class FilterType { ALL, LOCKED, FREQUENT, CATEGORY }
+  enum class FilterType { ALL, LOCKED, FREQUENT, CATEGORY, REMINDER }
   
   private val _selectedFilterType = MutableStateFlow(FilterType.ALL)
   val selectedFilterType = _selectedFilterType.asStateFlow()
@@ -78,6 +81,15 @@ class NoteListViewModel @Inject constructor(
           .thenByDescending { it.updatedAt }
       )
       FilterType.FREQUENT -> filteredList.sortedByDescending { it.viewCount }
+      FilterType.REMINDER -> {
+        // Önce yaklaşan hatırlatıcılar (en yakını üstte), sonra vakti geçenler (en yenisi üstte), en altta hatırlatıcısızlar
+        val now = LocalDateTime.now()
+        val (withReminder, without) = filteredList.partition { it.reminderAt != null }
+        val (upcoming, past) = withReminder.partition { it.reminderAt!! > now }
+        upcoming.sortedBy { it.reminderAt } +
+          past.sortedByDescending { it.reminderAt } +
+          without.sortedWith(compareByDescending<Note> { it.isPinned }.thenByDescending { it.updatedAt })
+      }
       FilterType.CATEGORY -> {
         if (categoryId != null) {
           // Seçili kategori notlarını EN ÜSTE koy, diğerlerini alta bırak.
@@ -120,6 +132,7 @@ class NoteListViewModel @Inject constructor(
 
   fun deleteNote(noteId: Long) {
     viewModelScope.launch {
+      reminderManager.cancelReminder(noteId)
       deleteNoteUseCase(noteId)
     }
   }

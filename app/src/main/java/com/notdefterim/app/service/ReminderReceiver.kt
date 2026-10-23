@@ -6,8 +6,10 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.notdefterim.app.MainActivity
 import com.notdefterim.app.R
 import dagger.hilt.android.AndroidEntryPoint
@@ -25,17 +27,27 @@ class ReminderReceiver : BroadcastReceiver() {
   @Inject lateinit var reminderRestorerLazy: dagger.Lazy<ReminderRestorer>
 
   override fun onReceive(context: Context, intent: Intent) {
+    val noteId = intent.getLongExtra("NOTE_ID", -1)
+    if (intent.action == ReminderManager.ACTION_SNOOZE || intent.action == ReminderManager.ACTION_DONE) {
+      // Düğmeye basılınca bildirim hemen kapansın; veritabanı işi aşağıda sürer
+      NotificationManagerCompat.from(context).cancel(noteId.toInt())
+    }
+
     val pendingResult = goAsync()
     // ProcessLifecycleOwner: uygulama process'ı boyunca yaşayan lifecycle-aware scope.
     // Bağımsız CoroutineScope(Dispatchers.IO) yerine kullanılır; orphan scope bırakmız.
     ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
       try {
         val reminderRestorer = reminderRestorerLazy.get()
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+        when (intent.action) {
           // Yeniden başlatma tüm alarmları siler; hatırlatıcıları veritabanından yeniden kur
-          reminderRestorer.restore()
-        } else {
-          onReminder(context, intent, reminderRestorer)
+          Intent.ACTION_BOOT_COMPLETED -> reminderRestorer.restore()
+          ReminderManager.ACTION_SNOOZE -> reminderRestorer.snooze(
+            noteId, intent.getLongExtra(ReminderManager.EXTRA_SNOOZE_MINUTES, 10)
+          )
+          ReminderManager.ACTION_DONE -> reminderRestorer.complete(noteId)
+          // Asıl alarm ya da tekrarlayan hatırlatıcının ertelenmiş alarmı
+          else -> onReminder(context, intent, reminderRestorer)
         }
       } catch (e: Exception) {
         // Ör. şifreleme anahtarı okunamıyor: arka planda çökme, uygulama açılınca açıklama gösterilir
@@ -51,15 +63,24 @@ class ReminderReceiver : BroadcastReceiver() {
     // Bu sürümden önce kurulan alarmlarda yok (-1)
     val reminderAtMillis = intent.getLongExtra("REMINDER_AT", -1)
 
+    // Bildirim notun güncel hâlinden kurulur; not silindiyse ya da hatırlatıcısı kaldırıldıysa gösterilmez.
+    // Veritabanı açılamazsa (ör. anahtar okunamıyor) alarma kaydedilen bilgilerle gösterilir.
+    val lookup = runCatching { reminderRestorer.noteWithReminder(noteId) }
+    lookup.exceptionOrNull()?.let {
+      android.util.Log.e("ReminderReceiver", "Not okunamadı, alarmdaki bilgiler kullanılıyor", it)
+    }
+    if (lookup.isSuccess && lookup.getOrNull() == null) return
+    val note = lookup.getOrNull()
+
     // Açılıştaki kontrol bu hatırlatıcıyı kaçırılmış sayıp zaten gösterdiyse ikinci kez gösterme
     if (reminderAtMillis <= 0 || !reminderRestorer.isDelivered(noteId, reminderAtMillis)) {
       showReminder(
         context = context,
         noteId = noteId,
-        title = intent.getStringExtra("NOTE_TITLE") ?: context.getString(R.string.app_name),
-        rawContent = intent.getStringExtra("NOTE_CONTENT") ?: "",
-        isChecklist = intent.getBooleanExtra("IS_CHECKLIST", false),
-        isLocked = intent.getBooleanExtra("IS_LOCKED", false)
+        title = note?.title ?: intent.getStringExtra("NOTE_TITLE") ?: context.getString(R.string.app_name),
+        rawContent = note?.content ?: intent.getStringExtra("NOTE_CONTENT") ?: "",
+        isChecklist = note?.isChecklist ?: intent.getBooleanExtra("IS_CHECKLIST", false),
+        isLocked = note?.isLocked ?: intent.getBooleanExtra("IS_LOCKED", false)
       )
       if (reminderAtMillis > 0) reminderRestorer.markDelivered(noteId, reminderAtMillis)
     }
@@ -143,6 +164,9 @@ class ReminderReceiver : BroadcastReceiver() {
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setAutoCancel(true)
         .setContentIntent(pendingIntent)
+        .addAction(0, context.getString(R.string.reminder_snooze_10_min), snoozeIntent(context, noteId, 10))
+        .addAction(0, context.getString(R.string.reminder_snooze_1_hour), snoozeIntent(context, noteId, 60))
+        .addAction(0, context.getString(R.string.reminder_done), actionIntent(context, noteId, ReminderManager.ACTION_DONE))
 
       if (whenMillis != null) {
         builder.setWhen(whenMillis).setShowWhen(true)
@@ -160,6 +184,32 @@ class ReminderReceiver : BroadcastReceiver() {
       }
 
       notificationManager.notify(noteId.toInt(), builder.build())
+    }
+
+    private fun snoozeIntent(context: Context, noteId: Long, minutes: Long): PendingIntent =
+      actionIntent(context, noteId, ReminderManager.ACTION_SNOOZE) {
+        putExtra(ReminderManager.EXTRA_SNOOZE_MINUTES, minutes)
+        // İki erteleme düğmesi aynı PendingIntent'i paylaşıp birbirinin süresini ezmesin
+        data = Uri.parse("notdefterim://reminder/$noteId/snooze/$minutes")
+      }
+
+    private fun actionIntent(
+      context: Context,
+      noteId: Long,
+      action: String,
+      configure: Intent.() -> Unit = {}
+    ): PendingIntent {
+      val intent = Intent(context, ReminderReceiver::class.java).apply {
+        this.action = action
+        putExtra("NOTE_ID", noteId)
+        configure()
+      }
+      return PendingIntent.getBroadcast(
+        context,
+        noteId.toInt(),
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+      )
     }
   }
 }

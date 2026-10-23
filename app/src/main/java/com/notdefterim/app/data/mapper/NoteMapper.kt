@@ -7,6 +7,7 @@ import com.notdefterim.app.domain.model.RepeatInterval
 import com.notdefterim.app.domain.model.Category
 import com.notdefterim.app.data.local.entity.CategoryEntity
 import com.notdefterim.app.data.local.entity.NoteWithCategory
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -38,6 +39,8 @@ fun NoteEntity.toDomain(): Note = Note(
       .toLocalDateTime()
   },
   repeatInterval = try { RepeatInterval.valueOf(repeatInterval) } catch (e: Exception) { RepeatInterval.NONE },
+  repeatDays = DayOfWeek.values().filterTo(mutableSetOf()) { repeatDays and it.bit() != 0 },
+  repeatDayOfMonth = repeatDayOfMonth,
   viewCount = viewCount,
   isLocked = isLocked,
   isChecklist = isChecklist
@@ -84,11 +87,16 @@ fun Note.toEntity(): NoteEntity = NoteEntity(
   colorIndex = color.index,
   reminderAt = reminderAt?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli(),
   repeatInterval = repeatInterval.name,
+  repeatDays = repeatDays.fold(0) { mask, day -> mask or day.bit() },
+  repeatDayOfMonth = repeatDayOfMonth,
   categoryId = category?.id,
   viewCount = viewCount,
   isLocked = isLocked,
   isChecklist = isChecklist
 )
+
+/** NoteEntity.repeatDays içindeki biti: Pazartesi 1, Salı 2, … Pazar 64 */
+private fun DayOfWeek.bit(): Int = 1 shl (value - 1)
 
 /** Liste dönüşümü. */
 fun List<NoteEntity>.toDomainList(): List<Note> = map { it.toDomain() }

@@ -113,7 +113,6 @@
     <string name="add_reminder">Hatırlatıcı ekle</string>
     <string name="remove_reminder">Hatırlatıcıyı kaldır</string>
     <string name="reminder_set_for">%s için hatırlatıcı kuruldu</string>
-    <string name="repeat_none">Sadece bir kez</string>
     <string name="repeat_once">Bir kez</string>
     <string name="repeat_daily">Her Gün</string>
     <string name="repeat_weekly">Her Hafta</string>
@@ -215,10 +214,7 @@
     <string name="pin_required_view_note">Uygulama içi pin korumasını açtınız. Notu görüntülemek için pini girmeniz gerekiyor.</string>
     <string name="show_content">İçeriği Göster</string>
     <string name="search_anything">Herhangi Birşey Ara</string>
-    <string name="reminder_set_format">Hatırlatıcı Kuruldu: %1$s (%2$s)</string>
-    <string name="repeat_selection_title">Tekrarlama Seçimi</string>
     <string name="ok">Tamam</string>
-    <string name="change_date">Tarihi Değiştir</string>
     <string name="overlay_permission_title">Diğer Uygulamaların Üzerinde Gösterme İzni</string>
     <string name="overlay_permission_note_desc">Yüzen not pencerelerini kullanabilmek için bu izni vermeniz gerekmektedir. İzin sayesinde notlarınızı diğer uygulamaların üzerindeyken de görebilirsiniz.</string>
     <string name="go_to_settings">Ayarlara Git</string>
@@ -303,4 +299,25 @@
     <string name="key_error_reset">Uygulamayı Sıfırla</string>
     <string name="key_error_reset_confirm_title">Uygulama sıfırlansın mı?</string>
     <string name="key_error_reset_confirm_desc">Bu cihazdaki notlar ve parolalar anahtar olmadan açılamadığı için silinecek. Yedekleriniz etkilenmez; onları Ayarlar\'dan geri yükleyebilirsiniz.</string>
+    <string name="reminder_sheet_title">Hatırlatıcı</string>
+    <string name="reminder_in_one_hour">1 saat sonra</string>
+    <string name="reminder_today_format">Bugün %s</string>
+    <string name="reminder_tomorrow_format">Yarın %s</string>
+    <string name="reminder_yesterday_format">Dün %s</string>
+    <string name="reminder_repeat_label">Tekrar</string>
+    <string name="repeat_weekdays">Hafta İçi</string>
+    <string name="repeat_custom_days">Belirli Günler</string>
+    <string name="reminder_first_at">İlk hatırlatma: %s</string>
+    <string name="reminder_time_passed">Bu zaman geçti, ileri bir zaman seçin.</string>
+    <string name="reminder_pick_day">En az bir gün seçin.</string>
+    <string name="reminder_snooze_10_min">10 dk ertele</string>
+    <string name="reminder_snooze_1_hour">1 saat ertele</string>
+    <string name="reminder_done">Tamam</string>
+    <string name="filter_reminders">Hatırlatıcılar</string>
+    <string name="no_reminder_notes">Hatırlatıcılı notunuz yok</string>
+    <string name="reminders_settings_section">Hatırlatıcılar</string>
+    <string name="exact_alarm_on">Açık</string>
+    <string name="exact_alarm_off">Kapalı; hatırlatıcılar birkaç dakika gecikebilir</string>
+    <string name="xiaomi_autostart_title">Otomatik başlatma (Xiaomi)</string>
+    <string name="xiaomi_autostart_desc">Telefon yeniden başlayınca hatırlatıcıların yeniden kurulması için NotDefterim\'e otomatik başlatma izni verin.</string>
 </resources>

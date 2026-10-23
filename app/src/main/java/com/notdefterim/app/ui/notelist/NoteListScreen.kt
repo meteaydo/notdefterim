@@ -37,6 +37,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.Add
@@ -68,6 +69,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.res.stringResource
 import com.notdefterim.app.R
 import com.notdefterim.app.domain.model.DefaultNoteCategory
@@ -245,7 +247,8 @@ fun NoteListScreen(
           // Kilitli
           FilterChip(
             selected = selectedFilterType == NoteListViewModel.FilterType.LOCKED,
-            onClick = { viewModel.setFilter(NoteListViewModel.FilterType.LOCKED) },
+            // İkinci dokunuş filtreyi kapatır (kategori etiketleri gibi)
+            onClick = { viewModel.toggleFilter(NoteListViewModel.FilterType.LOCKED) },
             label = { 
               Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(14.dp))
@@ -272,7 +275,7 @@ fun NoteListScreen(
           // Hatırlatıcılar
           FilterChip(
             selected = selectedFilterType == NoteListViewModel.FilterType.REMINDER,
-            onClick = { viewModel.setFilter(NoteListViewModel.FilterType.REMINDER) },
+            onClick = { viewModel.toggleFilter(NoteListViewModel.FilterType.REMINDER) },
             label = {
               Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(Icons.Rounded.NotificationsActive, contentDescription = null, modifier = Modifier.size(14.dp))
@@ -703,7 +706,20 @@ private fun NoteGrid(
     )
   }
 
+  // Filtre değişince liste yeniden sıralanır. Izgara o an en üstte görünen notu yerinde tuttuğu için
+  // öne alınan notlar ekranın üstünde, görünmeyen yerde kalıyordu; yeni sıralama gelince başa dönülür.
+  val gridState = rememberLazyStaggeredGridState()
+  val filterKey = selectedFilterType to selectedCategoryId
+  var notesFilterKey by remember { mutableStateOf(filterKey) }
+  LaunchedEffect(notes) {
+    if (notesFilterKey != filterKey) {
+      notesFilterKey = filterKey
+      gridState.scrollToItem(0)
+    }
+  }
+
   LazyVerticalStaggeredGrid(
+    state = gridState,
     columns = StaggeredGridCells.Adaptive(minSize = 160.dp),
     verticalItemSpacing = 8.dp,
     horizontalArrangement = Arrangement.spacedBy(8.dp),

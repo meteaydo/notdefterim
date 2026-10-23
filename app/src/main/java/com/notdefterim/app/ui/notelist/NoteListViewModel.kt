@@ -130,6 +130,11 @@ class NoteListViewModel @Inject constructor(
     _selectedCategoryId.value = categoryId
   }
 
+  /** Seçili filtreye yeniden dokunulunca "Tümü"ye döner. */
+  fun toggleFilter(type: FilterType) {
+    setFilter(if (_selectedFilterType.value == type) FilterType.ALL else type)
+  }
+
   fun deleteNote(noteId: Long) {
     viewModelScope.launch {
       reminderManager.cancelReminder(noteId)

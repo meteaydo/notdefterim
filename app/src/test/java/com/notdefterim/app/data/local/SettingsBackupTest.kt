@@ -3,6 +3,8 @@ package com.notdefterim.app.data.local
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.notdefterim.app.core.security.PinCheck
+import com.notdefterim.app.domain.model.NoteSortOrder
+import com.notdefterim.app.domain.model.PasswordSortOrder
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -35,6 +37,8 @@ class SettingsBackupTest {
       setStartupBehavior(2)
       setAppPin("1234", "ipucu")
       setAppPinScope(1)
+      setNoteSortOrder(NoteSortOrder.TITLE)
+      setPasswordSortOrder(PasswordSortOrder.LAST_CHANGED)
     }
     val theme = ThemePreferences(context).apply { toggleTheme(currentSystemDark = false) }
     val appJson = JSONObject(app.backupSettings().toString())
@@ -49,6 +53,8 @@ class SettingsBackupTest {
     assertEquals(7_776_000_000L, restored.passwordReminderPeriod.value)
     assertEquals(2, restored.startupBehavior.value)
     assertEquals(1, restored.appPinScope.value)
+    assertEquals(NoteSortOrder.TITLE, restored.noteSortOrder.value)
+    assertEquals(PasswordSortOrder.LAST_CHANGED, restored.passwordSortOrder.value)
     assertEquals("ipucu", restored.appPinHint.value)
     assertEquals(PinCheck.Correct, restored.checkPin("1234"))
     assertEquals(true, ThemePreferences(context).isDarkTheme.value)

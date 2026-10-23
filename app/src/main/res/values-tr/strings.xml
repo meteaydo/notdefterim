@@ -320,4 +320,11 @@
     <string name="exact_alarm_off">Kapalı; hatırlatıcılar birkaç dakika gecikebilir</string>
     <string name="xiaomi_autostart_title">Otomatik başlatma (Xiaomi)</string>
     <string name="xiaomi_autostart_desc">Telefon yeniden başlayınca hatırlatıcıların yeniden kurulması için NotDefterim\'e otomatik başlatma izni verin.</string>
+    <string name="sort_title">Sırala</string>
+    <string name="sort_last_edited">Son düzenleme</string>
+    <string name="sort_created">Oluşturma tarihi</string>
+    <string name="sort_title_az">Başlık (A–Z)</string>
+    <string name="sort_most_used">En çok kullanılan</string>
+    <string name="sort_last_changed">Son değiştirme (eskiden yeniye)</string>
+    <string name="sort_name_az">Ad (A–Z)</string>
 </resources>

@@ -2,7 +2,9 @@ package com.notdefterim.app.ui.notelist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.notdefterim.app.data.local.AppPreferences
 import com.notdefterim.app.domain.model.Note
+import com.notdefterim.app.domain.model.NoteSortOrder
 import com.notdefterim.app.domain.model.Category
 import com.notdefterim.app.domain.model.DefaultNoteCategory
 import com.notdefterim.app.domain.repository.CategoryRepository
@@ -33,7 +35,8 @@ class NoteListViewModel @Inject constructor(
   private val updateNoteUseCase: UpdateNoteUseCase,
   private val getCategoriesUseCase: GetCategoriesUseCase,
   private val categoryRepository: CategoryRepository,
-  private val reminderManager: ReminderManager
+  private val reminderManager: ReminderManager,
+  private val appPreferences: AppPreferences
 ) : ViewModel() {
 
   enum class FilterType { ALL, LOCKED, FREQUENT, CATEGORY, REMINDER }
@@ -62,8 +65,9 @@ class NoteListViewModel @Inject constructor(
     getNotesUseCase(),
     _searchQuery.debounce(300L),
     _selectedFilterType,
-    _selectedCategoryId
-  ) { noteList, query, filterType, categoryId ->
+    _selectedCategoryId,
+    appPreferences.noteSortOrder
+  ) { noteList, query, filterType, categoryId, sortOrder ->
       val filteredList = if (query.isBlank()) {
           noteList
       } else {
@@ -73,12 +77,15 @@ class NoteListViewModel @Inject constructor(
           }
       }
 
+    // Kullanıcının seçtiği sıra; filtrelerin öne aldığı notların ve sabitlenenlerin içinde uygulanır
+    val order = sortOrder.comparator()
+
     when (filterType) {
-      FilterType.ALL -> filteredList.sortedWith(compareByDescending<Note> { it.isPinned }.thenByDescending { it.updatedAt })
+      FilterType.ALL -> filteredList.sortedWith(compareByDescending<Note> { it.isPinned }.then(order))
       FilterType.LOCKED -> filteredList.sortedWith(
         compareByDescending<Note> { it.isLocked }
           .thenByDescending { it.isPinned }
-          .thenByDescending { it.updatedAt }
+          .then(order)
       )
       FilterType.FREQUENT -> filteredList.sortedByDescending { it.viewCount }
       FilterType.REMINDER -> {
@@ -88,7 +95,7 @@ class NoteListViewModel @Inject constructor(
         val (upcoming, past) = withReminder.partition { it.reminderAt!! > now }
         upcoming.sortedBy { it.reminderAt } +
           past.sortedByDescending { it.reminderAt } +
-          without.sortedWith(compareByDescending<Note> { it.isPinned }.thenByDescending { it.updatedAt })
+          without.sortedWith(compareByDescending<Note> { it.isPinned }.then(order))
       }
       FilterType.CATEGORY -> {
         if (categoryId != null) {
@@ -96,10 +103,10 @@ class NoteListViewModel @Inject constructor(
           filteredList.sortedWith(
             compareByDescending<Note> { it.category?.id == categoryId }
               .thenByDescending { it.isPinned }
-              .thenByDescending { it.updatedAt }
+              .then(order)
           )
         } else {
-          filteredList.sortedWith(compareByDescending<Note> { it.isPinned }.thenByDescending { it.updatedAt })
+          filteredList.sortedWith(compareByDescending<Note> { it.isPinned }.then(order))
         }
       }
     }
@@ -128,6 +135,12 @@ class NoteListViewModel @Inject constructor(
   fun setFilter(type: FilterType, categoryId: Long? = null) {
     _selectedFilterType.value = type
     _selectedCategoryId.value = categoryId
+  }
+
+  val sortOrder: StateFlow<NoteSortOrder> = appPreferences.noteSortOrder
+
+  fun setSortOrder(order: NoteSortOrder) {
+    appPreferences.setNoteSortOrder(order)
   }
 
   /** Seçili filtreye yeniden dokunulunca "Tümü"ye döner. */

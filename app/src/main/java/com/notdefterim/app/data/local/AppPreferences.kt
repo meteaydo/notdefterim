@@ -3,6 +3,8 @@ package com.notdefterim.app.data.local
 import android.content.Context
 import com.notdefterim.app.core.security.PinHasher
 import com.notdefterim.app.core.security.PinCheck
+import com.notdefterim.app.domain.model.NoteSortOrder
+import com.notdefterim.app.domain.model.PasswordSortOrder
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -63,6 +65,12 @@ class AppPreferences @Inject constructor(
     private val _lastOpenedTab = MutableStateFlow(prefs.getInt("last_opened_tab", 0)) // 0: Notes, 1: Passwords
     val lastOpenedTab: StateFlow<Int> = _lastOpenedTab.asStateFlow()
 
+    private val _noteSortOrder = MutableStateFlow(NoteSortOrder.fromName(prefs.getString("note_sort_order", null)))
+    val noteSortOrder: StateFlow<NoteSortOrder> = _noteSortOrder.asStateFlow()
+
+    private val _passwordSortOrder = MutableStateFlow(PasswordSortOrder.fromName(prefs.getString("password_sort_order", null)))
+    val passwordSortOrder: StateFlow<PasswordSortOrder> = _passwordSortOrder.asStateFlow()
+
     fun setAutoLockTimeout(timeoutMs: Long) {
         prefs.edit().putLong("auto_lock_timeout", timeoutMs).apply()
         _autoLockTimeout.value = timeoutMs
@@ -81,6 +89,16 @@ class AppPreferences @Inject constructor(
     fun setLastOpenedTab(tab: Int) {
         prefs.edit().putInt("last_opened_tab", tab).apply()
         _lastOpenedTab.value = tab
+    }
+
+    fun setNoteSortOrder(order: NoteSortOrder) {
+        prefs.edit().putString("note_sort_order", order.name).apply()
+        _noteSortOrder.value = order
+    }
+
+    fun setPasswordSortOrder(order: PasswordSortOrder) {
+        prefs.edit().putString("password_sort_order", order.name).apply()
+        _passwordSortOrder.value = order
     }
 
     fun setPasswordReminderPeriod(periodMs: Long) {
@@ -169,6 +187,8 @@ class AppPreferences @Inject constructor(
         put("password_reminder_period", _passwordReminderPeriod.value)
         put("startup_behavior", _startupBehavior.value)
         put("app_pin_scope", _appPinScope.value)
+        put("note_sort_order", _noteSortOrder.value.name)
+        put("password_sort_order", _passwordSortOrder.value.name)
         _appPinHash.value?.let { put("app_pin_hash", it) }
         _appPinHint.value?.let { put("app_pin_hint", it) }
     }
@@ -184,6 +204,8 @@ class AppPreferences @Inject constructor(
             .putLong("password_reminder_period", json.optLong("password_reminder_period", _passwordReminderPeriod.value))
             .putInt("startup_behavior", json.optInt("startup_behavior", _startupBehavior.value))
             .putInt("app_pin_scope", json.optInt("app_pin_scope", _appPinScope.value))
+            .putString("note_sort_order", json.optString("note_sort_order", _noteSortOrder.value.name))
+            .putString("password_sort_order", json.optString("password_sort_order", _passwordSortOrder.value.name))
             .remove("pin_failed_attempts")
             .remove("pin_locked_until")
         if (json.has("app_pin_hash")) {

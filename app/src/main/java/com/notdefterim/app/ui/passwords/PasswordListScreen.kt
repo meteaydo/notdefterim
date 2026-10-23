@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -104,6 +106,8 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.domain.model.Password
+import com.notdefterim.app.domain.model.PasswordSortOrder
+import com.notdefterim.app.ui.components.SortMenuButton
 import com.notdefterim.app.ui.auth.AuthViewModel
 import com.notdefterim.app.ui.components.ActionPinDialog
 import com.notdefterim.app.ui.components.PasswordGeneratorCard
@@ -127,7 +131,18 @@ fun PasswordListScreen(
   val unlockedPasswords = remember { androidx.compose.runtime.mutableStateListOf<Long>() }
   val categories by viewModel.categories.collectAsStateWithLifecycle()
   val selectedCategoryId by viewModel.selectedCategoryId.collectAsStateWithLifecycle()
+  val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
   var isCategoriesExpanded by remember { mutableStateOf(false) }
+
+  // Sıralama değişince liste o an en üstteki parolayı yerinde tutmasın; yeni sıralama gelince başa dönülür
+  val listState = rememberLazyListState()
+  var listSortOrder by remember { mutableStateOf(sortOrder) }
+  LaunchedEffect(passwords) {
+    if (listSortOrder != sortOrder) {
+      listSortOrder = sortOrder
+      listState.scrollToItem(0)
+    }
+  }
 
   var showAddDialog by remember { mutableStateOf(initialShowAddDialog) }
   var passwordToEdit by remember { mutableStateOf<Password?>(null) }
@@ -214,10 +229,19 @@ fun PasswordListScreen(
         placeholder = { Text(stringResource(R.string.search_anything)) },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
-          if (searchQuery.isNotEmpty()) {
-            IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-              Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search_desc))
+          Row(verticalAlignment = Alignment.CenterVertically) {
+            if (searchQuery.isNotEmpty()) {
+              IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search_desc))
+              }
             }
+            SortMenuButton(
+              options = PasswordSortOrder.entries,
+              selected = sortOrder,
+              default = PasswordSortOrder.MOST_USED,
+              labelResId = { it.titleResId },
+              onSelect = viewModel::setSortOrder
+            )
           }
         },
         shape = CircleShape,
@@ -385,6 +409,7 @@ fun PasswordListScreen(
             )
           } else {
             LazyColumn(
+              state = listState,
               modifier = Modifier.fillMaxSize(),
               contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp),
               verticalArrangement = Arrangement.spacedBy(6.dp)

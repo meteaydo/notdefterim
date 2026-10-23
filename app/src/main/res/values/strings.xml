@@ -318,4 +318,11 @@
     <string name="exact_alarm_off">Off; reminders may arrive a few minutes late</string>
     <string name="xiaomi_autostart_title">Autostart (Xiaomi)</string>
     <string name="xiaomi_autostart_desc">Allow NotDefterim to autostart so that reminders are set again after the phone restarts.</string>
+    <string name="sort_title">Sort</string>
+    <string name="sort_last_edited">Last edited</string>
+    <string name="sort_created">Date created</string>
+    <string name="sort_title_az">Title (A–Z)</string>
+    <string name="sort_most_used">Most used</string>
+    <string name="sort_last_changed">Last changed (oldest first)</string>
+    <string name="sort_name_az">Name (A–Z)</string>
 </resources>

@@ -3,6 +3,7 @@ package com.notdefterim.app.ui.passwords
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notdefterim.app.domain.model.Password
+import com.notdefterim.app.domain.model.PasswordSortOrder
 import com.notdefterim.app.domain.repository.PasswordRepository
 import com.notdefterim.app.data.local.AppPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,12 +44,15 @@ class PasswordListViewModel @Inject constructor(
   val categories: StateFlow<List<Category>> = getCategoriesUseCase(CategoryType.PASSWORD)
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+  val sortOrder: StateFlow<PasswordSortOrder> = appPreferences.passwordSortOrder
+
   val passwords = combine(
     repository.getAllPasswords(),
     _searchQuery,
-    _selectedCategoryId
-  ) { list, query, categoryId ->
-    var filteredList = list
+    _selectedCategoryId,
+    appPreferences.passwordSortOrder
+  ) { list, query, categoryId, sortOrder ->
+    var filteredList = list.sortedWith(sortOrder.comparator())
     
     // Filtreleme: Kategori
     if (categoryId != null) {
@@ -121,6 +125,10 @@ class PasswordListViewModel @Inject constructor(
 
   fun onCategorySelected(categoryId: Long?) {
     _selectedCategoryId.value = categoryId
+  }
+
+  fun setSortOrder(order: PasswordSortOrder) {
+    appPreferences.setPasswordSortOrder(order)
   }
 
   fun addCategory(name: String, colorHex: String) {

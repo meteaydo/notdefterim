@@ -90,7 +90,9 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.domain.model.Note
+import com.notdefterim.app.domain.model.NoteSortOrder
 import com.notdefterim.app.domain.model.Category
+import com.notdefterim.app.ui.components.SortMenuButton
 import com.notdefterim.app.ui.notelist.components.NoteCard
 
 /**
@@ -113,6 +115,7 @@ fun NoteListScreen(
   
   val categories by viewModel.categories.collectAsStateWithLifecycle()
   val selectedFilterType by viewModel.selectedFilterType.collectAsStateWithLifecycle()
+  val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
   val selectedCategoryId by viewModel.selectedCategoryId.collectAsStateWithLifecycle()
   var isCategoriesExpanded by remember { mutableStateOf(false) }
 
@@ -189,10 +192,19 @@ fun NoteListScreen(
         placeholder = { Text(stringResource(R.string.search_anything)) },
         leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
         trailingIcon = {
-          if (searchQuery.isNotEmpty()) {
-            IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-              Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search_desc))
+          Row(verticalAlignment = Alignment.CenterVertically) {
+            if (searchQuery.isNotEmpty()) {
+              IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search_desc))
+              }
             }
+            SortMenuButton(
+              options = NoteSortOrder.entries,
+              selected = sortOrder,
+              default = NoteSortOrder.LAST_EDITED,
+              labelResId = { it.titleResId },
+              onSelect = viewModel::setSortOrder
+            )
           }
         },
         shape = CircleShape,
@@ -476,6 +488,7 @@ fun NoteListScreen(
                 notes = notes,
                 selectedCategoryId = selectedCategoryId,
                 selectedFilterType = selectedFilterType,
+                sortOrder = sortOrder,
                 onNoteClick = { noteId ->
                   onNoteClick(noteId)
                 },
@@ -674,6 +687,7 @@ private fun NoteGrid(
   notes: List<Note>,
   selectedCategoryId: Long?,
   selectedFilterType: NoteListViewModel.FilterType,
+  sortOrder: NoteSortOrder,
   onNoteClick: (Long) -> Unit,
   onDeleteClick: (Note) -> Unit,
   onTogglePin: (Note) -> Unit,
@@ -706,10 +720,10 @@ private fun NoteGrid(
     )
   }
 
-  // Filtre değişince liste yeniden sıralanır. Izgara o an en üstte görünen notu yerinde tuttuğu için
-  // öne alınan notlar ekranın üstünde, görünmeyen yerde kalıyordu; yeni sıralama gelince başa dönülür.
+  // Filtre ya da sıralama değişince liste yeniden sıralanır. Izgara o an en üstte görünen notu yerinde
+  // tuttuğu için öne alınan notlar ekranın üstünde, görünmeyen yerde kalıyordu; yeni sıralama gelince başa dönülür.
   val gridState = rememberLazyStaggeredGridState()
-  val filterKey = selectedFilterType to selectedCategoryId
+  val filterKey = Triple(selectedFilterType, selectedCategoryId, sortOrder)
   var notesFilterKey by remember { mutableStateOf(filterKey) }
   LaunchedEffect(notes) {
     if (notesFilterKey != filterKey) {

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NotDefterim Gizlilik Politikası / Privacy Policy</title>
+<style>
+  :root { --bg: #fbfbfe; --text: #1d1b20; --muted: #5f5b66; --line: #e3e1ea; --accent: #3f51b5; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141218; --text: #e6e1e9; --muted: #aaa4b3; --line: #322f38; --accent: #9fa8ff; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 28px 0 8px; }
+  p, li { color: var(--text); }
+  .muted { color: var(--muted); }
+  nav { margin: 8px 0 24px; }
+  a { color: var(--accent); }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 48px 0; }
+  code { font-size: .9em; }
+</style>
+</head>
+<body>
+<main>
+
+<section lang="tr" id="tr">
+  <h1>NotDefterim Gizlilik Politikası</h1>
+  <p class="muted">Yürürlük tarihi: 24 Ekim 2026</p>
+  <nav><a href="#en">English version below</a></nav>
+
+  <p>NotDefterim, Akozba tarafından geliştirilen bir not ve parola uygulamasıdır. Bu politika, uygulamanın hangi verileri nasıl işlediğini açıklar.</p>
+  <p><strong>Kısaca:</strong> Notlarınız ve parolalarınız yalnızca cihazınızda, şifreli olarak saklanır. Geliştiricinin bir sunucusu yoktur; verileriniz geliştiriciye gönderilmez. Uygulamada reklam, analiz ya da izleme aracı yoktur ve verileriniz satılmaz.</p>
+
+  <h2>1. Cihazınızda saklanan veriler</h2>
+  <ul>
+    <li>Notlar, yapılacaklar listeleri, kategoriler, hatırlatıcı zamanları</li>
+    <li>Parola kayıtları (platform adı, kullanıcı adı, parola)</li>
+    <li>Uygulama ayarları (tema, dil, sıralama, otomatik kilit süresi, uygulama içi PIN'in özeti)</li>
+  </ul>
+  <p>Notlar ve parolalar, rastgele üretilen 256 bitlik bir anahtarla AES-256 (SQLCipher) kullanılarak şifrelenir. Anahtar, Android Keystore ile korunan depolamada tutulur. Uygulama içi PIN hiçbir zaman düz metin olarak saklanmaz; yalnızca tuzlanmış bir özeti (PBKDF2) tutulur.</p>
+
+  <h2>2. Kimlik doğrulama</h2>
+  <p>Uygulamayı açmak için cihazınızın parmak izi, yüz tanıma ya da ekran kilidi kullanılır. Bu doğrulamayı Android yapar; uygulama biyometrik verilerinize erişemez ve onları saklamaz.</p>
+
+  <h2>3. Google hesabı ve Google Drive yedeği (isteğe bağlı)</h2>
+  <p>Drive yedeğini kullanmak isterseniz “Google ile giriş” yaparsınız. Bu durumda uygulama, Google hesabınızın adını ve e-posta adresini yalnızca ayarlar ekranında göstermek için kullanır ve Google Drive'da yalnızca kendi uygulama veri klasörüne (<code>drive.appdata</code>) erişim ister; Drive'ınızdaki diğer dosyaları göremez.</p>
+  <p>Yedek, şifreli veritabanınızı içerir ve Google hesabınızın gizli uygulama veri klasörüne yüklenir. Bu klasöre yalnızca NotDefterim erişebilir; geliştirici yedeklerinize erişemez. Yedeğin güvenliği Google hesabınızın güvenliğine bağlıdır. Google ile giriş yaptıysanız uygulama, telefon şarjdayken ve Wi-Fi'ye bağlıyken günde bir kez otomatik yedek alır. Uygulama en fazla 5 yedek tutar, eskileri siler. Google giriş ve Drive işlemleri <a href="https://policies.google.com/privacy">Google Gizlilik Politikası</a>'na tabidir.</p>
+
+  <h2>4. Yerel yedek dosyası</h2>
+  <p>Yerel yedek, sizin belirlediğiniz bir şifreyle AES-256 (GCM) kullanılarak şifrelenir ve sizin seçtiğiniz konuma kaydedilir. Şifreyi yalnızca siz bilirsiniz; unutursanız yedek açılamaz.</p>
+
+  <h2>5. Sizin başlattığınız paylaşımlar</h2>
+  <p>Bir notu paylaşırsanız ya da bir parolayı panoya kopyalarsanız, veri yalnızca sizin seçtiğiniz uygulamaya ya da panoya iletilir.</p>
+
+  <h2>6. İzinler</h2>
+  <table>
+    <tr><th>İzin</th><th>Neden</th></tr>
+    <tr><td>İnternet, ağ durumu</td><td>Google ile giriş ve Drive yedeği</td></tr>
+    <tr><td>Bildirim gönderme</td><td>Not hatırlatıcıları</td></tr>
+    <tr><td>Alarmlar ve hatırlatıcılar</td><td>Hatırlatıcıların tam zamanında gelmesi (isteğe bağlı)</td></tr>
+    <tr><td>Diğer uygulamaların üzerinde gösterme</td><td>Yüzen not ve parola penceresi (isteğe bağlı)</td></tr>
+    <tr><td>Biyometri</td><td>Uygulama kilidi</td></tr>
+    <tr><td>Açılışta çalışma</td><td>Hatırlatıcıları telefon yeniden başladıktan sonra sürdürme</td></tr>
+  </table>
+
+  <h2>7. Verilerin silinmesi</h2>
+  <ul>
+    <li>Notlar ve parolalar: uygulamada silebilir ya da uygulamayı kaldırabilirsiniz; uygulama kaldırılınca cihazdaki tüm veriler silinir.</li>
+    <li>Drive yedekleri: Google Drive → Ayarlar → Uygulamaları yönet → NotDefterim → “Gizli uygulama verilerini sil”.</li>
+    <li>Google erişimi: uygulamada çıkış yapabilir ya da <a href="https://myaccount.google.com/connections">Google hesabınızın üçüncü taraf erişim sayfasından</a> erişimi kaldırabilirsiniz.</li>
+  </ul>
+
+  <h2>8. Çocuklar</h2>
+  <p>Uygulama 13 yaşın altındaki çocuklara yönelik değildir.</p>
+
+  <h2>9. Değişiklikler</h2>
+  <p>Bu politika değişirse güncel metin bu adreste yayınlanır ve yürürlük tarihi güncellenir.</p>
+
+  <h2>10. İletişim</h2>
+  <p>Sorularınız için: <a href="mailto:meteaydo@gmail.com">meteaydo@gmail.com</a></p>
+</section>
+
+<hr>
+
+<section lang="en" id="en">
+  <h1>NotDefterim Privacy Policy</h1>
+  <p class="muted">Effective date: October 24, 2026</p>
+
+  <p>NotDefterim is a notes and password app developed by Akozba. This policy explains what data the app handles and how.</p>
+  <p><strong>In short:</strong> Your notes and passwords are stored only on your device, encrypted. The developer runs no server, and your data is never sent to the developer. The app contains no ads, analytics or tracking tools, and your data is not sold.</p>
+
+  <h2>1. Data stored on your device</h2>
+  <ul>
+    <li>Notes, checklists, categories and reminder times</li>
+    <li>Password entries (platform name, username, password)</li>
+    <li>App settings (theme, language, sort order, auto-lock timeout, a hash of the in-app PIN)</li>
+  </ul>
+  <p>Notes and passwords are encrypted with AES-256 (SQLCipher) using a randomly generated 256-bit key. The key is kept in storage protected by the Android Keystore. The in-app PIN is never stored in plain text; only a salted hash (PBKDF2) is kept.</p>
+
+  <h2>2. Authentication</h2>
+  <p>The app is unlocked with your device's fingerprint, face unlock or screen lock. Android performs this check; the app cannot access or store your biometric data.</p>
+
+  <h2>3. Google account and Google Drive backup (optional)</h2>
+  <p>If you choose to use Drive backup, you sign in with Google. The app then uses your Google account name and email address only to show them on the settings screen, and requests access only to its own app data folder in Google Drive (<code>drive.appdata</code>); it cannot see your other Drive files.</p>
+  <p>The backup contains your encrypted database and is uploaded to the hidden app data folder of your Google account. Only NotDefterim can access this folder; the developer cannot access your backups. The security of the backup depends on the security of your Google account. If you are signed in with Google, the app also backs up automatically once a day while your phone is charging and connected to Wi-Fi. The app keeps at most 5 backups and deletes older ones. Google sign-in and Drive are subject to the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.</p>
+
+  <h2>4. Local backup file</h2>
+  <p>A local backup is encrypted with AES-256 (GCM) using a password you choose and saved to a location you pick. Only you know the password; if you forget it, the backup cannot be opened.</p>
+
+  <h2>5. Sharing you start</h2>
+  <p>If you share a note or copy a password to the clipboard, the data goes only to the app you choose or to the clipboard.</p>
+
+  <h2>6. Permissions</h2>
+  <table>
+    <tr><th>Permission</th><th>Why</th></tr>
+    <tr><td>Internet, network state</td><td>Google sign-in and Drive backup</td></tr>
+    <tr><td>Notifications</td><td>Note reminders</td></tr>
+    <tr><td>Alarms &amp; reminders</td><td>Delivering reminders exactly on time (optional)</td></tr>
+    <tr><td>Display over other apps</td><td>Floating note and password window (optional)</td></tr>
+    <tr><td>Biometrics</td><td>App lock</td></tr>
+    <tr><td>Run at startup</td><td>Keeping reminders after the phone restarts</td></tr>
+  </table>
+
+  <h2>7. Deleting your data</h2>
+  <ul>
+    <li>Notes and passwords: delete them in the app or uninstall it; uninstalling removes all data from the device.</li>
+    <li>Drive backups: Google Drive → Settings → Manage apps → NotDefterim → “Delete hidden app data”.</li>
+    <li>Google access: sign out in the app, or remove access on your <a href="https://myaccount.google.com/connections">Google Account third-party connections page</a>.</li>
+  </ul>
+
+  <h2>8. Children</h2>
+  <p>The app is not directed at children under 13.</p>
+
+  <h2>9. Changes</h2>
+  <p>If this policy changes, the updated text is published at this address and the effective date is updated.</p>
+
+  <h2>10. Contact</h2>
+  <p>Questions: <a href="mailto:meteaydo@gmail.com">meteaydo@gmail.com</a></p>
+</section>
+
+</main>
+</body>
+</html>

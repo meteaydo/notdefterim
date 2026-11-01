@@ -325,4 +325,7 @@
     <string name="sort_most_used">Most used</string>
     <string name="sort_last_changed">Last changed (oldest first)</string>
     <string name="sort_name_az">Name (A–Z)</string>
+    <string name="share_dialog_title">Share list</string>
+    <string name="share_checked_items">Checked items (%d)</string>
+    <string name="share_unchecked_items">Unchecked items (%d)</string>
 </resources>

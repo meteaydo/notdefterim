@@ -80,6 +80,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SnackbarHost
@@ -137,6 +138,7 @@ import com.notdefterim.app.ui.components.reminderTimeText
 import com.notdefterim.app.ui.components.repeatText
 import com.notdefterim.app.ui.components.SetupAppPinDialog
 import androidx.compose.ui.text.style.TextAlign
+import com.notdefterim.app.util.buildShareText
 import com.notdefterim.app.util.searchMatchRanges
 
 /**
@@ -181,6 +183,7 @@ fun NoteDetailScreen(
   val focusManager = LocalFocusManager.current
 
   var showDeleteDialog by remember { mutableStateOf(false) }
+  var showShareDialog by remember { mutableStateOf(false) }
   var showOverlayPermissionDialog by remember { mutableStateOf(false) }
 
   val scrollState = rememberScrollState()
@@ -269,6 +272,15 @@ fun NoteDetailScreen(
   val snackbarHostState = remember { SnackbarHostState() }
 
   val context = LocalContext.current
+
+  val shareText = { text: String ->
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+      type = "text/plain"
+      putExtra(Intent.EXTRA_TITLE, title)
+      putExtra(Intent.EXTRA_TEXT, text)
+    }
+    context.startActivity(Intent.createChooser(sendIntent, null))
+  }
 
   // Tek seferlik olayları dinle ve ilk açılışta klavyeyi gizle
   LaunchedEffect(Unit) {
@@ -440,15 +452,14 @@ fun NoteDetailScreen(
             )
           }
 
-          // Paylaş
+          // Paylaş. Madde imli notta önce hangi maddelerin gideceği sorulur;
+          // içerik content'te değil checklistItems'ta durduğu için eskiden yalnızca başlık gidiyordu.
           IconButton(onClick = {
-            val sendIntent = Intent(Intent.ACTION_SEND).apply {
-              type = "text/plain"
-              putExtra(Intent.EXTRA_TITLE, title)
-              val textToShare = if (title.isNotBlank()) "$title\n\n$content" else content
-              putExtra(Intent.EXTRA_TEXT, textToShare)
+            if (isChecklist) {
+              showShareDialog = true
+            } else {
+              shareText(buildShareText(title, content, isChecklist = false, items = emptyList()))
             }
-            context.startActivity(Intent.createChooser(sendIntent, null))
           }) {
             Icon(
               imageVector = Icons.Rounded.Share,
@@ -865,6 +876,52 @@ fun NoteDetailScreen(
       onDismiss = { showAddCategoryDialog = false },
       onAddCategory = { name, hex ->
         viewModel.addNewCategory(name, hex)
+      }
+    )
+  }
+
+  if (showShareDialog) {
+    var includeChecked by remember { mutableStateOf(true) }
+    var includeUnchecked by remember { mutableStateOf(true) }
+    val checkedCount = checklistItems.count { it.hasCheckbox && it.isChecked && it.text.isNotBlank() }
+    val uncheckedCount = checklistItems.count { it.hasCheckbox && !it.isChecked && it.text.isNotBlank() }
+    AlertDialog(
+      onDismissRequest = { showShareDialog = false },
+      title = { Text(stringResource(R.string.share_dialog_title)) },
+      text = {
+        Column {
+          listOf(
+            Triple(R.string.share_checked_items, checkedCount, includeChecked) to { v: Boolean -> includeChecked = v },
+            Triple(R.string.share_unchecked_items, uncheckedCount, includeUnchecked) to { v: Boolean -> includeUnchecked = v }
+          ).forEach { (option, onChange) ->
+            val (labelRes, count, checked) = option
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onChange(!checked) }
+            ) {
+              Checkbox(checked = checked, onCheckedChange = onChange)
+              Text(stringResource(labelRes, count))
+            }
+          }
+        }
+      },
+      confirmButton = {
+        TextButton(
+          enabled = includeChecked || includeUnchecked,
+          onClick = {
+            showShareDialog = false
+            shareText(buildShareText(title, content, isChecklist = true, items = checklistItems, includeChecked, includeUnchecked))
+          }
+        ) {
+          Text(stringResource(R.string.share))
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showShareDialog = false }) {
+          Text(stringResource(R.string.cancel))
+        }
       }
     )
   }

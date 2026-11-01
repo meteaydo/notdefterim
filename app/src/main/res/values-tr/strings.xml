@@ -327,4 +327,7 @@
     <string name="sort_most_used">En çok kullanılan</string>
     <string name="sort_last_changed">Son değiştirme (eskiden yeniye)</string>
     <string name="sort_name_az">Ad (A–Z)</string>
+    <string name="share_dialog_title">Listeyi paylaş</string>
+    <string name="share_checked_items">İşaretli maddeler (%d)</string>
+    <string name="share_unchecked_items">İşaretsiz maddeler (%d)</string>
 </resources>

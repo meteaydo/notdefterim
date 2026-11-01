@@ -105,6 +105,7 @@ class NoteDetailViewModel @Inject constructor(
   // Arka plan kaydı ile geri tuşu kaydı aynı anda çalışıp yeni notu iki kez eklemesin
   private val saveMutex = Mutex()
   private var savedInBackground = false
+  private var isDeleted = false
 
   init {
     if (noteId > 0L) {
@@ -274,6 +275,9 @@ class NoteDetailViewModel @Inject constructor(
     saveMutex.withLock { persistNoteLocked(deleteIfEmpty) }
 
   private suspend fun persistNoteLocked(deleteIfEmpty: Boolean): SaveResult {
+    // Silinen not, ekrandan çıkarken yapılan arka plan kaydıyla yeniden oluşmasın
+    // (hiç kaydedilmemiş yeni not silinince eskiden kaydediliyordu)
+    if (isDeleted) return SaveResult.UNCHANGED
     // Düzenlenen not henüz yüklenmediyse alanlar boştur; kaydetmek notu siler ya da kopyalardı
     if (noteId > 0L && currentNote == null) return SaveResult.UNCHANGED
 
@@ -363,11 +367,15 @@ class NoteDetailViewModel @Inject constructor(
 
   fun deleteNote() {
     viewModelScope.launch {
-      // Yeni not arka planda kaydedilmiş olabilir; onun id'si currentNote'ta
-      val savedId = currentNote?.id ?: noteId
-      if (savedId > 0L) {
-        reminderManager.cancelReminder(savedId)
-        deleteNoteUseCase(savedId)
+      // Kayıtla aynı kilit: o sırada süren bir arka plan kaydı yeni notu eklemeyi bitirsin, sonra silinsin
+      saveMutex.withLock {
+        isDeleted = true
+        // Yeni not arka planda kaydedilmiş olabilir; onun id'si currentNote'ta
+        val savedId = currentNote?.id ?: noteId
+        if (savedId > 0L) {
+          reminderManager.cancelReminder(savedId)
+          deleteNoteUseCase(savedId)
+        }
       }
       _events.emit(NoteDetailEvent.NavigateBack(showSavedMessage = false))
     }

@@ -427,6 +427,7 @@ fun PasswordListScreen(
                     }
                   },
                   onCopy = { field -> viewModel.onPasswordCopied(password, field) },
+                  onReveal = { viewModel.onPasswordRevealed(password) },
                   onEdit = { passwordToEdit = password },
                   onDelete = { passwordToDelete = password },
                   authViewModel = authViewModel
@@ -556,6 +557,8 @@ fun PasswordCard(
   isAnyPasswordUnlocked: Boolean,
   onUnlockedStateChange: (Boolean) -> Unit,
   onCopy: (CopiedField) -> Unit,
+  /** Şifre göz simgesiyle açıldı (kopyalarken açılması sayılmaz, kopyalama zaten sayılıyor) */
+  onReveal: () -> Unit,
   onEdit: () -> Unit,
   onDelete: () -> Unit,
   authViewModel: AuthViewModel
@@ -809,6 +812,7 @@ fun PasswordCard(
                         if (isAnyPasswordUnlocked) {
                             passwordVisible = true
                             onUnlockedStateChange(true)
+                            onReveal()
                         } else {
                             val activity = context as? androidx.fragment.app.FragmentActivity
                             if (activity != null) {
@@ -817,9 +821,10 @@ fun PasswordCard(
                                     title = context.getString(R.string.app_name),
                                     subtitle = context.getString(R.string.pin_required_view_password),
                                     targetScope = 2,
-                                    onSuccess = { 
+                                    onSuccess = {
                                         passwordVisible = true
                                         onUnlockedStateChange(true)
+                                        onReveal()
                                     },
                                     onError = {}
                                 )

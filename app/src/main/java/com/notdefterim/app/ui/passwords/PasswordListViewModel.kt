@@ -163,6 +163,11 @@ class PasswordListViewModel @Inject constructor(
     updatePassword(updatedPassword)
   }
 
+  /** Göz simgesiyle şifreye bakmak da kullanım sayılır ("En sık kullanılan" sırası için) */
+  fun onPasswordRevealed(password: Password) {
+    updatePassword(password.copy(usageCount = password.usageCount + 1))
+  }
+
   fun savePassword(platformName: String, username: String, passwordValue: String, category: Category?) {
     viewModelScope.launch {
       repository.insertPassword(

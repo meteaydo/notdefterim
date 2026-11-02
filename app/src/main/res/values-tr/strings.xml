@@ -221,6 +221,7 @@
     <string name="checklist_item_placeholder">Madde...</string>
     <string name="checklist_add_item">Madde ekle</string>
     <string name="checklist_add_checkbox">Madde imi ekle</string>
+    <string name="checklist_remove_checkbox">Madde imini kaldır</string>
     <string name="remove">Kaldır</string>
     <string name="delete_row_title">Satırı Sil</string>
     <string name="delete_row_desc">Bu satırı silmek istediğinize emin misiniz?</string>

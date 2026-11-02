@@ -1,6 +1,8 @@
 package com.notdefterim.app.ui.notedetail.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -16,6 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import com.notdefterim.app.R
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -116,6 +123,7 @@ private fun ChecklistItemRow(
     val focusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
 
     // İmlecin maddenin başında olup olmadığını bilmek için TextFieldValue tutulur;
     // metin dışarıdan değişirse imleç sona alınır
@@ -193,14 +201,32 @@ private fun ChecklistItemRow(
         verticalAlignment = Alignment.Top
     ) {
         if (item.hasCheckbox) {
-            Checkbox(
-                checked = item.isChecked,
-                onCheckedChange = { isChecked -> onItemChange(item.copy(isChecked = isChecked)) },
-                colors = CheckboxDefaults.colors(
-                    checkedColor = MaterialTheme.colorScheme.primary,
-                    uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            // Dokununca işaretlenir, uzun basınca madde imi kalkar
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .combinedClickable(
+                        role = Role.Checkbox,
+                        onLongClickLabel = stringResource(R.string.checklist_remove_checkbox),
+                        onLongClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onItemChange(item.copy(hasCheckbox = false, isChecked = false))
+                        },
+                        onClick = { onItemChange(item.copy(isChecked = !item.isChecked)) }
+                    )
+                    .semantics { toggleableState = ToggleableState(item.isChecked) }
+            ) {
+                Checkbox(
+                    checked = item.isChecked,
+                    onCheckedChange = null,
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colorScheme.primary,
+                        uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
                 )
-            )
+            }
         } else if (isFocused) {
             // Kutusuz satırda yazarken madde imini geri koyma düğmesi
             IconButton(onClick = { onItemChange(item.copy(hasCheckbox = true)) }) {
@@ -291,8 +317,21 @@ private fun ChecklistItemRow(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text(stringResource(R.string.cancel))
+                Row {
+                    // Madde imli satırda yalnız madde imi de kaldırılabilir
+                    if (item.hasCheckbox) {
+                        TextButton(
+                            onClick = {
+                                showDeleteDialog = false
+                                onItemChange(item.copy(hasCheckbox = false, isChecked = false))
+                            }
+                        ) {
+                            Text(stringResource(R.string.checklist_remove_checkbox))
+                        }
+                    }
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
                 }
             }
         )

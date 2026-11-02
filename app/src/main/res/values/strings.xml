@@ -219,6 +219,7 @@
     <string name="checklist_item_placeholder">Item...</string>
     <string name="checklist_add_item">Add item</string>
     <string name="checklist_add_checkbox">Add checkbox</string>
+    <string name="checklist_remove_checkbox">Remove checkbox</string>
     <string name="remove">Remove</string>
     <string name="delete_row_title">Delete Row</string>
     <string name="delete_row_desc">Are you sure you want to delete this row?</string>

@@ -32,7 +32,7 @@ class ComponentScreenshotTest : ScreenshotTest() {
   fun yapilacaklarListesi() = snapshotComponent {
     ChecklistEditor(
       items = SampleData.shoppingItems + ChecklistItem(id = "c5", text = "Not: indirimli olanları al", hasCheckbox = false),
-      onItemChange = {}, onAddItem = {}, onRemoveItem = {},
+      onItemChange = {}, onAddItem = { "" }, onRemoveItem = {},
       modifier = Modifier.width(379.dp)
     )
   }
@@ -76,7 +76,7 @@ class ComponentScreenshotTest : ScreenshotTest() {
     ChecklistEditor(
       items = SampleData.shoppingItems,
       searchQuery = "ekm",
-      onItemChange = {}, onAddItem = {}, onRemoveItem = {},
+      onItemChange = {}, onAddItem = { "" }, onRemoveItem = {},
       modifier = Modifier.width(379.dp)
     )
   }

@@ -219,6 +219,7 @@
     <string name="overlay_permission_note_desc">Yüzen not pencerelerini kullanabilmek için bu izni vermeniz gerekmektedir. İzin sayesinde notlarınızı diğer uygulamaların üzerindeyken de görebilirsiniz.</string>
     <string name="go_to_settings">Ayarlara Git</string>
     <string name="checklist_item_placeholder">Madde...</string>
+    <string name="checklist_add_item">Madde ekle</string>
     <string name="remove">Kaldır</string>
     <string name="delete_row_title">Satırı Sil</string>
     <string name="delete_row_desc">Bu satırı silmek istediğinize emin misiniz?</string>

@@ -216,8 +216,13 @@ class NoteDetailViewModel @Inject constructor(
       }
   }
 
-  fun addChecklistItem(text: String = "") {
-      _checklistItems.value = _checklistItems.value + ChecklistItem(text = text)
+  /** Boş madde ekler: [afterId] verilirse o maddenin hemen altına, yoksa sona. Yeni maddenin id'sini döner. */
+  fun addChecklistItem(afterId: String? = null): String {
+      val newItem = ChecklistItem(text = "")
+      val items = _checklistItems.value
+      val index = items.indexOfFirst { it.id == afterId }
+      _checklistItems.value = if (index < 0) items + newItem else items.toMutableList().apply { add(index + 1, newItem) }
+      return newItem.id
   }
 
   fun removeChecklistItem(id: String) {

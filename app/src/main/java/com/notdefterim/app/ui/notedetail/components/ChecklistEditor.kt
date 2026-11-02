@@ -1,5 +1,6 @@
 package com.notdefterim.app.ui.notedetail.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -11,7 +12,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import com.notdefterim.app.R
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -41,19 +44,50 @@ fun ChecklistEditor(
     items: List<ChecklistItem>,
     searchQuery: String = "",
     onItemChange: (ChecklistItem) -> Unit,
-    onAddItem: (String) -> Unit,
+    /** Boş madde ekler (afterId'nin altına, null ise sona) ve yeni maddenin id'sini döner */
+    onAddItem: (afterId: String?) -> String,
     onRemoveItem: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Yeni eklenen madde, listenin ortasında da olsa odak alsın
+    var focusItemId by remember { mutableStateOf<String?>(null) }
+
     Column(modifier = modifier.fillMaxWidth()) {
         items.forEachIndexed { index, item ->
-            ChecklistItemRow(
-                item = item,
-                searchQuery = searchQuery,
-                onItemChange = onItemChange,
-                onRemove = { onRemoveItem(item.id) },
-                onNext = { onAddItem("") },
-                isLastItem = index == items.size - 1
+            // Araya madde girince odak ve satır durumu doğru maddede kalsın
+            key(item.id) {
+                ChecklistItemRow(
+                    item = item,
+                    searchQuery = searchQuery,
+                    onItemChange = onItemChange,
+                    onRemove = { onRemoveItem(item.id) },
+                    onNext = { focusItemId = onAddItem(item.id) },
+                    isLastItem = index == items.size - 1,
+                    requestFocus = item.id == focusItemId,
+                    onFocusRequested = { focusItemId = null }
+                )
+            }
+        }
+
+        // Onay kutusu sütunuyla hizalı "+ Madde ekle" satırı
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.small)
+                .clickable(role = Role.Button) { focusItemId = onAddItem(null) },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Rounded.Add,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            Text(
+                text = stringResource(R.string.checklist_add_item),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -67,7 +101,9 @@ private fun ChecklistItemRow(
     onItemChange: (ChecklistItem) -> Unit,
     onRemove: () -> Unit,
     onNext: () -> Unit,
-    isLastItem: Boolean
+    isLastItem: Boolean,
+    requestFocus: Boolean,
+    onFocusRequested: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -78,6 +114,15 @@ private fun ChecklistItemRow(
             try {
                 focusRequester.requestFocus()
             } catch (e: Exception) { }
+        }
+    }
+
+    LaunchedEffect(requestFocus) {
+        if (requestFocus) {
+            try {
+                focusRequester.requestFocus()
+            } catch (e: Exception) { }
+            onFocusRequested()
         }
     }
     val density = LocalDensity.current

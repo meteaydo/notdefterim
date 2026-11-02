@@ -766,7 +766,7 @@ fun NoteDetailScreen(
                 items = checklistItems,
                 searchQuery = searchQuery,
                 onItemChange = { item -> viewModel.updateChecklistItem(item) },
-                onAddItem = { text -> viewModel.addChecklistItem(text) },
+                onAddItem = { afterId -> viewModel.addChecklistItem(afterId) },
                 onRemoveItem = { id -> viewModel.removeChecklistItem(id) },
                 modifier = Modifier
                     .fillMaxWidth()

@@ -217,6 +217,7 @@
     <string name="overlay_permission_note_desc">To use floating note windows, you need to grant this permission. It lets you see your notes on top of other apps.</string>
     <string name="go_to_settings">Go to Settings</string>
     <string name="checklist_item_placeholder">Item...</string>
+    <string name="checklist_add_item">Add item</string>
     <string name="remove">Remove</string>
     <string name="delete_row_title">Delete Row</string>
     <string name="delete_row_desc">Are you sure you want to delete this row?</string>

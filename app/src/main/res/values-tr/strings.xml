@@ -104,8 +104,6 @@
     <string name="delete_note_desc">Bu notu silmek istediğinize emin misiniz?</string>
     <string name="no_notes_yet">Henüz not yok</string>
     <string name="title_placeholder">Başlık</string>
-    <string name="more_notes_above">Yukarıda daha fazla not var</string>
-    <string name="more_notes_below">Aşağıda daha fazla not var</string>
     <string name="settings">Ayarlar</string>
     <string name="write_your_note">Notunuzu yazın...</string>
     <string name="reminder_title">Not Hatırlatması</string>
@@ -337,4 +335,6 @@
     <string name="action_lock">Kilit</string>
     <string name="action_checklist">Liste</string>
     <string name="action_floating">Pencere</string>
+    <string name="scroll_to_top">Sayfa başına git</string>
+    <string name="scroll_to_bottom">Sayfa sonuna git</string>
 </resources>

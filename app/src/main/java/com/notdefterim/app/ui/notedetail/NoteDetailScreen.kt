@@ -103,13 +103,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.SpanStyle
@@ -794,57 +795,56 @@ fun NoteDetailScreen(
 
         // Kullanıcının sayfanın en altına rahatça kaydırabilmesi ve 
         // son satırı klavyenin üstünde rahatça görebilmesi için boşluk
-        Spacer(modifier = Modifier.height(300.dp))
+        Spacer(modifier = Modifier.height(BottomScrollSpace))
       } // Column bitişi
+
+      // Üst ve alt oklar: içerik o yönde devam ediyorsa görünür, basınca sayfa başına/sonuna gider.
+      // En alttaki boşluk (BottomScrollSpace) "aşağıda içerik var" sayılmaz.
+      val bottomSpacePx = with(LocalDensity.current) { BottomScrollSpace.toPx() }
+      val hasMoreBelow by remember(bottomSpacePx) {
+        derivedStateOf { scrollState.maxValue - scrollState.value > bottomSpacePx }
+      }
 
       // Üst İkon
       val topAlpha by animateFloatAsState(if (scrollState.canScrollBackward) 1f else 0f, label = "topAlpha")
       if (topAlpha > 0f) {
-        Box(
+        SmallFloatingActionButton(
+          onClick = { coroutineScope.launch { scrollState.animateScrollTo(0) } },
+          shape = CircleShape,
+          containerColor = MaterialTheme.colorScheme.primaryContainer,
+          contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
           modifier = Modifier
             .align(Alignment.TopCenter)
             .padding(top = 8.dp)
             .alpha(topAlpha)
-            .background(
-              brush = Brush.radialGradient(
-                colors = listOf(
-                  MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                  androidx.compose.ui.graphics.Color.Transparent
-                )
-              )
-            )
-            .padding(8.dp)
         ) {
           Icon(
             imageVector = Icons.Rounded.KeyboardArrowUp,
-            contentDescription = stringResource(R.string.more_notes_above),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            contentDescription = stringResource(R.string.scroll_to_top)
           )
         }
       }
 
-      // Alt İkon
-      val bottomAlpha by animateFloatAsState(if (scrollState.canScrollForward) 1f else 0f, label = "bottomAlpha")
+      // Alt İkon: son satır ekranın altına gelecek kadar kaydırır
+      val bottomAlpha by animateFloatAsState(if (hasMoreBelow) 1f else 0f, label = "bottomAlpha")
       if (bottomAlpha > 0f) {
-        Box(
+        SmallFloatingActionButton(
+          onClick = {
+            coroutineScope.launch {
+              scrollState.animateScrollTo((scrollState.maxValue - bottomSpacePx.toInt()).coerceAtLeast(0))
+            }
+          },
+          shape = CircleShape,
+          containerColor = MaterialTheme.colorScheme.primaryContainer,
+          contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
           modifier = Modifier
             .align(Alignment.BottomCenter)
             .padding(bottom = 8.dp)
             .alpha(bottomAlpha)
-            .background(
-              brush = Brush.radialGradient(
-                colors = listOf(
-                  MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                  androidx.compose.ui.graphics.Color.Transparent
-                )
-              )
-            )
-            .padding(8.dp)
         ) {
           Icon(
             imageVector = Icons.Rounded.KeyboardArrowDown,
-            contentDescription = stringResource(R.string.more_notes_below),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            contentDescription = stringResource(R.string.scroll_to_bottom)
           )
         }
       }
@@ -1083,3 +1083,6 @@ private fun TopBarAction(
     )
   }
 }
+
+/** Not içeriğinin altında bırakılan boşluk: son satır klavyenin üstüne kaydırılabilsin */
+private val BottomScrollSpace = 300.dp

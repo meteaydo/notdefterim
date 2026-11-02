@@ -9,7 +9,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.CheckBoxOutlineBlank
+import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -150,6 +150,15 @@ private fun ChecklistItemRow(
 
     // Klavye açılıp görünür alan daralınca odaklı madde klavyenin altında kalmasın
     var isFocused by remember { mutableStateOf(false) }
+
+    // Madde imi kalkınca geri koyma düğmesi hemen çıkmasın: kutu kaybolup metin sola kayınca
+    // kaldırıldığı belli olur. Düğme satırdan çıkıp yeniden girince görünür.
+    var restoreHidden by remember { mutableStateOf(false) }
+    fun removeCheckbox() {
+        restoreHidden = isFocused
+        onItemChange(item.copy(hasCheckbox = false, isChecked = false))
+    }
+
     val imeBottom = WindowInsets.ime.getBottom(density)
     LaunchedEffect(isFocused, imeBottom) {
         if (isFocused && imeBottom > 0) {
@@ -212,7 +221,7 @@ private fun ChecklistItemRow(
                         onLongClickLabel = stringResource(R.string.checklist_remove_checkbox),
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onItemChange(item.copy(hasCheckbox = false, isChecked = false))
+                            removeCheckbox()
                         },
                         onClick = { onItemChange(item.copy(isChecked = !item.isChecked)) }
                     )
@@ -227,13 +236,15 @@ private fun ChecklistItemRow(
                     )
                 )
             }
-        } else if (isFocused) {
-            // Kutusuz satırda yazarken madde imini geri koyma düğmesi
+        } else if (isFocused && !restoreHidden) {
+            // Kutusuz satırda yazarken madde imini geri koyma düğmesi;
+            // onay kutusuyla karışmasın diye artılı kare ve daha küçük
             IconButton(onClick = { onItemChange(item.copy(hasCheckbox = true)) }) {
                 Icon(
-                    Icons.Rounded.CheckBoxOutlineBlank,
+                    Icons.Outlined.AddBox,
                     contentDescription = stringResource(R.string.checklist_add_checkbox),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
+                    modifier = Modifier.size(20.dp)
                 )
             }
         } else {
@@ -257,12 +268,15 @@ private fun ChecklistItemRow(
             modifier = Modifier
                 .weight(1f)
                 .focusRequester(focusRequester)
-                .onFocusChanged { isFocused = it.isFocused }
+                .onFocusChanged {
+                    isFocused = it.isFocused
+                    if (!it.isFocused) restoreHidden = false
+                }
                 // İmleç maddenin başındayken silme tuşu madde imini kaldırır (metne dokunmaz)
                 .onPreviewKeyEvent { event ->
                     val atStart = value.selection.collapsed && value.selection.start == 0
                     if (item.hasCheckbox && atStart && event.type == KeyEventType.KeyDown && event.key == Key.Backspace) {
-                        onItemChange(item.copy(hasCheckbox = false, isChecked = false))
+                        removeCheckbox()
                         true
                     } else {
                         false
@@ -323,7 +337,7 @@ private fun ChecklistItemRow(
                         TextButton(
                             onClick = {
                                 showDeleteDialog = false
-                                onItemChange(item.copy(hasCheckbox = false, isChecked = false))
+                                removeCheckbox()
                             }
                         ) {
                             Text(stringResource(R.string.checklist_remove_checkbox))

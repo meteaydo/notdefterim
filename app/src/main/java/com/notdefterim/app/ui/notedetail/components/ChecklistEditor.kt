@@ -7,6 +7,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.CheckBoxOutlineBlank
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -200,6 +201,15 @@ private fun ChecklistItemRow(
                     uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             )
+        } else if (isFocused) {
+            // Kutusuz satırda yazarken madde imini geri koyma düğmesi
+            IconButton(onClick = { onItemChange(item.copy(hasCheckbox = true)) }) {
+                Icon(
+                    Icons.Rounded.CheckBoxOutlineBlank,
+                    contentDescription = stringResource(R.string.checklist_add_checkbox),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+                )
+            }
         } else {
             Spacer(modifier = Modifier.width(8.dp))
         }

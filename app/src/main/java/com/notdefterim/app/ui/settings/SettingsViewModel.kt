@@ -48,8 +48,16 @@ class SettingsViewModel @Inject constructor(
   private val _isBackupLoading = MutableStateFlow(false)
   val isBackupLoading: StateFlow<Boolean> = _isBackupLoading.asStateFlow()
 
+  // Cihaza yedek ayrıca izlenir: Drive yedeği sürerken yerel yedek düğmesinin çarkı dönmesin
+  private val _isExportLoading = MutableStateFlow(false)
+  val isExportLoading: StateFlow<Boolean> = _isExportLoading.asStateFlow()
+
   private val _isRestoreLoading = MutableStateFlow(false)
   val isRestoreLoading: StateFlow<Boolean> = _isRestoreLoading.asStateFlow()
+
+  // Cihazdan geri yükleme ayrıca izlenir: sürerken Drive'ın geri yükle düğmesinin çarkı dönmesin
+  private val _isImportLoading = MutableStateFlow(false)
+  val isImportLoading: StateFlow<Boolean> = _isImportLoading.asStateFlow()
 
   private val _cloudBackups = MutableStateFlow<List<BackupInfo>>(emptyList())
   val cloudBackups: StateFlow<List<BackupInfo>> = _cloudBackups.asStateFlow()
@@ -170,6 +178,7 @@ class SettingsViewModel @Inject constructor(
   fun createBackupFile(password: String, hint: String) {
     viewModelScope.launch {
       _isBackupLoading.value = true
+      _isExportLoading.value = true
       localBackupManager.exportToFile(password, hint).fold(
         onSuccess = { file ->
           _events.emit(SettingsEvent.ShowShareSheet(file))
@@ -178,6 +187,7 @@ class SettingsViewModel @Inject constructor(
           _events.emit(SettingsEvent.ShowMessage(context.getString(R.string.file_creation_failed, error.localizedMessage)))
         }
       )
+      _isExportLoading.value = false
       _isBackupLoading.value = false
     }
   }
@@ -185,6 +195,7 @@ class SettingsViewModel @Inject constructor(
   fun exportToDevice(uri: Uri, password: String, hint: String) {
     viewModelScope.launch {
       _isBackupLoading.value = true
+      _isExportLoading.value = true
       localBackupManager.exportToUri(uri, password, hint).fold(
         onSuccess = {
           _events.emit(SettingsEvent.ShowMessage(context.getString(R.string.saved_to_device_successfully)))
@@ -193,6 +204,7 @@ class SettingsViewModel @Inject constructor(
           _events.emit(SettingsEvent.ShowMessage(context.getString(R.string.save_failed, error.localizedMessage)))
         }
       )
+      _isExportLoading.value = false
       _isBackupLoading.value = false
     }
   }
@@ -213,6 +225,7 @@ class SettingsViewModel @Inject constructor(
   fun importFromDevice(uri: Uri, password: String) {
     viewModelScope.launch {
       _isRestoreLoading.value = true
+      _isImportLoading.value = true
       localBackupManager.importFromUri(uri, password).fold(
         onSuccess = {
           _events.emit(SettingsEvent.ShowMessage(context.getString(R.string.restore_restart_message)))
@@ -221,6 +234,7 @@ class SettingsViewModel @Inject constructor(
           _events.emit(SettingsEvent.ShowMessage(context.getString(R.string.restore_failed, error.localizedMessage)))
         }
       )
+      _isImportLoading.value = false
       _isRestoreLoading.value = false
     }
   }

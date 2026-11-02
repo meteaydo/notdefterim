@@ -97,7 +97,9 @@ fun SettingsScreen(
   val context = LocalContext.current
   val googleAuthState by viewModel.googleAuthState.collectAsStateWithLifecycle()
   val isBackupLoading by viewModel.isBackupLoading.collectAsStateWithLifecycle()
+  val isExportLoading by viewModel.isExportLoading.collectAsStateWithLifecycle()
   val isRestoreLoading by viewModel.isRestoreLoading.collectAsStateWithLifecycle()
+  val isImportLoading by viewModel.isImportLoading.collectAsStateWithLifecycle()
   val lastBackupTime by viewModel.lastBackupTime.collectAsStateWithLifecycle()
   val cloudBackups by viewModel.cloudBackups.collectAsStateWithLifecycle()
   val autoLockTimeout by viewModel.autoLockTimeout.collectAsStateWithLifecycle()
@@ -426,7 +428,7 @@ fun SettingsScreen(
               enabled = googleAuthState is GoogleAuthState.SignedIn && !isBackupLoading,
               modifier = Modifier.weight(1f)
             ) {
-              if (isBackupLoading) {
+              if (isBackupLoading && !isExportLoading) {
                 CircularProgressIndicator(
                   modifier = Modifier.size(16.dp),
                   color = MaterialTheme.colorScheme.onPrimary,
@@ -444,7 +446,7 @@ fun SettingsScreen(
               enabled = googleAuthState is GoogleAuthState.SignedIn && !isRestoreLoading,
               modifier = Modifier.weight(1f)
             ) {
-              if (isRestoreLoading) {
+              if (isRestoreLoading && !isImportLoading) {
                 CircularProgressIndicator(
                   modifier = Modifier.size(16.dp),
                   strokeWidth = 2.dp
@@ -507,7 +509,7 @@ fun SettingsScreen(
               enabled = !isBackupLoading,
               modifier = Modifier.weight(1f)
             ) {
-              if (isBackupLoading) {
+              if (isExportLoading) {
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                 Spacer(modifier = Modifier.size(8.dp))
               } else {

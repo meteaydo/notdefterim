@@ -8,6 +8,7 @@ import com.notdefterim.app.domain.model.NoteColor
 import com.notdefterim.app.domain.model.RepeatInterval
 import com.notdefterim.app.domain.model.Category
 import com.notdefterim.app.domain.model.ChecklistItem
+import com.notdefterim.app.domain.model.linesToChecklist
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import com.notdefterim.app.domain.usecase.category.AddCategoryUseCase
@@ -107,6 +108,9 @@ class NoteDetailViewModel @Inject constructor(
   private var savedInBackground = false
   private var isDeleted = false
 
+  // Liste düzeni kapatılıp yeniden açılınca işaretler kaybolmasın diye son liste hatırlanır
+  private var checklistBeforeText: List<ChecklistItem> = emptyList()
+
   init {
     if (noteId > 0L) {
       loadNote()
@@ -195,15 +199,16 @@ class NoteDetailViewModel @Inject constructor(
     _isChecklist.value = !currentMode
     
     if (!currentMode) {
-        // Text to Checklist
-        val lines = _content.value.lines().filter { it.isNotBlank() }
-        _checklistItems.value = lines.map { ChecklistItem(text = it.trim()) }
+        // Text to Checklist: az önce kapatılan listenin işaretleri geri gelir
+        _checklistItems.value = linesToChecklist(_content.value.lines(), checklistBeforeText)
+        checklistBeforeText = emptyList()
         if (_checklistItems.value.isEmpty()) {
              _checklistItems.value = listOf(ChecklistItem(text = ""))
         }
         _content.value = ""
     } else {
         // Checklist to Text
+        checklistBeforeText = _checklistItems.value
         val text = _checklistItems.value.map { it.text }.filter { it.isNotBlank() }.joinToString("\n")
         _content.value = text
         _checklistItems.value = emptyList()

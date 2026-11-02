@@ -292,7 +292,9 @@ class NoteDetailViewModel @Inject constructor(
         _content.value.trim()
     }
 
-    val isNoteEmpty = _title.value.isBlank() && finalContent.isBlank() && (!_isChecklist.value || _checklistItems.value.isEmpty())
+    // Liste modunda içerik JSON olduğu için hiç boş görünmez; maddelerin metnine bakılır
+    val hasContent = if (_isChecklist.value) _checklistItems.value.any { it.text.isNotBlank() } else finalContent.isNotBlank()
+    val isNoteEmpty = _title.value.isBlank() && !hasContent
 
     if (isNoteEmpty) {
       val savedId = currentNote?.id ?: 0L

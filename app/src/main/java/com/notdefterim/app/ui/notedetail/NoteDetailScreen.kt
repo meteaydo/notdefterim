@@ -1,5 +1,6 @@
 package com.notdefterim.app.ui.notedetail
 
+import com.notdefterim.app.ui.components.QuickSearchField
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -530,25 +531,9 @@ fun NoteDetailScreen(
         }
       } else {
         // ── Sabit Arama Kutusu (Üstte) ──────────────────────────────────────────
-      OutlinedTextField(
+      QuickSearchField(
         value = searchQuery,
         onValueChange = viewModel::onSearchQueryChange,
-        placeholder = { Text(stringResource(R.string.search_anything)) },
-        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-        trailingIcon = {
-          if (searchQuery.isNotEmpty()) {
-            IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-              Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search_desc))
-            }
-          }
-        },
-        shape = CircleShape,
-        colors = TextFieldDefaults.colors(
-          focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-          unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-          focusedIndicatorColor = Color.Transparent,
-          unfocusedIndicatorColor = Color.Transparent
-        ),
         modifier = Modifier
           .fillMaxWidth()
           .alpha(0.7f)

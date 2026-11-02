@@ -1,5 +1,6 @@
 package com.notdefterim.app.ui.passwords
 
+import com.notdefterim.app.ui.components.QuickSearchField
 import android.app.Activity
 import android.content.Intent
 import android.provider.Settings
@@ -232,34 +233,18 @@ fun PasswordListScreen(
       }
 
       // Arama Çubuğu
-      OutlinedTextField(
+      QuickSearchField(
         value = searchQuery,
         onValueChange = viewModel::onSearchQueryChange,
-        placeholder = { Text(stringResource(R.string.search_anything)) },
-        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-        trailingIcon = {
-          Row(verticalAlignment = Alignment.CenterVertically) {
-            if (searchQuery.isNotEmpty()) {
-              IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear_search_desc))
-              }
-            }
-            SortMenuButton(
-              options = PasswordSortOrder.entries,
-              selected = sortOrder,
-              default = PasswordSortOrder.MOST_USED,
-              labelResId = { it.titleResId },
-              onSelect = viewModel::setSortOrder
-            )
-          }
+        trailing = {
+          SortMenuButton(
+            options = PasswordSortOrder.entries,
+            selected = sortOrder,
+            default = PasswordSortOrder.MOST_USED,
+            labelResId = { it.titleResId },
+            onSelect = viewModel::setSortOrder
+          )
         },
-        shape = CircleShape,
-        colors = TextFieldDefaults.colors(
-          focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-          unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-          focusedIndicatorColor = Color.Transparent,
-          unfocusedIndicatorColor = Color.Transparent
-        ),
         modifier = Modifier
           .fillMaxWidth()
           .alpha(0.7f)

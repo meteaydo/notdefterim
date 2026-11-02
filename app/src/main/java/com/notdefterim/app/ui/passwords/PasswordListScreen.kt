@@ -57,6 +57,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
@@ -156,6 +159,12 @@ fun PasswordListScreen(
   Scaffold(
     modifier = modifier.fillMaxSize(),
     containerColor = androidx.compose.ui.graphics.Color.Transparent,
+    // Ana sayfada üst satır durum çubuğu payını zaten bırakıyor; burada ikinci kez eklenmesin
+    contentWindowInsets = if (hideTopBar) {
+      ScaffoldDefaults.contentWindowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+    } else {
+      ScaffoldDefaults.contentWindowInsets
+    },
     topBar = {
       if (!hideTopBar) {
         TopAppBar(

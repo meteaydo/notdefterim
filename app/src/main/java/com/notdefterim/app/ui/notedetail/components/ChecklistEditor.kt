@@ -19,6 +19,13 @@ import com.notdefterim.app.R
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
@@ -109,6 +116,11 @@ private fun ChecklistItemRow(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    // İmlecin maddenin başında olup olmadığını bilmek için TextFieldValue tutulur;
+    // metin dışarıdan değişirse imleç sona alınır
+    var fieldValue by remember { mutableStateOf(TextFieldValue(item.text, TextRange(item.text.length))) }
+    val value = if (fieldValue.text == item.text) fieldValue else TextFieldValue(item.text, TextRange(item.text.length))
+
     LaunchedEffect(item.id) {
         if (item.text.isEmpty() && isLastItem) {
             try {
@@ -193,8 +205,11 @@ private fun ChecklistItemRow(
         }
     
         BasicTextField(
-            value = item.text,
-            onValueChange = { newText -> onItemChange(item.copy(text = newText)) },
+            value = value,
+            onValueChange = { newValue ->
+                fieldValue = newValue
+                if (newValue.text != item.text) onItemChange(item.copy(text = newValue.text))
+            },
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 color = if (item.isChecked && item.hasCheckbox) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onBackground,
                 textDecoration = if (item.isChecked && item.hasCheckbox) TextDecoration.LineThrough else null
@@ -207,6 +222,16 @@ private fun ChecklistItemRow(
                 .weight(1f)
                 .focusRequester(focusRequester)
                 .onFocusChanged { isFocused = it.isFocused }
+                // İmleç maddenin başındayken silme tuşu madde imini kaldırır (metne dokunmaz)
+                .onPreviewKeyEvent { event ->
+                    val atStart = value.selection.collapsed && value.selection.start == 0
+                    if (item.hasCheckbox && atStart && event.type == KeyEventType.KeyDown && event.key == Key.Backspace) {
+                        onItemChange(item.copy(hasCheckbox = false, isChecked = false))
+                        true
+                    } else {
+                        false
+                    }
+                }
                 // Tek satır metin 48 dp yüksekliğindeki onay kutusuyla aynı hizada dursun
                 .padding(end = 8.dp, top = 12.dp, bottom = 12.dp),
             decorationBox = { innerTextField ->
@@ -223,10 +248,9 @@ private fun ChecklistItemRow(
     
         IconButton(
             onClick = {
+                // Boş madde hemen, dolu madde onaydan sonra silinir
                 if (item.text.isBlank()) {
                     onRemove()
-                } else if (item.hasCheckbox) {
-                    onItemChange(item.copy(hasCheckbox = false, isChecked = false))
                 } else {
                     showDeleteDialog = true
                 }

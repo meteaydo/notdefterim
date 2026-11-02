@@ -332,4 +332,8 @@
     <string name="share_dialog_title">Listeyi paylaş</string>
     <string name="share_checked_items">İşaretledikleriniz (%d)</string>
     <string name="share_unchecked_items">İşaretlemedikleriniz (%d)</string>
+    <string name="action_reminder">Hatırlat</string>
+    <string name="action_lock">Kilit</string>
+    <string name="action_checklist">Liste</string>
+    <string name="action_floating">Pencere</string>
 </resources>

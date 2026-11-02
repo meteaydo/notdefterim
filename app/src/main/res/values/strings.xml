@@ -330,4 +330,8 @@
     <string name="share_dialog_title">Share list</string>
     <string name="share_checked_items">Items you checked (%d)</string>
     <string name="share_unchecked_items">Items you didn\'t check (%d)</string>
+    <string name="action_reminder">Remind</string>
+    <string name="action_lock">Lock</string>
+    <string name="action_checklist">List</string>
+    <string name="action_floating">Float</string>
 </resources>

@@ -21,6 +21,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -74,8 +80,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconToggleButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -379,103 +383,82 @@ fun NoteDetailScreen(
           }
         },
         actions = {
+          // Her düğmenin altında kısa bir ad yazar; simgeler tek başına ne yaptığını anlatmıyordu
           // Alarm
-          IconToggleButton(
+          TopBarAction(
+            icon = if (reminderAt != null) Icons.Rounded.NotificationsActive else Icons.Outlined.Notifications,
+            label = stringResource(R.string.action_reminder),
+            description = stringResource(R.string.add_reminder),
             checked = reminderAt != null,
-            onCheckedChange = { openReminder() },
-            colors = IconButtonDefaults.iconToggleButtonColors(
-              checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-              checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-              contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          ) {
-            Icon(
-              imageVector = if (reminderAt != null) Icons.Rounded.NotificationsActive else Icons.Outlined.Notifications,
-              contentDescription = stringResource(R.string.add_reminder)
-            )
-          }
+            onClick = { openReminder() }
+          )
 
           // Kilit
-          IconToggleButton(
+          TopBarAction(
+            icon = if (isLocked) Icons.Rounded.Lock else Icons.Rounded.LockOpen,
+            label = stringResource(R.string.action_lock),
+            description = stringResource(if (isLocked) R.string.unlock else R.string.lock),
             checked = isLocked,
-            onCheckedChange = { isChecked -> 
-              viewModel.onLockToggle() 
-              if (isChecked) {
+            onClick = {
+              viewModel.onLockToggle()
+              if (!isLocked) {
                 authViewModel.lockSession()
               }
-            },
-            colors = IconButtonDefaults.iconToggleButtonColors(
-              checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-              checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-              contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          ) {
-            Icon(
-              imageVector = if (isLocked) Icons.Rounded.Lock else Icons.Rounded.LockOpen,
-              contentDescription = stringResource(if (isLocked) R.string.unlock else R.string.lock)
-            )
-          }
+            }
+          )
 
           // Checklist Toggle
-          IconToggleButton(
+          TopBarAction(
+            icon = Icons.AutoMirrored.Rounded.FormatListBulleted,
+            label = stringResource(R.string.action_checklist),
+            description = stringResource(R.string.checklist_mode),
             checked = isChecklist,
-            onCheckedChange = { viewModel.onToggleChecklistMode() },
-            colors = IconButtonDefaults.iconToggleButtonColors(
-              checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-              checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-              contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          ) {
-            Icon(
-              imageVector = Icons.AutoMirrored.Rounded.FormatListBulleted,
-              contentDescription = stringResource(R.string.checklist_mode)
-            )
-          }
+            onClick = { viewModel.onToggleChecklistMode() }
+          )
 
           // Yüzen Pencerede Aç
-          IconButton(onClick = {
-            if (!Settings.canDrawOverlays(context)) {
-              showOverlayPermissionDialog = true
-            } else {
-              val displayContent = if (isChecklist) {
-                  viewModel.checklistItems.value.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
+          TopBarAction(
+            icon = Icons.AutoMirrored.Rounded.ExitToApp,
+            label = stringResource(R.string.action_floating),
+            description = stringResource(R.string.open_in_floating_window),
+            onClick = {
+              if (!Settings.canDrawOverlays(context)) {
+                showOverlayPermissionDialog = true
               } else {
-                  content
+                val displayContent = if (isChecklist) {
+                    viewModel.checklistItems.value.joinToString("\n") { (if (it.isChecked) "☑ " else "☐ ") + it.text }
+                } else {
+                    content
+                }
+                com.notdefterim.app.service.FloatingNoteManager.show(context, title, displayContent)
               }
-              com.notdefterim.app.service.FloatingNoteManager.show(context, title, displayContent)
             }
-          }) {
-            Icon(
-              imageVector = Icons.AutoMirrored.Rounded.ExitToApp,
-              contentDescription = stringResource(R.string.open_in_floating_window),
-              tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
+          )
 
           // Paylaş. Madde imli notta önce hangi maddelerin gideceği sorulur;
           // içerik content'te değil checklistItems'ta durduğu için eskiden yalnızca başlık gidiyordu.
-          IconButton(onClick = {
-            if (isChecklist) {
-              showShareDialog = true
-            } else {
-              shareText(buildShareText(title, content, isChecklist = false, items = emptyList()))
+          TopBarAction(
+            icon = Icons.Rounded.Share,
+            label = stringResource(R.string.share),
+            description = stringResource(R.string.share),
+            onClick = {
+              if (isChecklist) {
+                showShareDialog = true
+              } else {
+                shareText(buildShareText(title, content, isChecklist = false, items = emptyList()))
+              }
             }
-          }) {
-            Icon(
-              imageVector = Icons.Rounded.Share,
-              contentDescription = stringResource(R.string.share),
-              tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-          }
+          )
 
           // Sil
-          IconButton(onClick = { showDeleteDialog = true }) {
-            Icon(
-              imageVector = Icons.Rounded.Delete,
-              contentDescription = stringResource(R.string.delete),
-              tint = MaterialTheme.colorScheme.error
-            )
-          }
+          TopBarAction(
+            icon = Icons.Rounded.Delete,
+            label = stringResource(R.string.delete),
+            description = stringResource(R.string.delete),
+            tint = MaterialTheme.colorScheme.error,
+            onClick = { showDeleteDialog = true }
+          )
+          Spacer(modifier = Modifier.width(4.dp))
         },
         colors = TopAppBarDefaults.topAppBarColors(
           containerColor = Color.Transparent
@@ -1045,6 +1028,58 @@ fun NoteDetailScreen(
           Text(stringResource(R.string.cancel))
         }
       }
+    )
+  }
+}
+
+/**
+ * Not ekranının üst çubuğundaki düğme: simgenin altında kısa bir ad yazar.
+ * [checked] doluysa simgenin arkası vurgulanır (hatırlatıcı var, not kilitli, liste modu açık).
+ */
+@Composable
+private fun TopBarAction(
+  icon: ImageVector,
+  label: String,
+  description: String,
+  onClick: () -> Unit,
+  checked: Boolean? = null,
+  tint: Color = MaterialTheme.colorScheme.onSurfaceVariant
+) {
+  val isOn = checked == true
+  val clickModifier = if (checked == null) {
+    Modifier.clickable(role = Role.Button, onClick = onClick)
+  } else {
+    Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = { onClick() })
+  }
+  Column(
+    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = Modifier
+      .clip(RoundedCornerShape(12.dp))
+      .then(clickModifier)
+      .widthIn(min = 48.dp)
+      .padding(horizontal = 2.dp, vertical = 2.dp)
+  ) {
+    Box(
+      contentAlignment = Alignment.Center,
+      modifier = Modifier
+        .size(width = 40.dp, height = 28.dp)
+        .background(if (isOn) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, CircleShape)
+    ) {
+      Icon(
+        imageVector = icon,
+        contentDescription = description,
+        tint = if (isOn) MaterialTheme.colorScheme.onPrimaryContainer else tint,
+        modifier = Modifier.size(22.dp)
+      )
+    }
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelSmall,
+      color = tint,
+      maxLines = 1,
+      softWrap = false,
+      // Ekran okuyucu simgenin ayrıntılı açıklamasını okur, kısa ad tekrar okunmasın
+      modifier = Modifier.clearAndSetSemantics {}
     )
   }
 }

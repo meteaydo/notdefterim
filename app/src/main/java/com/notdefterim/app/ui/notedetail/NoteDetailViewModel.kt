@@ -150,10 +150,10 @@ class NoteDetailViewModel @Inject constructor(
             _content.value = note.content
         }
         
-        // Görüntülenme sayısını artır ve arka planda kaydet
+        // Görüntülenme sayısını artır ve arka planda kaydet; açmak düzenleme sayılmaz, updatedAt değişmez
         val updatedNote = note.copy(viewCount = note.viewCount + 1)
         currentNote = updatedNote
-        updateNoteUseCase(updatedNote)
+        updateNoteUseCase(updatedNote, touch = false)
       }
     }
   }

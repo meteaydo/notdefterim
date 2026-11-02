@@ -35,6 +35,17 @@ class SortOrderTest {
   }
 
   @Test
+  fun notlar_enEskiDegistirilenOnce() {
+    assertEquals(listOf("Banka", "Çarşı", "-", "ödev"), listOf(a, b, c, d).sortedWith(NoteSortOrder.OLDEST_EDITED.comparator()).titles())
+  }
+
+  @Test
+  fun notlar_enSikAcilanOnce_esitlikteSonDuzenlenen() {
+    val list = listOf(a.copy(viewCount = 3), b.copy(viewCount = 0), c.copy(viewCount = 3), d.copy(viewCount = 8))
+    assertEquals(listOf("Banka", "-", "Çarşı", "ödev"), list.sortedWith(NoteSortOrder.MOST_USED.comparator()).titles())
+  }
+
+  @Test
   fun notlar_sonOlusturulanOnce() {
     assertEquals(listOf("Çarşı", "-", "Banka", "ödev"), listOf(a, b, c, d).sortedWith(NoteSortOrder.CREATED.comparator()).titles())
   }
@@ -45,13 +56,17 @@ class SortOrderTest {
   }
 
   @Test
-  fun parolalar_enEskiDegistirilenOnce_hicDegismeyenOlusturmaZamaniyla() {
+  fun parolalar_degistirmeyeGore_hicDegismeyenOlusturmaZamaniyla() {
     val old = Password(platformName = "Eski", username = "", passwordValue = "", createdAt = 100, updatedAt = 500)
     val neverChanged = Password(platformName = "Hiç", username = "", passwordValue = "", createdAt = 300)
     val recent = Password(platformName = "Yeni", username = "", passwordValue = "", createdAt = 50, updatedAt = 900)
     assertEquals(
       listOf("Hiç", "Eski", "Yeni"),
       listOf(recent, old, neverChanged).sortedWith(PasswordSortOrder.LAST_CHANGED.comparator()).map { it.platformName }
+    )
+    assertEquals(
+      listOf("Yeni", "Eski", "Hiç"),
+      listOf(old, neverChanged, recent).sortedWith(PasswordSortOrder.RECENTLY_CHANGED.comparator()).map { it.platformName }
     )
   }
 

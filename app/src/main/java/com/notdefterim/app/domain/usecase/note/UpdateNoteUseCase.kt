@@ -5,11 +5,11 @@ import com.notdefterim.app.domain.repository.NoteRepository
 import java.time.LocalDateTime
 import javax.inject.Inject
 
-/** Mevcut notu günceller; updatedAt otomatik yenilenir. */
+/** Mevcut notu günceller; [touch] true ise updatedAt yenilenir (içerik değişmediyse false verin). */
 class UpdateNoteUseCase @Inject constructor(
   private val repository: NoteRepository
 ) {
-  suspend operator fun invoke(note: Note) {
-    repository.updateNote(note.copy(updatedAt = LocalDateTime.now()))
+  suspend operator fun invoke(note: Note, touch: Boolean = true) {
+    repository.updateNote(if (touch) note.copy(updatedAt = LocalDateTime.now()) else note)
   }
 }

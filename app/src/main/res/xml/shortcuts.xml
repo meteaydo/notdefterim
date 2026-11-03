@@ -8,7 +8,7 @@
         android:shortcutLongLabel="@string/shortcut_add_note_long">
         <intent
             android:action="com.notdefterim.app.ACTION_ADD_NOTE"
-            android:targetPackage="com.notdefterim.app"
+            android:targetPackage="io.github.meteaydo.notdefterim"
             android:targetClass="com.notdefterim.app.MainActivity" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
@@ -21,7 +21,7 @@
         android:shortcutLongLabel="@string/shortcut_add_password_long">
         <intent
             android:action="com.notdefterim.app.ACTION_ADD_PASSWORD"
-            android:targetPackage="com.notdefterim.app"
+            android:targetPackage="io.github.meteaydo.notdefterim"
             android:targetClass="com.notdefterim.app.MainActivity" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>

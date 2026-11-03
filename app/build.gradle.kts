@@ -37,7 +37,7 @@ android {
   }
 
   defaultConfig {
-    applicationId = "com.notdefterim.app"
+    applicationId = "io.github.meteaydo.notdefterim"
     minSdk = 26
     targetSdk = 36
     versionCode = 1

@@ -13,6 +13,7 @@ import com.notdefterim.app.domain.usecase.note.DeleteNoteUseCase
 import com.notdefterim.app.domain.usecase.note.GetNotesUseCase
 import com.notdefterim.app.domain.usecase.note.UpdateNoteUseCase
 import com.notdefterim.app.service.ReminderManager
+import com.notdefterim.app.service.ReminderNotifications
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +49,13 @@ class NoteListViewModel @Inject constructor(
   val selectedCategoryId = _selectedCategoryId.asStateFlow()
 
   val categories: StateFlow<List<Category>> = getCategoriesUseCase(com.notdefterim.app.domain.model.CategoryType.NOTE)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+  /** Bildirimi hâlâ duran hatırlatıcıların notları (ana sayfadaki şerit) */
+  val pendingReminderNotes: StateFlow<List<Note>> = kotlinx.coroutines.flow.combine(
+    getNotesUseCase(),
+    ReminderNotifications.noteIds
+  ) { noteList, ids -> noteList.filter { it.id in ids } }
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
   private val _searchQuery = MutableStateFlow("")
@@ -151,6 +159,8 @@ class NoteListViewModel @Inject constructor(
   fun deleteNote(noteId: Long) {
     viewModelScope.launch {
       reminderManager.cancelReminder(noteId)
+      // Silinen notun bildirimi çekmecede kalmasın; simgedeki sayı da düşsün
+      reminderManager.dismissNotification(noteId)
       deleteNoteUseCase(noteId)
     }
   }

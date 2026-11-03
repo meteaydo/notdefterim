@@ -29,6 +29,8 @@ class ReminderManager @Inject constructor(
     /** Tekrarlayan hatırlatıcının ertelenmiş alarmı. Asıl alarmın yerine geçmesin diye ayrı bir eylemle kurulur. */
     const val ACTION_SNOOZED_ALARM = "com.notdefterim.app.action.REMINDER_SNOOZED_ALARM"
     const val EXTRA_SNOOZE_MINUTES = "SNOOZE_MINUTES"
+    /** Kullanıcı bildirimi kaydırarak ya da "Tümünü temizle" ile kapattı (bildirimin silme niyeti) */
+    const val ACTION_DISMISSED = "com.notdefterim.app.action.REMINDER_DISMISSED"
   }
 
   fun scheduleReminder(note: Note) {
@@ -92,6 +94,9 @@ class ReminderManager @Inject constructor(
   }
 
   /** Notun asıl alarmını da ertelenmiş alarmını da iptal eder. */
+  /** Not açıldı ya da silindi: çekmecede duran hatırlatıcı bildirimi kapatılır (simgedeki sayı da düşer) */
+  fun dismissNotification(noteId: Long) = ReminderNotifications.dismiss(context, noteId)
+
   fun cancelReminder(noteId: Long) {
     cancel(noteId, action = null)
     cancelSnooze(noteId)

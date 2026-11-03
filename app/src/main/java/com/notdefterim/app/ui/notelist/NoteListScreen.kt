@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.notdefterim.app.ui.notelist.components.SmartFlowRow
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.InputChip
@@ -86,6 +87,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -113,6 +115,13 @@ fun NoteListScreen(
   viewModel: NoteListViewModel = hiltViewModel()
 ) {
   val notes by viewModel.notes.collectAsStateWithLifecycle()
+  val pendingReminderNotes by viewModel.pendingReminderNotes.collectAsStateWithLifecycle()
+  val lifecycleContext = androidx.compose.ui.platform.LocalContext.current
+  // Uygulama arka plandayken değişen ya da süreç yeniden başlayınca kaybolan liste, ekrana her dönüşte sistemden okunur
+  androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+    com.notdefterim.app.service.ReminderNotifications.refresh(lifecycleContext)
+    onPauseOrDispose { }
+  }
   val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
   val isSearchActive by viewModel.isSearchActive.collectAsStateWithLifecycle()
   val isEmpty by viewModel.isEmptyState.collectAsStateWithLifecycle()
@@ -213,6 +222,11 @@ fun NoteListScreen(
           .alpha(0.7f)
           .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
       )
+
+      // ── Bekleyen hatırlatıcılar: bildirimi hâlâ duran notlar (simgedeki sayının karşılığı) ──
+      if (!isSearchActive && pendingReminderNotes.isNotEmpty()) {
+        PendingRemindersRow(notes = pendingReminderNotes, onNoteClick = onNoteClick)
+      }
 
       // ── Kategori Filtre Çubuğu ──────────────────────────────────────
       if (!isSearchActive) {
@@ -868,5 +882,42 @@ private fun EmptyNotesContent(
       color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
       textAlign = TextAlign.Center
     )
+  }
+}
+
+/** Bildirimi hâlâ duran hatırlatıcılar; dokununca not açılır ve bildirimi kapanır. */
+@Composable
+private fun PendingRemindersRow(notes: List<Note>, onNoteClick: (Long) -> Unit) {
+  androidx.compose.foundation.lazy.LazyRow(
+    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+    contentPadding = PaddingValues(horizontal = 16.dp),
+    horizontalArrangement = Arrangement.spacedBy(8.dp)
+  ) {
+    items(notes.size, key = { notes[it].id }) { index ->
+      val note = notes[index]
+      androidx.compose.material3.AssistChip(
+        onClick = { onNoteClick(note.id) },
+        label = {
+          Text(
+            text = note.title.ifBlank { stringResource(R.string.reminder_title) },
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            // Kilitli notun başlığı karttaki gibi bulanık durur
+            modifier = Modifier
+              .widthIn(max = 180.dp)
+              .let { if (note.isLocked) it.blur(radius = 5.dp) else it }
+          )
+        },
+        leadingIcon = {
+          Icon(Icons.Rounded.NotificationsActive, contentDescription = null, modifier = Modifier.size(16.dp))
+        },
+        colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(
+          containerColor = MaterialTheme.colorScheme.primaryContainer,
+          labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+          leadingIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ),
+        border = null
+      )
+    }
   }
 }

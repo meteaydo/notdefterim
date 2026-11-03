@@ -28,9 +28,15 @@ class ReminderReceiver : BroadcastReceiver() {
 
   override fun onReceive(context: Context, intent: Intent) {
     val noteId = intent.getLongExtra("NOTE_ID", -1)
+    if (intent.action == ReminderManager.ACTION_DISMISSED) {
+      // Kullanıcı bildirimi kaydırıp sildi: yalnız şerit güncellenir. Aşağıya inerse hatırlatıcı yeniden gösterilir.
+      ReminderNotifications.removed(noteId)
+      return
+    }
     if (intent.action == ReminderManager.ACTION_SNOOZE || intent.action == ReminderManager.ACTION_DONE) {
       // Düğmeye basılınca bildirim hemen kapansın; veritabanı işi aşağıda sürer
       NotificationManagerCompat.from(context).cancel(noteId.toInt())
+      ReminderNotifications.removed(noteId)
     }
 
     val pendingResult = goAsync()
@@ -131,7 +137,7 @@ class ReminderReceiver : BroadcastReceiver() {
       whenMillis: Long?
     ) {
       val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-      val channelId = "notdefterim_reminders"
+      val channelId = ReminderNotifications.CHANNEL_ID
 
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val channel = NotificationChannel(
@@ -164,6 +170,8 @@ class ReminderReceiver : BroadcastReceiver() {
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setAutoCancel(true)
         .setContentIntent(pendingIntent)
+        // Kaydırılıp silinince uygulama haber alsın (ana sayfadaki şerit)
+        .setDeleteIntent(actionIntent(context, noteId, ReminderManager.ACTION_DISMISSED))
         .addAction(0, context.getString(R.string.reminder_snooze_10_min), snoozeIntent(context, noteId, 10))
         .addAction(0, context.getString(R.string.reminder_snooze_1_hour), snoozeIntent(context, noteId, 60))
         .addAction(0, context.getString(R.string.reminder_done), actionIntent(context, noteId, ReminderManager.ACTION_DONE))
@@ -184,6 +192,8 @@ class ReminderReceiver : BroadcastReceiver() {
       }
 
       notificationManager.notify(noteId.toInt(), builder.build())
+      // Uygulama açıksa ana sayfadaki şerit hemen güncellensin
+      ReminderNotifications.posted(context, noteId)
     }
 
     private fun snoozeIntent(context: Context, noteId: Long, minutes: Long): PendingIntent =

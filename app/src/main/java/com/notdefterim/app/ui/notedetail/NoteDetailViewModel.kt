@@ -113,6 +113,7 @@ class NoteDetailViewModel @Inject constructor(
 
   init {
     if (noteId > 0L) {
+      reminderManager.dismissNotification(noteId)
       loadNote()
     } else if (initialCategoryId != null) {
       viewModelScope.launch {

@@ -219,8 +219,10 @@ fun NoteDetailScreen(
     val cursorBottom = contentOffsetY + cursorRect.bottom
     val visibleTop = scrollState.value
     val visibleBottom = scrollState.value + viewportHeight
+    // Yazılan satırla klavye arasında en az 2 satır boşluk kalsın
+    val bottomMargin = 2 * (cursorRect.bottom - cursorRect.top)
     val target = when {
-      cursorBottom + cursorMarginPx > visibleBottom -> cursorBottom + cursorMarginPx - viewportHeight
+      cursorBottom + bottomMargin > visibleBottom -> cursorBottom + bottomMargin - viewportHeight
       cursorTop - cursorMarginPx < visibleTop -> cursorTop - cursorMarginPx
       else -> return@LaunchedEffect
     }
@@ -810,13 +812,14 @@ fun NoteDetailScreen(
         }
       }
 
-      // Alt İkon: son satır ekranın altına gelecek kadar kaydırır
+      // Alt İkon: son satırı görünür alanın ortasına getirir (kenarda kalınca gözden kaçıyordu)
       val bottomAlpha by animateFloatAsState(if (hasMoreBelow) 1f else 0f, label = "bottomAlpha")
       if (bottomAlpha > 0f) {
         SmallFloatingActionButton(
           onClick = {
             coroutineScope.launch {
-              scrollState.animateScrollTo((scrollState.maxValue - bottomSpacePx.toInt()).coerceAtLeast(0))
+              val target = scrollState.maxValue - bottomSpacePx + viewportHeight / 2f
+              scrollState.animateScrollTo(target.toInt().coerceIn(0, scrollState.maxValue))
             }
           },
           shape = CircleShape,

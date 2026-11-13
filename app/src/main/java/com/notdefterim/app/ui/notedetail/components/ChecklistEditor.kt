@@ -12,6 +12,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.*
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -160,10 +161,15 @@ private fun ChecklistItemRow(
     }
 
     val imeBottom = WindowInsets.ime.getBottom(density)
+    // Odaklı maddenin altında klavyeye kadar en az 2 satır boşluk kalsın
+    var rowHeight by remember { mutableStateOf(0) }
+    val twoLinesPx = with(density) { 2 * MaterialTheme.typography.bodyLarge.lineHeight.toPx() }
     LaunchedEffect(isFocused, imeBottom) {
         if (isFocused && imeBottom > 0) {
             try {
-                bringIntoViewRequester.bringIntoView()
+                bringIntoViewRequester.bringIntoView(
+                    androidx.compose.ui.geometry.Rect(0f, 0f, 1f, rowHeight + twoLinesPx)
+                )
             } catch (e: Exception) { }
         }
     }
@@ -206,6 +212,7 @@ private fun ChecklistItemRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .onSizeChanged { rowHeight = it.height }
             .bringIntoViewRequester(bringIntoViewRequester),
         verticalAlignment = Alignment.Top
     ) {

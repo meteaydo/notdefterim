@@ -212,7 +212,7 @@ fun NoteListScreen(
           SortMenuButton(
             options = NoteSortOrder.entries,
             selected = sortOrder,
-            default = NoteSortOrder.LAST_EDITED,
+            default = NoteSortOrder.LAST_USED,
             labelResId = { it.titleResId },
             onSelect = viewModel::setSortOrder
           )

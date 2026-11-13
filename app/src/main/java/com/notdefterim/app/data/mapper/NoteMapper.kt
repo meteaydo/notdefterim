@@ -42,6 +42,7 @@ fun NoteEntity.toDomain(): Note = Note(
   repeatDays = DayOfWeek.values().filterTo(mutableSetOf()) { repeatDays and it.bit() != 0 },
   repeatDayOfMonth = repeatDayOfMonth,
   viewCount = viewCount,
+  lastUsedAt = lastUsedAt?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime() },
   isLocked = isLocked,
   isChecklist = isChecklist
 )
@@ -91,6 +92,7 @@ fun Note.toEntity(): NoteEntity = NoteEntity(
   repeatDayOfMonth = repeatDayOfMonth,
   categoryId = category?.id,
   viewCount = viewCount,
+  lastUsedAt = lastUsedAt?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli(),
   isLocked = isLocked,
   isChecklist = isChecklist
 )

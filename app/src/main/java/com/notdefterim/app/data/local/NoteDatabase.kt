@@ -26,7 +26,7 @@ import kotlinx.serialization.json.Json
  */
 @Database(
   entities = [NoteEntity::class, PasswordEntity::class, CategoryEntity::class],
-  version = 11,
+  version = 12,
   exportSchema = true
 )
 abstract class NoteDatabase : RoomDatabase() {
@@ -110,6 +110,12 @@ abstract class NoteDatabase : RoomDatabase() {
       }
     }
 
+    val MIGRATION_11_12 = object : Migration(11, 12) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE notes ADD COLUMN lastUsedAt INTEGER")
+      }
+    }
+
     /**
      * SQLCipher ile şifrelenmiş Room veritabanı oluşturur.
      *
@@ -135,7 +141,7 @@ abstract class NoteDatabase : RoomDatabase() {
         DATABASE_NAME
       )
         .openHelperFactory(factory)
-        .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+        .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
         // Güvenli migrasyon stratejisi: yalnızca debug build'de yıkım-yeniden yapma izni
         // Release'de migration eksikse crash edilir; kullanıcı verisi sessizce SİLİNMEZ
         .apply { if (BuildConfig.DEBUG) fallbackToDestructiveMigration() }

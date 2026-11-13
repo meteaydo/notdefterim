@@ -23,6 +23,8 @@ data class Note(
   val repeatDayOfMonth: Int = 0,
   val category: Category? = null,
   val viewCount: Int = 0,
+  /** Son açılma zamanı; hiç açılmadıysa null (sıralamada [updatedAt] kullanılır) */
+  val lastUsedAt: LocalDateTime? = null,
   val isLocked: Boolean = false,
   val isChecklist: Boolean = false
 )

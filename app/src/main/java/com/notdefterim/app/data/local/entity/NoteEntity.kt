@@ -41,6 +41,8 @@ data class NoteEntity(
   val categoryId: Long? = null,
   /** Notun görüntülenme sayısı (En Sık sekmesi için) */
   val viewCount: Int = 0,
+  /** Son açılma ya da düzenlenme zamanı — Unix epoch milisaniye ("Son kullanılan" sırası) */
+  val lastUsedAt: Long? = null,
   /** Notun kilitli olup olmadığı */
   val isLocked: Boolean = false,
   /** Notun checklist modunda olup olmadığı */

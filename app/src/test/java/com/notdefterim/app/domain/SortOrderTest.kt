@@ -35,6 +35,13 @@ class SortOrderTest {
   }
 
   @Test
+  fun notlar_sonKullanilanOnce_acmakDaKullanimSayilir() {
+    // b en son düzenlendi ama d sonra açıldı; a hiç açılmadı, düzenlenme zamanıyla sıralanır
+    val list = listOf(a, b, c.copy(lastUsedAt = day.minusDays(3)), d.copy(lastUsedAt = day))
+    assertEquals(listOf("Banka", "ödev", "-", "Çarşı"), list.sortedWith(NoteSortOrder.LAST_USED.comparator()).titles())
+  }
+
+  @Test
   fun notlar_enEskiDegistirilenOnce() {
     assertEquals(listOf("Banka", "Çarşı", "-", "ödev"), listOf(a, b, c, d).sortedWith(NoteSortOrder.OLDEST_EDITED.comparator()).titles())
   }
@@ -82,7 +89,7 @@ class SortOrderTest {
 
   @Test
   fun bilinmeyenKayitVarsayilanaDoner() {
-    assertEquals(NoteSortOrder.LAST_EDITED, NoteSortOrder.fromName(null))
+    assertEquals(NoteSortOrder.LAST_USED, NoteSortOrder.fromName(null))
     assertEquals(PasswordSortOrder.MOST_USED, PasswordSortOrder.fromName("YOK"))
   }
 }

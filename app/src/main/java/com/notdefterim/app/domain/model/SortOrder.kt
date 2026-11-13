@@ -5,6 +5,7 @@ import java.text.Collator
 
 /** Not listesinin sırası. Sabitlenen notlar ve filtrenin öne aldıkları her zaman önce gelir. */
 enum class NoteSortOrder(val titleResId: Int) {
+  LAST_USED(R.string.sort_last_used),
   LAST_EDITED(R.string.sort_last_edited),
   OLDEST_EDITED(R.string.sort_last_changed),
   MOST_USED(R.string.sort_most_used),
@@ -12,6 +13,8 @@ enum class NoteSortOrder(val titleResId: Int) {
   TITLE(R.string.sort_title_az);
 
   fun comparator(collator: Collator = Collator.getInstance()): Comparator<Note> = when (this) {
+    // Açılma ya da düzenlenme, hangisi daha yakınsa
+    LAST_USED -> compareByDescending { it.lastUsedAt?.let { used -> maxOf(used, it.updatedAt) } ?: it.updatedAt }
     LAST_EDITED -> compareByDescending { it.updatedAt }
     OLDEST_EDITED -> compareBy { it.updatedAt }
     // Açılma sayısı; eşitlikte son düzenlenen önce
@@ -24,7 +27,7 @@ enum class NoteSortOrder(val titleResId: Int) {
   }
 
   companion object {
-    fun fromName(name: String?): NoteSortOrder = entries.firstOrNull { it.name == name } ?: LAST_EDITED
+    fun fromName(name: String?): NoteSortOrder = entries.firstOrNull { it.name == name } ?: LAST_USED
   }
 }
 

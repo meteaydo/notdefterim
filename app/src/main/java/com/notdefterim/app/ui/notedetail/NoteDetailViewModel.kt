@@ -155,8 +155,9 @@ class NoteDetailViewModel @Inject constructor(
             _content.value = note.content
         }
         
-        // Görüntülenme sayısını artır ve arka planda kaydet; açmak düzenleme sayılmaz, updatedAt değişmez
-        val updatedNote = note.copy(viewCount = note.viewCount + 1)
+        // Görüntülenme sayısını ve son kullanılma zamanını arka planda kaydet;
+        // açmak düzenleme sayılmaz, updatedAt değişmez
+        val updatedNote = note.copy(viewCount = note.viewCount + 1, lastUsedAt = java.time.LocalDateTime.now())
         currentNote = updatedNote
         updateNoteUseCase(updatedNote, touch = false)
       }

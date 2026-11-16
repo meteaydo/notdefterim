@@ -1,5 +1,6 @@
 package com.notdefterim.app.ui.auth
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,12 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Fingerprint
-import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -104,26 +107,34 @@ fun AuthScreen(
       if (authState !is AuthState.Authenticated) {
         Spacer(modifier = Modifier.height(40.dp))
 
-        // İçinde parmak izi olan yuvarlak düğme; tek parmak izi bu, üstte ayrıca ikon yok
-        FilledIconButton(
-          onClick = onAuthenticate,
-          shape = CircleShape,
-          modifier = Modifier.size(88.dp)
+        // İçi boş çember içinde parmak izi (dolu daire değil); tek parmak izi bu, üstte ayrıca ikon yok.
+        // Düğme ve yazısı başlığın biraz altına indirilir; offset başlığın yerini değiştirmez.
+        Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          modifier = Modifier.offset(y = 72.dp)
         ) {
-          Icon(
-            imageVector = Icons.Rounded.Fingerprint,
-            contentDescription = stringResource(R.string.tap_to_unlock),
-            modifier = Modifier.size(48.dp)
+          OutlinedIconButton(
+            onClick = onAuthenticate,
+            shape = CircleShape,
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+            colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+            modifier = Modifier.size(88.dp)
+          ) {
+            Icon(
+              imageVector = Icons.Rounded.Fingerprint,
+              contentDescription = stringResource(R.string.tap_to_unlock),
+              modifier = Modifier.size(48.dp)
+            )
+          }
+
+          Spacer(modifier = Modifier.height(12.dp))
+
+          Text(
+            text = stringResource(R.string.tap_to_unlock),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-          text = stringResource(R.string.tap_to_unlock),
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
       }
 
       if (biometricSupport is BiometricSupport.NoneEnrolled) {

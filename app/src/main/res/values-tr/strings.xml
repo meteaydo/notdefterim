@@ -91,7 +91,7 @@
     <string name="auth_prompt">Notlarınıza güvenli erişim için\nkimliğinizi doğrulayın</string>
     <string name="authenticating">Kimlik doğrulanıyor...</string>
     <string name="auth_success">Giriş başarılı</string>
-    <string name="authenticate">Kimliği Doğrula</string>
+    <string name="tap_to_unlock">Açmak için dokun</string>
     <string name="no_biometric_enrolled">Parmak izi veya PIN kurulu değil.\nCihaz ayarlarından ekleyin.</string>
     <string name="search_passwords">Parolalarda ara...</string>
     <string name="overlay_permission_request">Lütfen \'Diğer uygulamaların üzerinde göster\' izni verin.</string>

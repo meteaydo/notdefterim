@@ -91,7 +91,7 @@
     <string name="auth_prompt">Verify your identity\nfor secure access to your notes</string>
     <string name="authenticating">Authenticating...</string>
     <string name="auth_success">Login successful</string>
-    <string name="authenticate">Verify Identity</string>
+    <string name="tap_to_unlock">Tap to unlock</string>
     <string name="no_biometric_enrolled">Fingerprint or PIN is not set up.\nPlease add it in device settings.</string>
     <string name="search_passwords">Search passwords...</string>
     <string name="overlay_permission_request">Please grant \'Display over other apps\' permission.</string>

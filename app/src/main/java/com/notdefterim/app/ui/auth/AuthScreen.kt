@@ -1,10 +1,5 @@
 package com.notdefterim.app.ui.auth
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,9 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Fingerprint
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.notdefterim.app.R
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontWeight
@@ -54,18 +46,6 @@ fun AuthScreen(
   onAuthenticate: () -> Unit,
   modifier: Modifier = Modifier
 ) {
-  // Kilid ikonu için nefes efekti animasyonu
-  val infiniteTransition = rememberInfiniteTransition(label = "lock_pulse")
-  val pulseScale by infiniteTransition.animateFloat(
-    initialValue = 1f,
-    targetValue = 1.08f,
-    animationSpec = infiniteRepeatable(
-      animation = tween(durationMillis = 1200),
-      repeatMode = RepeatMode.Reverse
-    ),
-    label = "pulse_scale"
-  )
-
   // Ekran açıldığında ve uygulama öne geldiğinde otomatik kimlik doğrulama başlat.
   // Ekran kapalıyken açılışta pencere başlayamazsa durum Unauthenticated'a döner; ekran açılınca yeniden denenir.
   LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -95,36 +75,6 @@ fun AuthScreen(
       verticalArrangement = Arrangement.Center,
       modifier = Modifier.padding(32.dp)
     ) {
-      // Animasyonlu kilit/parmak izi ikonu
-      Box(
-        modifier = Modifier
-          .size(120.dp)
-          .scale(pulseScale)
-          .background(
-            brush = Brush.radialGradient(
-              colors = listOf(
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                MaterialTheme.colorScheme.primary.copy(alpha = 0f)
-              )
-            ),
-            shape = CircleShape
-          ),
-        contentAlignment = Alignment.Center
-      ) {
-        Icon(
-          imageVector = if (authState is AuthState.Error) {
-            Icons.Rounded.Lock
-          } else {
-            Icons.Rounded.Fingerprint
-          },
-          contentDescription = stringResource(R.string.auth_description),
-          modifier = Modifier.size(64.dp),
-          tint = MaterialTheme.colorScheme.primary
-        )
-      }
-
-      Spacer(modifier = Modifier.height(32.dp))
-
       Text(
         text = "NotDefterim",
         style = MaterialTheme.typography.headlineLarge,
@@ -154,20 +104,26 @@ fun AuthScreen(
       if (authState !is AuthState.Authenticated) {
         Spacer(modifier = Modifier.height(40.dp))
 
-        Button(
+        // İçinde parmak izi olan yuvarlak düğme; tek parmak izi bu, üstte ayrıca ikon yok
+        FilledIconButton(
           onClick = onAuthenticate,
-          colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary
-          )
+          shape = CircleShape,
+          modifier = Modifier.size(88.dp)
         ) {
           Icon(
             imageVector = Icons.Rounded.Fingerprint,
-            contentDescription = null,
-            modifier = Modifier.size(20.dp)
+            contentDescription = stringResource(R.string.tap_to_unlock),
+            modifier = Modifier.size(48.dp)
           )
-          Spacer(modifier = Modifier.size(8.dp))
-          Text(stringResource(R.string.authenticate))
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+          text = stringResource(R.string.tap_to_unlock),
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
       }
 
       if (biometricSupport is BiometricSupport.NoneEnrolled) {

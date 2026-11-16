@@ -88,37 +88,6 @@ class PasswordListViewModel @Inject constructor(
       initialValue = emptyList()
     )
 
-  val expiredPasswordAlert: StateFlow<String?> = combine(
-    repository.getAllPasswords(),
-    appPreferences.passwordReminderPeriod,
-    appPreferences.dismissedReminders
-  ) { list, periodMs, dismissedReminders ->
-    if (periodMs == -1L) return@combine null
-
-    val currentTime = System.currentTimeMillis()
-    val expiredPlatforms = list.filter { password ->
-      val timeToCompare = password.updatedAt ?: password.createdAt
-      val key = "${password.id}_${timeToCompare}"
-      
-      if (dismissedReminders.contains(key)) {
-        false
-      } else {
-        val timeDiff = currentTime - timeToCompare
-        timeDiff > periodMs
-      }
-    }.map { it.platformName }.distinct()
-
-    if (expiredPlatforms.isNotEmpty()) {
-      expiredPlatforms.joinToString(", ")
-    } else {
-      null
-    }
-  }.stateIn(
-    scope = viewModelScope,
-    started = SharingStarted.WhileSubscribed(5000),
-    initialValue = null
-  )
-
   fun onSearchQueryChange(query: String) {
     _searchQuery.value = query
   }
@@ -134,26 +103,6 @@ class PasswordListViewModel @Inject constructor(
   fun addCategory(name: String, colorHex: String) {
     viewModelScope.launch {
       categoryRepository.addCategory(Category(name = name, colorHex = colorHex, type = CategoryType.PASSWORD))
-    }
-  }
-
-  fun dismissCurrentAlerts() {
-    viewModelScope.launch {
-      val periodMs = appPreferences.passwordReminderPeriod.value
-      if (periodMs == -1L) return@launch
-      val currentTime = System.currentTimeMillis()
-      val dismissed = appPreferences.dismissedReminders.value
-
-      repository.getAllPasswords().first().forEach { password ->
-        val timeToCompare = password.updatedAt ?: password.createdAt
-        val key = "${password.id}_${timeToCompare}"
-        if (!dismissed.contains(key)) {
-          val timeDiff = currentTime - timeToCompare
-          if (timeDiff > periodMs) {
-            appPreferences.dismissReminder(password.id, timeToCompare)
-          }
-        }
-      }
     }
   }
 

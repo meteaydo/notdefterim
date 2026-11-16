@@ -103,7 +103,6 @@ fun SettingsScreen(
   val lastBackupTime by viewModel.lastBackupTime.collectAsStateWithLifecycle()
   val cloudBackups by viewModel.cloudBackups.collectAsStateWithLifecycle()
   val autoLockTimeout by viewModel.autoLockTimeout.collectAsStateWithLifecycle()
-  val passwordReminderPeriod by viewModel.passwordReminderPeriod.collectAsStateWithLifecycle()
   val appPin by viewModel.appPin.collectAsStateWithLifecycle()
   val appPinHint by viewModel.appPinHint.collectAsStateWithLifecycle()
   val appPinScope by viewModel.appPinScope.collectAsStateWithLifecycle()
@@ -126,7 +125,6 @@ fun SettingsScreen(
   var showImportDialog by remember { mutableStateOf<Uri?>(null) }
   var showLanguageDialog by remember { mutableStateOf(false) }
   var showAutoLockDialog by remember { mutableStateOf(false) }
-  var showReminderDialog by remember { mutableStateOf(false) }
   var showAppPinDialog by remember { mutableStateOf(false) }
   var showStartupBehaviorDialog by remember { mutableStateOf(false) }
   var showBackupListDialog by remember { mutableStateOf(false) }
@@ -271,25 +269,6 @@ fun SettingsScreen(
 
       // ── Hatırlatıcılar ────────────────────────────────
       ReminderSettingsSection()
-
-      // ── Parola Değiştirme Tavsiyesi ────────────────────────────────
-      SectionTitle(stringResource(R.string.reminder_section))
-      Card(
-        colors = CardDefaults.cardColors(
-          containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        modifier = Modifier.fillMaxWidth().clickable { showReminderDialog = true }
-      ) {
-        val currentReminder = com.notdefterim.app.domain.model.PasswordUpdateReminderPeriod.fromMs(passwordReminderPeriod)
-        ListItem(
-          colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-          headlineContent = { Text(stringResource(R.string.reminder_section)) },
-          supportingContent = { Text(stringResource(currentReminder.titleResId)) },
-          trailingContent = { Icon(Icons.AutoMirrored.Rounded.ArrowBack, modifier = androidx.compose.ui.Modifier.rotate(180f), contentDescription = null) }
-        )
-      }
-
-      Spacer(modifier = Modifier.height(24.dp))
 
       // ── Uygulama İçi PIN ────────────────────────────────
       SectionTitle(stringResource(R.string.app_pin_title))
@@ -787,46 +766,6 @@ fun SettingsScreen(
       },
       confirmButton = {
         TextButton(onClick = { showStartupBehaviorDialog = false }) {
-          Text(stringResource(R.string.cancel))
-        }
-      }
-    )
-  }
-
-  if (showReminderDialog) {
-    val reminders = com.notdefterim.app.domain.model.PasswordUpdateReminderPeriod.entries
-
-    AlertDialog(
-      onDismissRequest = { showReminderDialog = false },
-      title = { Text(stringResource(R.string.reminder_section)) },
-      text = {
-        Column {
-          Text(stringResource(R.string.reminder_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-          Spacer(modifier = Modifier.height(8.dp))
-          reminders.forEach { reminder ->
-            TextButton(
-              onClick = {
-                viewModel.setPasswordReminderPeriod(reminder.periodMs)
-                showReminderDialog = false
-              },
-              modifier = Modifier.fillMaxWidth()
-            ) {
-              Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-              ) {
-                Text(stringResource(reminder.titleResId))
-                if (passwordReminderPeriod == reminder.periodMs) {
-                  Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                }
-              }
-            }
-          }
-        }
-      },
-      confirmButton = {
-        TextButton(onClick = { showReminderDialog = false }) {
           Text(stringResource(R.string.cancel))
         }
       }

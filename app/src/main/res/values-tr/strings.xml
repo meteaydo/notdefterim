@@ -126,13 +126,6 @@
     <string name="timeout_30_min">30 Dakika</string>
     <string name="timeout_never">Hiçbir Zaman</string>
     
-    <string name="reminder_section">Parola Değiştirme Tavsiyesi</string>
-    <string name="reminder_desc">Güvenliğiniz için parolalarınızın belirli periyotlarla güncellenmesi önerilir.</string>
-    <string name="reminder_3_months">3 Ay</string>
-    <string name="reminder_6_months">6 Ay</string>
-    <string name="reminder_9_months">9 Ay</string>
-    <string name="reminder_12_months">12 Ay</string>
-    <string name="password_expired_alert">Güvenliğiniz için şu parolalarınızı güncellemeniz önerilir: %1$s</string>
     
     <string name="app_pin_title">Uygulama İçi PIN</string>
     <string name="app_pin_not_set">Belirlenmedi</string>

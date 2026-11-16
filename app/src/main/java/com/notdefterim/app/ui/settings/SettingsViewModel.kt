@@ -66,7 +66,6 @@ class SettingsViewModel @Inject constructor(
   val lastBackupTime: StateFlow<Long?> = _lastBackupTime.asStateFlow()
 
   val autoLockTimeout: StateFlow<Long> = appPreferences.autoLockTimeout
-  val passwordReminderPeriod: StateFlow<Long> = appPreferences.passwordReminderPeriod
   val startupBehavior: StateFlow<Int> = appPreferences.startupBehavior
   
   val appPin: StateFlow<String?> = appPreferences.appPin
@@ -119,10 +118,6 @@ class SettingsViewModel @Inject constructor(
 
   fun setStartupBehavior(behavior: Int) {
     appPreferences.setStartupBehavior(behavior)
-  }
-
-  fun setPasswordReminderPeriod(periodMs: Long) {
-    appPreferences.setPasswordReminderPeriod(periodMs)
   }
 
   fun setAppPin(pin: String?, hint: String? = null) {

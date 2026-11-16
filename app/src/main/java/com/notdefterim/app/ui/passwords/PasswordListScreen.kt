@@ -130,7 +130,6 @@ fun PasswordListScreen(
   val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
   val copiedState by viewModel.copiedState.collectAsStateWithLifecycle()
   val frequentUsernames by viewModel.frequentUsernames.collectAsStateWithLifecycle()
-  val expiredPasswordAlert by viewModel.expiredPasswordAlert.collectAsStateWithLifecycle()
   val pinPromptState by authViewModel.pinPromptState.collectAsStateWithLifecycle()
   val unlockedPasswords = remember { androidx.compose.runtime.mutableStateListOf<Long>() }
   val categories by viewModel.categories.collectAsStateWithLifecycle()
@@ -200,38 +199,6 @@ fun PasswordListScreen(
         .imePadding()
         .navigationBarsPadding()
     ) {
-      AnimatedVisibility(visible = expiredPasswordAlert != null) {
-        expiredPasswordAlert?.let { platforms ->
-          Card(
-            modifier = Modifier
-              .fillMaxWidth()
-              .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-            colors = CardDefaults.cardColors(
-              containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f),
-              contentColor = MaterialTheme.colorScheme.onErrorContainer
-            )
-          ) {
-            Row(
-              modifier = Modifier.padding(start = 12.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
-              verticalAlignment = Alignment.CenterVertically
-            ) {
-              Text(
-                text = stringResource(R.string.password_expired_alert, platforms),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.weight(1f)
-              )
-              IconButton(onClick = { viewModel.dismissCurrentAlerts() }) {
-                Icon(
-                  imageVector = Icons.Rounded.Close,
-                  contentDescription = stringResource(R.string.clear_search_desc),
-                  modifier = Modifier.size(20.dp)
-                )
-              }
-            }
-          }
-        }
-      }
-
       // Arama Çubuğu
       QuickSearchField(
         value = searchQuery,

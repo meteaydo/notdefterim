@@ -125,13 +125,6 @@
     <string name="timeout_10_min">10 Minutes</string>
     <string name="timeout_30_min">30 Minutes</string>
     <string name="timeout_never">Never</string>
-    <string name="reminder_section">Password Change Reminder</string>
-    <string name="reminder_desc">For your security, it is recommended to update your passwords periodically.</string>
-    <string name="reminder_3_months">3 Months</string>
-    <string name="reminder_6_months">6 Months</string>
-    <string name="reminder_9_months">9 Months</string>
-    <string name="reminder_12_months">12 Months</string>
-    <string name="password_expired_alert">For your security, consider updating these passwords: %1$s</string>
     <string name="app_pin_title">In-App PIN</string>
     <string name="app_pin_not_set">Not set</string>
     <string name="app_pin_active">PIN Active</string>

@@ -31,16 +31,6 @@ class AppPreferences @Inject constructor(
     )
     val autoLockTimeout: StateFlow<Long> = _autoLockTimeout.asStateFlow()
 
-    private val _passwordReminderPeriod = MutableStateFlow(
-        prefs.getLong("password_reminder_period", 15_552_000_000L) // Default is 6 Months
-    )
-    val passwordReminderPeriod: StateFlow<Long> = _passwordReminderPeriod.asStateFlow()
-
-    private val _dismissedReminders = MutableStateFlow(
-        prefs.getStringSet("dismissed_reminders", emptySet())?.toSet() ?: emptySet()
-    )
-    val dismissedReminders: StateFlow<Set<String>> = _dismissedReminders.asStateFlow()
-
     /**
      * Ham PIN asla saklanmaz; yalnızca PBKDF2 hash'i tutulur.
      * null → PIN kurulmamış demektir.
@@ -99,19 +89,6 @@ class AppPreferences @Inject constructor(
     fun setPasswordSortOrder(order: PasswordSortOrder) {
         prefs.edit().putString("password_sort_order", order.name).apply()
         _passwordSortOrder.value = order
-    }
-
-    fun setPasswordReminderPeriod(periodMs: Long) {
-        prefs.edit().putLong("password_reminder_period", periodMs).apply()
-        _passwordReminderPeriod.value = periodMs
-    }
-
-    fun dismissReminder(passwordId: Long, timeToCompare: Long) {
-        val key = "${passwordId}_${timeToCompare}"
-        val currentSet = _dismissedReminders.value.toMutableSet()
-        currentSet.add(key)
-        prefs.edit().putStringSet("dismissed_reminders", currentSet).apply()
-        _dismissedReminders.value = currentSet
     }
 
     /**
@@ -184,7 +161,6 @@ class AppPreferences @Inject constructor(
      */
     fun backupSettings(): JSONObject = JSONObject().apply {
         put("auto_lock_timeout", _autoLockTimeout.value)
-        put("password_reminder_period", _passwordReminderPeriod.value)
         put("startup_behavior", _startupBehavior.value)
         put("app_pin_scope", _appPinScope.value)
         put("note_sort_order", _noteSortOrder.value.name)
@@ -201,7 +177,6 @@ class AppPreferences @Inject constructor(
     fun restoreSettings(json: JSONObject) {
         val editor = prefs.edit()
             .putLong("auto_lock_timeout", json.optLong("auto_lock_timeout", _autoLockTimeout.value))
-            .putLong("password_reminder_period", json.optLong("password_reminder_period", _passwordReminderPeriod.value))
             .putInt("startup_behavior", json.optInt("startup_behavior", _startupBehavior.value))
             .putInt("app_pin_scope", json.optInt("app_pin_scope", _appPinScope.value))
             .putString("note_sort_order", json.optString("note_sort_order", _noteSortOrder.value.name))

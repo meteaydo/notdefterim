@@ -33,7 +33,6 @@ class SettingsBackupTest {
   fun ayarlar_yedekten_aynen_geri_gelir() {
     val app = AppPreferences(context).apply {
       setAutoLockTimeout(600_000L)
-      setPasswordReminderPeriod(7_776_000_000L)
       setStartupBehavior(2)
       setAppPin("1234", "ipucu")
       setAppPinScope(1)
@@ -50,7 +49,6 @@ class SettingsBackupTest {
 
     val restored = AppPreferences(context)
     assertEquals(600_000L, restored.autoLockTimeout.value)
-    assertEquals(7_776_000_000L, restored.passwordReminderPeriod.value)
     assertEquals(2, restored.startupBehavior.value)
     assertEquals(1, restored.appPinScope.value)
     assertEquals(NoteSortOrder.TITLE, restored.noteSortOrder.value)

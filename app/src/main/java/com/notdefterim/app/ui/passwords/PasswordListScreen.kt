@@ -1,5 +1,20 @@
 package com.notdefterim.app.ui.passwords
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitHorizontalTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.horizontalDrag
+import androidx.compose.foundation.layout.offset
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntOffset
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import com.notdefterim.app.ui.components.QuickSearchField
 import android.app.Activity
 import android.content.Intent
@@ -533,58 +548,8 @@ fun PasswordCard(
   val isThisCardCopied = copiedState?.first == password.id
   val copiedField = if (isThisCardCopied) copiedState?.second else CopiedField.NONE
 
-  val dismissState = androidx.compose.material3.rememberSwipeToDismissBoxState(
-    confirmValueChange = { dismissValue ->
-      when (dismissValue) {
-        androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd -> {
-          onEdit()
-          false
-        }
-        androidx.compose.material3.SwipeToDismissBoxValue.EndToStart -> {
-          onDelete()
-          false
-        }
-        else -> false
-      }
-    },
-    positionalThreshold = { totalDistance -> totalDistance * 0.4f }
-  )
-
-  androidx.compose.material3.SwipeToDismissBox(
-    state = dismissState,
-    modifier = Modifier.fillMaxWidth(),
-    backgroundContent = {
-      val direction = dismissState.dismissDirection
-      val color = when (direction) {
-        androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primary
-        androidx.compose.material3.SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error
-        else -> Color.Transparent
-      }
-      val alignment = when (direction) {
-        androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
-        androidx.compose.material3.SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
-        else -> Alignment.Center
-      }
-      val icon = when (direction) {
-        androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd -> Icons.Rounded.Edit
-        androidx.compose.material3.SwipeToDismissBoxValue.EndToStart -> Icons.Rounded.Delete
-        else -> Icons.Rounded.Delete
-      }
-
-      Box(
-        modifier = Modifier
-          .fillMaxSize()
-          .clip(MaterialTheme.shapes.medium)
-          .background(color)
-          .padding(horizontal = 20.dp),
-        contentAlignment = alignment
-      ) {
-        if (direction != androidx.compose.material3.SwipeToDismissBoxValue.Settled) {
-          Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
-        }
-      }
-    },
-    content = {
+  // Sağa çekince düzenleme açılır; sola çekme Notlarım'a geçmek içindir (kullanıcı kararı). Silme uzun basınca açılan menüde.
+  SwipeRightToEdit(onEdit = onEdit) {
       val borderModifier = if (isThisCardCopied) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium) else Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), MaterialTheme.shapes.medium)
       val cardColor = if (isThisCardCopied) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
 
@@ -911,8 +876,59 @@ fun PasswordCard(
         )
       }
     }
+  }
+}
+
+/**
+ * Sağa çekilince [onEdit] çağrılır. Sola çekme tüketilmez; üstteki sayfa geçişi alır (Notlarım'a dönüş).
+ * Hazır SwipeToDismissBox kapalı yönde de hareketi tuttuğu için sayfa geçişini engelliyordu; bu yüzden elle yazıldı.
+ */
+@Composable
+private fun SwipeRightToEdit(onEdit: () -> Unit, content: @Composable () -> Unit) {
+  val offsetX = remember { Animatable(0f) }
+  val scope = rememberCoroutineScope()
+  var width by remember { mutableIntStateOf(0) }
+  val currentOnEdit by rememberUpdatedState(onEdit)
+
+  Box(
+    modifier = Modifier
+      .fillMaxWidth()
+      .onSizeChanged { width = it.width }
+      .pointerInput(Unit) {
+        awaitEachGesture {
+          val down = awaitFirstDown(requireUnconsumed = false)
+          // Yalnız sağa doğru eşiği geçen hareket sahiplenilir
+          val start = awaitHorizontalTouchSlopOrCancellation(down.id) { change, overSlop ->
+            if (overSlop > 0f) change.consume()
+          } ?: return@awaitEachGesture
+          var x = start.positionChange().x.coerceAtLeast(0f)
+          scope.launch { offsetX.snapTo(x) }
+          horizontalDrag(start.id) { change ->
+            x = (x + change.positionChange().x).coerceIn(0f, width.toFloat())
+            scope.launch { offsetX.snapTo(x) }
+            change.consume()
+          }
+          if (width > 0 && x > width * 0.4f) currentOnEdit()
+          scope.launch { offsetX.animateTo(0f) }
+        }
+      }
+  ) {
+    if (offsetX.value > 0f) {
+      Box(
+        modifier = Modifier
+          .matchParentSize()
+          .clip(MaterialTheme.shapes.medium)
+          .background(MaterialTheme.colorScheme.primary)
+          .padding(horizontal = 20.dp),
+        contentAlignment = Alignment.CenterStart
+      ) {
+        Icon(Icons.Rounded.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+      }
     }
-  )
+    Box(modifier = Modifier.offset { IntOffset(offsetX.value.roundToInt(), 0) }) {
+      content()
+    }
+  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,6 +1,5 @@
 package com.notdefterim.app.ui.home
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
@@ -29,6 +30,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.notdefterim.app.data.local.ThemePreferences
 import com.notdefterim.app.data.local.AppPreferences
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -56,15 +62,22 @@ fun HomeScreen(
     initialShortcutAction: String? = null,
     modifier: Modifier = Modifier
 ) {
-    var selectedTab by rememberSaveable { 
-        mutableIntStateOf(
-            if (initialShortcutAction == "com.notdefterim.app.ACTION_ADD_PASSWORD") 1
-            else when (appPreferences.startupBehavior.value) {
-                1 -> 0 // Notlarım
-                2 -> 1 // Parolalarım
-                else -> appPreferences.lastOpenedTab.value // En son açılan
-            }
-        ) 
+    val initialTab = remember {
+        if (initialShortcutAction == "com.notdefterim.app.ACTION_ADD_PASSWORD") 1
+        else when (appPreferences.startupBehavior.value) {
+            1 -> 0 // Notlarım
+            2 -> 1 // Parolalarım
+            else -> appPreferences.lastOpenedTab.value // En son açılan
+        }
+    }
+    // Sayfa 0 Notlarım, 1 Parolalarım. Kullanıcı kararı: Notlarım'da parmak sağa kayınca Parolalarım'a,
+    // Parolalarım'da sola kayınca Notlarım'a geçilir; bu yüzden sayfalar ters dizilir (reverseLayout).
+    val pagerState = rememberPagerState(initialPage = initialTab) { 2 }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Kaydırarak ya da sekmeye dokunarak geçilen sayfa "en son açılan" olarak kaydedilir
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.drop(1).collect { appPreferences.setLastOpenedTab(it) }
     }
 
     val userDarkTheme by themePreferences.isDarkTheme.collectAsStateWithLifecycle()
@@ -81,11 +94,8 @@ fun HomeScreen(
         ) {
             Spacer(modifier = Modifier.weight(1f))
             SegmentedControl(
-                selectedTab = selectedTab,
-                onTabSelected = { 
-                    selectedTab = it 
-                    appPreferences.setLastOpenedTab(it)
-                },
+                selectedTab = pagerState.currentPage,
+                onTabSelected = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
                 modifier = Modifier.weight(5f)
             )
             Row(
@@ -114,8 +124,12 @@ fun HomeScreen(
         }
 
         // İçerik Geçişi
-        Crossfade(targetState = selectedTab, modifier = Modifier.fillMaxSize(), label = "home_tabs") { tab ->
-            when (tab) {
+        HorizontalPager(
+            state = pagerState,
+            reverseLayout = true,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            when (page) {
                 0 -> NoteListScreen(
                     onNoteClick = onNoteClick,
                     onNewNoteClick = onNewNoteClick,

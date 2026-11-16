@@ -70,14 +70,15 @@ fun HomeScreen(
             else -> appPreferences.lastOpenedTab.value // En son açılan
         }
     }
-    // Sayfa 0 Notlarım, 1 Parolalarım. Kullanıcı kararı: Notlarım'da parmak sağa kayınca Parolalarım'a,
-    // Parolalarım'da sola kayınca Notlarım'a geçilir; bu yüzden sayfalar ters dizilir (reverseLayout).
-    val pagerState = rememberPagerState(initialPage = initialTab) { 2 }
+    // Kullanıcı kararı: Notlarım'da iki yöne kaydırma da Parolalarım'ı açar, Parolalarım'da sola kaydırma
+    // Notlarım'a döner. Bunun için sayfalar döngüsel: çift sayfa Notlarım, tek sayfa Parolalarım; her kaydırma
+    // diğer sekmeye geçer. Ters dizilim (reverseLayout) sekmeye dokununca eski kayma yönünü korur.
+    val pagerState = rememberPagerState(initialPage = LOOP_START_PAGE + initialTab) { LOOP_PAGE_COUNT }
     val coroutineScope = rememberCoroutineScope()
 
     // Kaydırarak ya da sekmeye dokunarak geçilen sayfa "en son açılan" olarak kaydedilir
     LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }.drop(1).collect { appPreferences.setLastOpenedTab(it) }
+        snapshotFlow { pagerState.settledPage }.drop(1).collect { appPreferences.setLastOpenedTab(it % 2) }
     }
 
     val userDarkTheme by themePreferences.isDarkTheme.collectAsStateWithLifecycle()
@@ -94,8 +95,14 @@ fun HomeScreen(
         ) {
             Spacer(modifier = Modifier.weight(1f))
             SegmentedControl(
-                selectedTab = pagerState.currentPage,
-                onTabSelected = { coroutineScope.launch { pagerState.animateScrollToPage(it) } },
+                selectedTab = pagerState.currentPage % 2,
+                onTabSelected = { tab ->
+                    val current = pagerState.currentPage
+                    if (tab != current % 2) {
+                        // Notlarım'dan Parolalarım'a bir ileri, geri dönüşte bir geri (eski kayma yönü)
+                        coroutineScope.launch { pagerState.animateScrollToPage(if (tab == 1) current + 1 else current - 1) }
+                    }
+                },
                 modifier = Modifier.weight(5f)
             )
             Row(
@@ -129,7 +136,7 @@ fun HomeScreen(
             reverseLayout = true,
             modifier = Modifier.fillMaxSize()
         ) { page ->
-            when (page) {
+            when (page % 2) {
                 0 -> NoteListScreen(
                     onNoteClick = onNoteClick,
                     onNewNoteClick = onNewNoteClick,
@@ -143,6 +150,10 @@ fun HomeScreen(
         }
     }
 }
+
+/** Döngüsel sayfa sayısı; ortadan başlanır, uçlara kaydırarak ulaşmak pratikte mümkün değil */
+private const val LOOP_PAGE_COUNT = 100_000
+private const val LOOP_START_PAGE = LOOP_PAGE_COUNT / 2 // çift: Notlarım
 
 @Composable
 fun SegmentedControl(
